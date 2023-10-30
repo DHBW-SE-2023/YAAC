@@ -1,1 +1,2 @@
-# NSFW - Not a Signature Forging Webservice
+# YAAC - Yet Another Attendance Checker
+
