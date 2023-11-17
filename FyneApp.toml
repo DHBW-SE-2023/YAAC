@@ -1,0 +1,8 @@
+Website = "https://github.com/DHBW-SE-2023/yaac-go-prototype"
+
+[Details]
+  Icon = "Icon.png"
+  Name = "YAAC-Go-Prototype"
+  ID = "github.com/DHBW-SE-2023/yaac-go-prototype"
+  Version = "1.0.0"
+  Build = 6
