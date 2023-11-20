@@ -1,10 +1,11 @@
 package yaac_backend
 
 import (
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
+	"log"
+
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
-	"log"
 )
 
 func (b *Backend) GetResponse(input yaac_shared.EmailData) string {

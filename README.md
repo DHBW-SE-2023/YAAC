@@ -1,4 +1,4 @@
-# yaac-go-prototype
+# YAAC
 Full-Stack YAAC Prototype writen in Go.
 
 # Setup

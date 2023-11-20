@@ -6,8 +6,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
-	resource "github.com/DHBW-SE-2023/yaac-go-prototype/pkg/resource_manager"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 var App fyne.App

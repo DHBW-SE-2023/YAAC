@@ -1,9 +1,9 @@
 package yaac_mvvm
 
 import (
-	yaac_backend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/backend"
-	yaac_frontend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/frontend"
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
+	yaac_backend "github.com/DHBW-SE-2023/YAAC/internal/backend"
+	yaac_frontend "github.com/DHBW-SE-2023/YAAC/internal/frontend"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
 func (m *MVVM) MailFormUpdated(data yaac_shared.EmailData) {

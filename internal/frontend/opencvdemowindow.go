@@ -11,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	resource "github.com/DHBW-SE-2023/yaac-go-prototype/pkg/resource_manager"
+	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 type OpencvDemoWindow struct {

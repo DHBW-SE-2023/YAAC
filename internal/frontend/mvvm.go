@@ -1,7 +1,7 @@
 package yaac_frontend
 
 import (
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
 type mvvm interface {

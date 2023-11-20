@@ -1,6 +1,6 @@
 package yaac_shared
 
-const APP_NAME = "YAAC-Go-Prototype"
+const APP_NAME = "YAAC"
 
 type EmailData struct {
 	MailServer string

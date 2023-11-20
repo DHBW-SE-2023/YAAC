@@ -2,11 +2,12 @@ package yaac_frontend
 
 import (
 	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/widget"
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
-	resource "github.com/DHBW-SE-2023/yaac-go-prototype/pkg/resource_manager"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 var mailWindow fyne.Window

@@ -3,8 +3,8 @@ package yaac_mvvm
 import (
 	"fmt"
 
-	yaac_backend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/backend"
-	yaac_frontend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/frontend"
+	yaac_backend "github.com/DHBW-SE-2023/YAAC/internal/backend"
+	yaac_frontend "github.com/DHBW-SE-2023/YAAC/internal/frontend"
 )
 
 func (m *MVVM) StartGoCV(img_path string) {

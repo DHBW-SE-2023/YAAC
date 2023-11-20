@@ -1,4 +1,4 @@
-module github.com/DHBW-SE-2023/yaac-go-prototype
+module github.com/DHBW-SE-2023/YAAC
 
 go 1.21.3
 
