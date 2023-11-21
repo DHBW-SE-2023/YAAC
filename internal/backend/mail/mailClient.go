@@ -1,4 +1,4 @@
-package yaac_backend
+package yaac_backend_mail
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-func (b *Backend) GetResponse(input yaac_shared.EmailData) string {
+func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
 	msg, err := getLatestMessage(input.MailServer, input.Email, input.Password)
 	if err != nil {
 		return "Something went wrong please try again"

@@ -3,12 +3,12 @@ package yaac_mvvm
 import (
 	"fmt"
 
-	yaac_backend "github.com/DHBW-SE-2023/YAAC/internal/backend"
+	yaac_backend_opencv "github.com/DHBW-SE-2023/YAAC/internal/backend/opencv"
 	yaac_frontend_opencv "github.com/DHBW-SE-2023/YAAC/internal/frontend/opencv"
 )
 
 func (m *MVVM) StartGoCV(img_path string) {
-	backend := yaac_backend.New(m)
+	backend := yaac_backend_opencv.New(m)
 	gocv_window := yaac_frontend_opencv.New(m)
 
 	var msg string
