@@ -1,4 +1,4 @@
-package yaac_frontend
+package yaac_frontend_main
 
 import (
 	"fyne.io/fyne/v2"
@@ -11,40 +11,45 @@ import (
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
-var App fyne.App
-var mainWindow fyne.Window
+var gv GlobalVars
 
-func (f *Frontend) OpenMainWindow() {
-	App = *yaac_shared.GetApp()
+type GlobalVars struct {
+	App    fyne.App
+	Window fyne.Window
+}
+
+func (f *FrontendMain) OpenMainWindow() {
+	gv = GlobalVars{}
+	gv.App = *yaac_shared.GetApp()
 
 	// setuping window
-	mainWindow = App.NewWindow(yaac_shared.APP_NAME)
+	gv.Window = gv.App.NewWindow(yaac_shared.APP_NAME)
 
 	// set icon
 	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	mainWindow.SetIcon(r)
+	gv.Window.SetIcon(r)
 
 	// setup systray
-	if desk, ok := App.(desktop.App); ok {
+	if desk, ok := gv.App.(desktop.App); ok {
 		m := fyne.NewMenu(yaac_shared.APP_NAME,
 			fyne.NewMenuItem("Show", func() {
-				mainWindow.Show()
+				gv.Window.Show()
 			}))
 		desk.SetSystemTrayMenu(m)
 		desk.SetSystemTrayIcon(r)
 	}
-	mainWindow.SetCloseIntercept(func() {
-		mainWindow.Hide()
+	gv.Window.SetCloseIntercept(func() {
+		gv.Window.Hide()
 	})
 
 	// handle main window
-	mainWindow.SetContent(makeMainWindow(f))
-	mainWindow.Show()
+	gv.Window.SetContent(makeWindow(f))
+	gv.Window.Show()
 
-	App.Run()
+	gv.App.Run()
 }
 
-func makeMainWindow(f *Frontend) *fyne.Container {
+func makeWindow(f *FrontendMain) *fyne.Container {
 	header := widget.NewLabel("Select an action:")
 	mail_button := widget.NewButton(
 		"Open Mail Window",

@@ -10,24 +10,29 @@ import (
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
-var App fyne.App
-var mailWindow fyne.Window
-var result_label *widget.Label
+var gv GlobalVars
+
+type GlobalVars struct {
+	App         fyne.App
+	Window      fyne.Window
+	ResultLabel *widget.Label
+}
 
 func (f *WindowMail) Open() {
-	App = *yaac_shared.GetApp()
-	mailWindow = App.NewWindow("Mail Demo")
+	gv = GlobalVars{}
+	gv.App = *yaac_shared.GetApp()
+	gv.Window = gv.App.NewWindow("Mail Demo")
 
 	// set icon
 	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	mailWindow.SetIcon(r)
+	gv.Window.SetIcon(r)
 
-	mailWindow.SetContent(makeFormTab(mailWindow, f))
-	mailWindow.Show()
+	gv.Window.SetContent(makeFormTab(gv.Window, f))
+	gv.Window.Show()
 }
 
 func (f *WindowMail) UpdateResultLabel(content string) {
-	result_label.SetText(content)
+	gv.ResultLabel.SetText(content)
 	fyne.CurrentApp().SendNotification(&fyne.Notification{
 		Title: content,
 	})
@@ -44,7 +49,7 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 	password := widget.NewPasswordEntry()
 	password.SetPlaceHolder("Password")
 
-	result_label = widget.NewLabel("")
+	gv.ResultLabel = widget.NewLabel("")
 
 	form := &widget.Form{
 		Items: []*widget.FormItem{
@@ -65,7 +70,7 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 		},
 	}
 	form.Append("Password", password)
-	form.Append("Your first unread message:", result_label)
+	form.Append("Your first unread message:", gv.ResultLabel)
 
 	return form
 }
