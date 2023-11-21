@@ -1,4 +1,4 @@
-package yaac_frontend
+package yaac_frontend_mail
 
 import (
 	"fmt"
@@ -10,10 +10,12 @@ import (
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
+var App fyne.App
 var mailWindow fyne.Window
 var result_label *widget.Label
 
-func (f *Frontend) OpenMailWindow() {
+func (f *WindowMail) Open() {
+	App = *yaac_shared.GetApp()
 	mailWindow = App.NewWindow("Mail Demo")
 
 	// set icon
@@ -24,14 +26,14 @@ func (f *Frontend) OpenMailWindow() {
 	mailWindow.Show()
 }
 
-func (f *Frontend) UpdateResultLabel(content string) {
+func (f *WindowMail) UpdateResultLabel(content string) {
 	result_label.SetText(content)
 	fyne.CurrentApp().SendNotification(&fyne.Notification{
 		Title: content,
 	})
 }
 
-func makeFormTab(_ fyne.Window, f *Frontend) fyne.CanvasObject {
+func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 	mailServer := widget.NewEntry()
 	mailServer.SetPlaceHolder("John Smith")
 

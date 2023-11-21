@@ -1,4 +1,4 @@
-package yaac_frontend
+package yaac_frontend_opencv
 
 import (
 	"image/color"
@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
@@ -22,9 +23,11 @@ type OpencvDemoWindow struct {
 	OutputImageContainer *fyne.Container
 }
 
+var App fyne.App
 var opencvDemoWindow OpencvDemoWindow
 
-func (f *Frontend) OpenOpencvDemoWindow() {
+func (f *WindowOpenCV) Open() {
+	App = *yaac_shared.GetApp()
 	opencvDemoWindow = OpencvDemoWindow{}
 
 	// setuping window
@@ -42,11 +45,11 @@ func (f *Frontend) OpenOpencvDemoWindow() {
 	App.Run()
 }
 
-func (f *Frontend) UpdateProgress(value float64) {
+func (f *WindowOpenCV) UpdateProgress(value float64) {
 	opencvDemoWindow.ProgBar.SetValue(value)
 }
 
-func makeOpencvDemoWindow(f *Frontend) *fyne.Container {
+func makeOpencvDemoWindow(f *WindowOpenCV) *fyne.Container {
 	header := widget.NewLabel("Please select an Input image:")
 
 	inputImage := canvas.NewLinearGradient(color.Transparent, color.Black, 0)
@@ -100,7 +103,7 @@ func makeOpencvDemoWindow(f *Frontend) *fyne.Container {
 	)))
 }
 
-func (f *Frontend) ShowGeneratedImage(out_Path string) {
+func (f *WindowOpenCV) ShowGeneratedImage(out_Path string) {
 	// Load the image resource directly from the file path
 	res, err := fyne.LoadResourceFromPath(out_Path)
 	if err != nil {
