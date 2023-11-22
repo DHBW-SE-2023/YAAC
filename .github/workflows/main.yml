@@ -1,0 +1,36 @@
+name: Build+Test Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21.3
+
+    - name: Install project dependencies
+      run: go mod download
+
+    - name: Build Docker image and Push to Container Registry(https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+      run: |
+        docker build -t ghcr.io/${{ github.repository_owner }}/goDocker:latest .
+        docker push ghcr.io/${{ github.repository_owner }}/goDocker:latest
+
+    - name: Check for Makefile
+      run: test -e Makefile
+      
+    - name: Build project with make
+      run: make build
+
+    - name: Run tests
+      run: go test -v
