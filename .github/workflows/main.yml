@@ -1,0 +1,29 @@
+name: Build+Test Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Build Docker image
+      run:  docker build -t denismakogon/gocv-alpine:test .
+      
+    - name: Install project dependencies
+      run: go mod download
+
+    - name: Check for Makefile
+      run: test -e Makefile
+      
+    - name: Build project with make
+      run: make build
+
+    - name: Run tests
+      run: go test -v
