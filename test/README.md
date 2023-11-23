@@ -1,7 +1,7 @@
 # tests
 
 ## setup tests
-- create for each go file a new testfile called *testfile*_test.go
+- create for each go file a new testfile called *testfile*_test.go in the same dictonary where the go file is
 - create a function called Test*FunctionNameToTest*(t *testing.T)
 - modul *testing* should be imported automaticaly
 - test the function
@@ -18,8 +18,13 @@
 > // Output:
 > // Hello World
 
+For more information about tests in go, see also https://pkg.go.dev/testing
+
 
 # fyne tests
+- test the UI with user input
+- you can test the UI without 
+- For more information abour fyne tests, see https://developer.fyne.io/started/testing
 
 
 
@@ -29,3 +34,5 @@ navigate to the test directory
 ```shell
 go test
 ```
+
+Go tests are also executet by using make
