@@ -1,4 +1,4 @@
-package yaac_frontend
+package yaac_frontend_opencv
 
 import (
 	"image/color"
@@ -11,10 +11,14 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	resource "github.com/DHBW-SE-2023/yaac-go-prototype/pkg/resource_manager"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
-type OpencvDemoWindow struct {
+var gv GlobalVars
+
+type GlobalVars struct {
+	App                  fyne.App
 	Window               fyne.Window
 	ImagePath            string
 	ProgBar              *widget.ProgressBar
@@ -22,59 +26,58 @@ type OpencvDemoWindow struct {
 	OutputImageContainer *fyne.Container
 }
 
-var opencvDemoWindow OpencvDemoWindow
-
-func (f *Frontend) OpenOpencvDemoWindow() {
-	opencvDemoWindow = OpencvDemoWindow{}
+func (f *WindowOpenCV) Open() {
+	gv = GlobalVars{}
+	gv.App = *yaac_shared.GetApp()
 
 	// setuping window
-	opencvDemoWindow.Window = App.NewWindow("OpenCV Demo")
+	gv.Window = gv.App.NewWindow("OpenCV Demo")
 
 	// set icon
 	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	opencvDemoWindow.Window.SetIcon(r)
+	gv.Window.SetIcon(r)
 
 	// handle main window
-	opencvDemoWindow.Window.SetContent(makeOpencvDemoWindow(f))
-	opencvDemoWindow.Window.Resize(fyne.NewSize(800, 600))
-	opencvDemoWindow.Window.Show()
+	gv.Window.SetContent(makeWindow(f))
+	gv.Window.Resize(fyne.NewSize(800, 600))
+	gv.Window.Show()
 
-	App.Run()
+	gv.App.Run()
 }
 
-func (f *Frontend) UpdateProgress(value float64) {
-	opencvDemoWindow.ProgBar.SetValue(value)
+func (f *WindowOpenCV) UpdateProgress(value float64) {
+	gv.ProgBar.SetValue(value)
 }
 
-func makeOpencvDemoWindow(f *Frontend) *fyne.Container {
+func makeWindow(f *WindowOpenCV) *fyne.Container {
 	header := widget.NewLabel("Please select an Input image:")
 
 	inputImage := canvas.NewLinearGradient(color.Transparent, color.Black, 0)
 	inputImageScroll := container.NewScroll(inputImage)
-	opencvDemoWindow.InputImageContainer = container.NewAdaptiveGrid(1, inputImageScroll)
-	opencvDemoWindow.OutputImageContainer = container.NewAdaptiveGrid(1, inputImageScroll)
+	gv.InputImageContainer = container.NewAdaptiveGrid(1, inputImageScroll)
+	gv.OutputImageContainer = container.NewAdaptiveGrid(1, inputImageScroll)
 
 	openFile := widget.NewButton("File Open With Filter (.jpg or .png)", func() {
 		fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil {
-				dialog.ShowError(err, opencvDemoWindow.Window)
+				dialog.ShowError(err, gv.Window)
 				return
 			}
 			if reader == nil {
 				log.Println("Cancelled")
 				return
 			}
-			opencvDemoWindow.ImagePath = reader.URI().Path()
-			showImage(reader, opencvDemoWindow.InputImageContainer)
-		}, opencvDemoWindow.Window)
+			gv.ImagePath = reader.URI().Path()
+			showImage(reader, gv.InputImageContainer)
+		}, gv.Window)
 		fd.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpg", ".jpeg"}))
 		fd.Show()
 	})
 
 	startOpenCV := widget.NewButton("Run OpenCV", func() {
-		f.MVVM.StartGoCV(opencvDemoWindow.ImagePath)
+		f.MVVM.StartGoCV(gv.ImagePath)
 	})
-	opencvDemoWindow.ProgBar = widget.NewProgressBar()
+	gv.ProgBar = widget.NewProgressBar()
 
 	/*
 		box := container.NewVBox(
@@ -91,16 +94,16 @@ func makeOpencvDemoWindow(f *Frontend) *fyne.Container {
 			header,
 			openFile,
 		),
-		opencvDemoWindow.InputImageContainer,
+		gv.InputImageContainer,
 		container.NewVBox(
 			startOpenCV,
-			opencvDemoWindow.ProgBar,
+			gv.ProgBar,
 		),
-		opencvDemoWindow.OutputImageContainer,
+		gv.OutputImageContainer,
 	)))
 }
 
-func (f *Frontend) ShowGeneratedImage(out_Path string) {
+func (f *WindowOpenCV) ShowGeneratedImage(out_Path string) {
 	// Load the image resource directly from the file path
 	res, err := fyne.LoadResourceFromPath(out_Path)
 	if err != nil {
@@ -118,12 +121,12 @@ func (f *Frontend) ShowGeneratedImage(out_Path string) {
 	img.FillMode = canvas.ImageFillContain
 
 	imgScroll := container.NewScroll(img)
-	opencvDemoWindow.OutputImageContainer.Objects = []fyne.CanvasObject{imgScroll}
+	gv.OutputImageContainer.Objects = []fyne.CanvasObject{imgScroll}
 
 	// Refresh the content to display the new image
-	opencvDemoWindow.Window.Content().Refresh()
-	opencvDemoWindow.Window.RequestFocus()
-	opencvDemoWindow.Window.Show()
+	gv.Window.Content().Refresh()
+	gv.Window.RequestFocus()
+	gv.Window.Show()
 }
 
 func loadImage(f fyne.URIReadCloser) *canvas.Image {
@@ -172,7 +175,7 @@ func showImage(f fyne.URIReadCloser, imgContainer *fyne.Container) {
 	//fmt.Println(img.Size())
 
 	// Actualize and show window
-	opencvDemoWindow.Window.Content().Refresh()
-	opencvDemoWindow.Window.RequestFocus()
-	opencvDemoWindow.Window.Show()
+	gv.Window.Content().Refresh()
+	gv.Window.RequestFocus()
+	gv.Window.Show()
 }

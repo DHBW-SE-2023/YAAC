@@ -1,4 +1,4 @@
-package yaac_backend
+package yaac_backend_opencv
 
 import (
 	"errors"
@@ -19,7 +19,7 @@ import (
 //			true -> Path to the transormed image in the FS
 //			false -> Error Message
 //		bool -> If the trasnformation was successfull
-func (b *Backend) StartGoCV(image_path string, prog chan int) (string, bool) {
+func (b *BackendOpenCV) StartGoCV(image_path string, prog chan int) (string, bool) {
 	if prog != nil {
 		defer close(prog)
 		prog <- 0
