@@ -12,15 +12,21 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-      
-    - name: Build Docker image
-      run:  docker build -t denismakogon/gocv-alpine:test .
-      
-    - name: Install project dependencies
-      run: go mod download
 
-    - name: Check for Makefile
-      run: test -e Makefile
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+
+    - name: Get CMake
+      uses: symbitic/install-cmake@master
+
+    - name: Cache OpenCV
+      uses: UrielCh/opencv-cache-action@V1
+      with:
+        branch: 4.x
+        BUILD_LIST: core,imgproc,imgcodecs,videoio,highgui,video,calib3d,features2d,objdetect,dnn,ml,photo,gapi,python3
+        NO_CONTRIB: ''
       
     - name: Build project with make
       run: make build
