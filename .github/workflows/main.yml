@@ -1,0 +1,48 @@
+name: Build+Test Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clean
+      run: apt clean
+
+    - name: Update
+      run:  apt update -y && apt upgrade -y
+
+    - name: Install opencv libs
+      run:  apt install libopencv-dev libopencv-contrib-dev -y
+
+    #- name: Manually Update Keys
+     # run: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 40976EAF437D05B5 \3B4FE6ACC0B21F32
+
+    - name: Checkout code
+      uses: actions/checkout@v2#
+
+    #- name: Setup OpenCV
+     # uses: Dovyski/setup-opencv-action@v1.1
+      #with:
+       # opencv-version: '4.0.0'
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21.3
+
+    - name: Install project dependencies
+      run: go mod download
+
+    #- name: Check for Makefile
+     # run: test -e Makefile
+
+    - name: Build project with make
+      run: make build
+
+    #- name: Run tests
+     # run: go test -v
