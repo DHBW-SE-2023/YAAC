@@ -1,0 +1,43 @@
+name: Build+Test Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Clean
+      run: apt clean
+
+    - name: Update
+      run:  apt update -y && apt upgrade -y
+
+    - name: Install fyne deps
+      run: apt install gcc libgl1-mesa-dev xorg-dev -y
+
+    - name: Install opencv libs
+      run:  apt install libopencv-dev libopencv-contrib-dev -y
+
+    - name: Debug aruco
+      run: echo $(cat /usr/include/opencv4/opencv2/aruco.hpp)
+
+    - name: Break
+      run: exit 1
+
+    - name: Checkout code
+      uses: actions/checkout@v2#
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21.3
+
+    - name: Install project dependencies
+      run: go mod download
+
+    - name: Build project with make
+      run: make build

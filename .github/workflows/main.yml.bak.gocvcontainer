@@ -1,0 +1,27 @@
+name: Build+Test Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    #  act -P ubuntu-latest=hybridgroup/gocv
+
+    steps:
+    - name: Update System
+      run: apt update && apt upgrade -y
+
+    - name: Update Go
+      run: rm -rf /usr/local/go && curl -Lo go1.21.4.linux-amd64.tar.gz https://go.dev/dl/go1.21.4.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.21.4.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin
+
+    - name: Get Fyne Deps
+      run: apt install libgl1-mesa-dev xorg-dev -y
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: make build
