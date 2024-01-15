@@ -1,6 +1,21 @@
 package yaac_shared
 
-const APP_NAME = "YAAC-Go-Prototype"
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+)
+
+const APP_NAME = "YAAC"
+
+var App fyne.App
+
+func GetApp() *fyne.App {
+	if App == nil {
+		App = app.NewWithID(APP_NAME)
+	}
+
+	return &App
+}
 
 type EmailData struct {
 	MailServer string
