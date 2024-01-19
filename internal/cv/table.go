@@ -2,6 +2,7 @@ package cv
 
 import (
 	"image"
+	"sort"
 
 	"gocv.io/x/gocv"
 )
@@ -14,6 +15,8 @@ type Table struct {
 func NewTable(img gocv.Mat) Table {
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
 	gocv.BitwiseNot(img, &img)
+
+	invImg := img.Clone()
 
 	size := img.Size()
 
@@ -40,5 +43,58 @@ func NewTable(img gocv.Mat) Table {
 
 	gocv.Threshold(vhLines, &vhLines, 128.0, 255.0, gocv.ThresholdOtsu)
 
-	return Table{}
+	contours := gocv.FindContours(vhLines, gocv.RetrievalTree, gocv.ChainApproxSimple).ToPoints()
+
+	boundingRects := make([]image.Rectangle, len(contours))
+	meanHeight := 0
+
+	for _, contour := range contours {
+		rect := gocv.BoundingRect(gocv.NewPointVectorFromPoints(contour))
+		boundingRects = append(boundingRects, rect)
+		meanHeight = meanHeight + rect.Dy()
+	}
+
+	meanHeight = meanHeight / len(contours)
+
+	sort.Slice(boundingRects, func(i, j int) bool {
+		return boundingRects[i].Max.Y < boundingRects[j].Max.Y
+	})
+
+	rows := [][]image.Rectangle{}
+
+	newIdx := 0
+	for i, rect := range boundingRects {
+		if i < newIdx {
+			continue
+		}
+
+		if rect.Dx() == 0 || rect.Dy() == 0 {
+			continue
+		}
+
+		// We'll probably never have more than 10 rects detected in one line
+		row := make([]image.Rectangle, 0, 10)
+		currentMaxHeight := rect.Min.Y + meanHeight/2
+
+		for _, next := range boundingRects[i:] {
+			if next.Min.Y > currentMaxHeight {
+				break
+			}
+
+			row = append(row, next)
+		}
+
+		newIdx = i + len(row)
+
+		sort.Slice(row, func(i, j int) bool {
+			return row[i].Min.X < row[j].Min.X
+		})
+
+		rows = append(rows, row)
+	}
+
+	return Table{
+		Image: invImg,
+		Rows:  rows,
+	}
 }
