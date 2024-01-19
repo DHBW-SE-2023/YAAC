@@ -1,7 +1,13 @@
 package yaac_backend_mail
 
 import (
+	"fmt"
+	"io"
 	"log"
+	"mime"
+	"mime/multipart"
+	"net/mail"
+	"strings"
 
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
@@ -11,7 +17,7 @@ import (
 func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
 	msg, err := getLatestMessage(input.MailServer, input.Email, input.Password)
 	if err != nil {
-		return "Something went wrong please try again"
+		return ("Something went wrong please try again:")
 	}
 	return msg
 }
@@ -37,28 +43,111 @@ func getLatestMessage(serverAddr string, username string, password string) (stri
 	// TODO: in actual implementation return an error for this and show a filed for inbox selection
 	mbox, err := c.Select("INBOX", false)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
+	// Get first unseen message
 	firstUnseen := mbox.UnseenSeqNum
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(firstUnseen)
 
+	// Get the whole message body
+	var section imap.BodySectionName
+	items := []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}
+
+	// Channes for messages
 	messages := make(chan *imap.Message, 1)
-	done := make(chan error, 1)
 
 	go func() {
-		done <- c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, messages)
+		if err := c.Fetch(seqset, items, messages); err != nil {
+			log.Fatal(err)
+		}
 	}()
 
-	if err := <-done; err != nil {
+	msg := <-messages
+	if msg == nil {
 		return "", err
 	}
 
-	var firstUnseenMsg string
-	for msg := range messages {
-		firstUnseenMsg = msg.Envelope.Subject
+	// Get Mail Literal
+	mailLiteral := msg.GetBody(&section)
+	if mailLiteral == nil {
+		return "", err
 	}
 
-	return firstUnseenMsg, nil
+	// Get Mail Body as String
+	mailString, err := imap.ParseString(mailLiteral)
+	if err != nil {
+		return "", err
+	}
+
+	// Get Base64Image from Body
+	base64Image, err := getBase64AttachmentFromMail(mailString)
+	if err != nil {
+		return "", err
+	}
+
+	return base64Image, err
+
+}
+
+func getBoundary(contentType string) (string, error) {
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return "", err
+	}
+	return params["boundary"], err
+}
+
+func getBase64AttachmentFromMail(mailString string) (string, error) {
+
+	// Read Mail
+	message, err := mail.ReadMessage(strings.NewReader(mailString))
+	if err != nil {
+		return "", err
+	}
+
+	// Read content type from Mail Header
+	contentType := message.Header.Get("Content-Type")
+	if strings.HasPrefix(contentType, "multipart/") {
+
+		// Read Body Boundary from Mail Header
+		boundary, err := getBoundary(contentType)
+		if err != nil {
+			return "", err
+		}
+
+		// Divide Mail into body parts
+		mr := multipart.NewReader(message.Body, boundary)
+
+		for {
+
+			// End of File
+			part, err := mr.NextPart()
+			if err == io.EOF {
+				break
+			}
+
+			// Other Error
+			if err != nil {
+				return "", err
+			}
+
+			// Read one part
+			body, err := io.ReadAll(part)
+			if err != nil {
+				return "", err
+			}
+
+			fmt.Printf("Teil mit Content-Type %s:\n", part.Header.Get("Content-Type"))
+			fmt.Println("----------")
+			fmt.Println(string(body))
+			fmt.Println("----------")
+			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
+				return (string(body)), err
+			}
+		}
+	}
+	// Return Error
+	return "no return value", err
 }
