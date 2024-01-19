@@ -72,10 +72,6 @@ func NewTable(img gocv.Mat) Table {
 			continue
 		}
 
-		if rect.Dx() == 0 || rect.Dy() == 0 {
-			continue
-		}
-
 		if rect.Dx() < int(float32(img.Cols())*0.04) || rect.Dy() < int(float32(img.Rows())*0.02) {
 			continue
 		}
