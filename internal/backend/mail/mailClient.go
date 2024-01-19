@@ -57,7 +57,7 @@ func getLatestMessage(serverAddr string, username string, password string) (stri
 	items := []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}
 
 	// Channes for messages
-	messages := make(chan *imap.Message, 1)
+	messages := make(chan *imap.Message)
 
 	go func() {
 		if err := c.Fetch(seqset, items, messages); err != nil {
@@ -76,17 +76,21 @@ func getLatestMessage(serverAddr string, username string, password string) (stri
 		return "", err
 	}
 
-	// Get Mail Body as String
+	// Get Mail as String
 	mailString, err := imap.ParseString(mailLiteral)
 	if err != nil {
 		return "", err
 	}
+
+	//Check if mail subject ist correct!!!!!!
 
 	// Get Base64Image from Body
 	base64Image, err := getBase64AttachmentFromMail(mailString)
 	if err != nil {
 		return "", err
 	}
+
+	//Mark Mail as readable
 
 	return base64Image, err
 
@@ -152,4 +156,8 @@ func getBase64AttachmentFromMail(mailString string) (string, error) {
 	// Return Error
 	err = errors.New("Found no attached image in mail")
 	return "", err
+}
+
+func startMailService() {
+
 }
