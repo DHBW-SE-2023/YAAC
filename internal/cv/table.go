@@ -76,6 +76,10 @@ func NewTable(img gocv.Mat) Table {
 			continue
 		}
 
+		if rect.Dx() < int(float32(img.Cols())*0.04) || rect.Dy() < int(float32(img.Rows())*0.02) {
+			continue
+		}
+
 		// We'll probably never have more than 10 rects detected in one line
 		row := make([]image.Rectangle, 0, 10)
 		currentMaxHeight := rect.Min.Y + meanHeight/2
