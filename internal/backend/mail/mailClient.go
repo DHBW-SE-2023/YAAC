@@ -1,6 +1,7 @@
 package yaac_backend_mail
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -149,5 +150,6 @@ func getBase64AttachmentFromMail(mailString string) (string, error) {
 		}
 	}
 	// Return Error
-	return "no return value", err
+	err = errors.New("Found no attached image in mail")
+	return "", err
 }
