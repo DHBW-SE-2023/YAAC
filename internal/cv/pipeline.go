@@ -8,13 +8,11 @@ import (
 )
 
 func FindTable(img gocv.Mat) gocv.Mat {
+	origImg := img.Clone()
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
 	gocv.FastNlMeansDenoisingWithParams(img, &img, 11.0, 31, 9)
-
-	prepared := img.Clone()
-
 	gocv.Canny(img, &img, 50.0, 150.0)
 
 	hierachy := gocv.NewMat()
@@ -70,7 +68,7 @@ func FindTable(img gocv.Mat) gocv.Mat {
 	})
 
 	transform := gocv.GetPerspectiveTransform(origRect, destRect)
-	gocv.WarpPerspective(prepared, &img, transform, image.Pt(maxWidth, maxHeight))
+	gocv.WarpPerspective(origImg, &img, transform, image.Pt(maxWidth, maxHeight))
 
 	return img
 }

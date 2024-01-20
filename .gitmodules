@@ -1,3 +1,3 @@
-[submodule "data"]
-	path = data
+[submodule "test/testdata"]
+	path = test/testdata
 	url = git@github.com:DHBW-SE-2023/testing-data.git
