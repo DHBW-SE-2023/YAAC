@@ -15,6 +15,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: 'true'
+        token: ${{ secrets.TESTING_DATA_PAT }}
 
     - name: 'Get Go'
       uses: actions/setup-go@v4
