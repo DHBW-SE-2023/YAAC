@@ -8,7 +8,7 @@ import (
 )
 
 func TestTableColumnCount(t *testing.T) {
-	attendanceListPath := "../data/list.jpg"
+	attendanceListPath := "testdata/list.jpg"
 	img := gocv.IMRead(attendanceListPath, gocv.IMReadAnyColor)
 
 	img = cv.FindTable(img)
