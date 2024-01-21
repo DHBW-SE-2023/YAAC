@@ -3,7 +3,6 @@ package yaac_backend_mail
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"mime"
@@ -184,7 +183,7 @@ func getBase64AttachmentFromMail(mailString string) (string, error) {
 				return "", err
 			}
 
-			fmt.Printf("Teil mit Content-Type %s:\n", part.Header.Get("Content-Type"))
+			//fmt.Printf("Teil mit Content-Type %s:\n", part.Header.Get("Content-Type"))
 			//fmt.Println("----------")
 			//fmt.Println(string(body))
 			//fmt.Println("----------")
@@ -240,4 +239,94 @@ func decodeBase64(base64data string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func startMailService(serverAddr string, username string, password string) error {
+	// init all
+	// Connect to server
+	c, err := client.DialTLS(serverAddr, nil)
+	if err != nil {
+		return err
+	}
+	log.Println("Connected to server at: ", serverAddr)
+
+	// close connection to server when data was recieved
+	defer c.Logout()
+
+	// login to the email server
+	if err := c.Login(username, password); err != nil {
+		return err
+	}
+	log.Println("Logged in to server at: ", serverAddr)
+
+	// Select to default INBOX, would not work if renamed
+	// TODO: in actual implementation return an error for this and show a filed for inbox selection
+	_, err = c.Select("INBOX", false)
+	if err != nil {
+		return err
+	}
+
+	// Get only unseen Messages
+	criteria := imap.NewSearchCriteria()
+	criteria.WithoutFlags = []string{imap.SeenFlag}
+	ids, err := c.Search(criteria)
+	if err != nil {
+		return err
+	}
+
+	// Create a sequenz for the found mails
+	seqset := new(imap.SeqSet)
+	seqset.AddNum(ids...)
+
+	// Channel for mail messages
+	messages := make(chan *imap.Message)
+
+	// Fetching mails
+	go func() {
+		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	go checkMailsService(messages)
+
+	return nil
+}
+
+func checkMailsService(messages chan *imap.Message) {
+	for {
+		// Check all unread messages
+		for msg := range messages {
+			if msg == nil {
+				log.Fatal("Error: Could not read Mail")
+				continue
+			}
+
+			mailstring, err := getMailasString(msg)
+			if err == nil {
+				log.Fatal("Error decoding mail")
+			} else {
+				subject, err := getSubject(mailstring)
+				if err == nil {
+					log.Fatal("Error decoding mail")
+				} else {
+					log.Printf("Mail detected with Subject: %v\n", subject)
+
+					// Check if mail Subject is correct
+
+					image, err := getBase64AttachmentFromMail(mailstring)
+					if err == nil {
+						log.Println("Image Attachment identified")
+						err := writeToDatabase(image)
+						if err != nil {
+							log.Println(("Error writing to Database"))
+						} else {
+							// Mark Mail as read
+						}
+					}
+				}
+			}
+		}
+		//sleep
+	}
 }
