@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"image"
-	"image/color"
 	"math"
 
 	"github.com/otiai10/gosseract"
@@ -77,13 +76,13 @@ func FindTable(img gocv.Mat) gocv.Mat {
 	return img
 }
 
-type ValidNames struct {
+type ReviewedName struct {
 	string
 	bool
 }
 
 // Expects an image which is made up of the table in question.
-func ReviewTable(img gocv.Mat) ([]ValidNames, error) {
+func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
 
@@ -122,30 +121,40 @@ func ReviewTable(img gocv.Mat) ([]ValidNames, error) {
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdBinary)
 	gocv.MedianBlur(img, &img, 3)
 
+	gocv.CvtColor(table.Image, &img, gocv.ColorGrayToBGRA)
+	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
+
 	tesseractClient := gosseract.NewClient()
 	defer tesseractClient.Close()
-
 	tesseractClient.SetLanguage("deu")
+	names, err := StudentNames(img, table, tesseractClient)
+	if err != nil {
+		return nil, err
+	}
 
+	results := make([]ReviewedName, 0)
+
+	for _, name := range names {
+		results = append(results, ReviewedName{name.name, false})
+	}
+
+	return results, nil
+}
+
+type NameROI struct {
+	name string
+	roi  image.Rectangle
+}
+
+func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameROI, error) {
+	shape := table.Image.Size()
 	dyBot := 2
 	dyTop := 4
 	dxLeft := 1
 	dxRight := 10
 
-	gocv.CvtColor(table.Image, &img, gocv.ColorGrayToBGRA)
-	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
-
-	for _, row := range table.Rows {
-		for _, col := range row {
-			gocv.Rectangle(&img, col, color.RGBA{255, 0, 0, 255}, 1)
-		}
-	}
-
 	nameCells := make([]image.Rectangle, 0, len(table.Rows))
-	namesigs := make([]struct {
-		name   string
-		sigROI image.Rectangle
-	}, 0, len(nameCells))
+	nameSigs := make([]NameROI, 0, len(nameCells))
 	for _, row := range table.Rows {
 		// If len(row) > 10, then we assume the row is deformed
 		if len(row) > 10 {
@@ -190,19 +199,14 @@ func ReviewTable(img gocv.Mat) ([]ValidNames, error) {
 			return nil, err
 		}
 
-		tesseractClient.SetImageFromBytes(roiPng.GetBytes())
-		text, err := tesseractClient.Text()
+		client.SetImageFromBytes(roiPng.GetBytes())
+		text, err := client.Text()
 		if err != nil {
 			return nil, err
 		}
 
-		namesigs = append(namesigs, struct {
-			name   string
-			sigROI image.Rectangle
-		}{text, sigROI})
+		nameSigs = append(nameSigs, NameROI{text, sigROI})
 	}
 
-	results := make([]ValidNames, 0)
-
-	return results, nil
+	return nameSigs, nil
 }
