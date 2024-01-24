@@ -109,32 +109,29 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	gocv.Filter2D(img, &img, -1, sharpeningKernel, image.Pt(-1, -1), 0, gocv.BorderDefault)
 
 	table := NewTable(img)
-	shape := table.Image.Size()
-
-	scaling := 2
-
-	// Shove table.Image into img for ease of use
-	gocv.Resize(table.Image, &img, image.Pt(scaling*shape[0], scaling*shape[1]), 0.0, 0.0, gocv.InterpolationLinear)
+	img = table.Image.Clone()
 
 	kernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
 	gocv.MorphologyEx(img, &img, gocv.MorphClose, kernel)
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdBinary)
 	gocv.MedianBlur(img, &img, 3)
+	gocv.BitwiseNot(img, &img)
 
-	gocv.CvtColor(table.Image, &img, gocv.ColorGrayToBGRA)
+	gocv.CvtColor(img, &img, gocv.ColorGrayToBGRA)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
 
 	tesseractClient := gosseract.NewClient()
 	defer tesseractClient.Close()
 	tesseractClient.SetLanguage("deu")
-	names, err := StudentNames(img, table, tesseractClient)
+
+	namesROI, err := StudentNames(img, table, tesseractClient)
 	if err != nil {
 		return nil, err
 	}
 
 	results := make([]ReviewedName, 0)
 
-	for _, name := range names {
+	for _, name := range namesROI {
 		results = append(results, ReviewedName{name.Name(), false})
 	}
 
@@ -158,11 +155,10 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameRO
 	shape := table.Image.Size()
 	dyBot := 2
 	dyTop := 4
-	dxLeft := 1
-	dxRight := 10
+	dxLeft := 2
+	dxRight := 30
 
-	nameCells := make([]image.Rectangle, 0, len(table.Rows))
-	nameSigs := make([]NameROI, 0, len(nameCells))
+	rois := make([]NameROI, 0, len(table.Rows))
 	for _, row := range table.Rows {
 		// If len(row) > 10, then we assume the row is deformed
 		if len(row) > 10 {
@@ -197,12 +193,11 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameRO
 		roi := image.Rect(nameCell.Min.X+dxLeft, nameCell.Min.Y+dyTop, nameCell.Max.X-dxRight, nameCell.Max.Y-dyBot)
 		sigROI := image.Rect(sigCell.Min.X+dxLeft, sigCell.Min.Y+dyTop, sigCell.Max.X-dxRight, sigCell.Max.Y-dyBot)
 
-		// Show the rectangles of the students names on the image
-		// gocv.Rectangle(&img, roi, color.RGBA{255, 0, 0, 255}, 1)
+		roiImg := img.Region(roi)
 
 		// Tesseract accepts (among others) the following formats: PNG, JPEG, ...
 		// We choose PNG, because it is lossless and it doesn't have block artifacts
-		roiPng, err := gocv.IMEncode(gocv.PNGFileExt, img.Region(roi))
+		roiPng, err := gocv.IMEncode(gocv.PNGFileExt, roiImg)
 		if err != nil {
 			return nil, err
 		}
@@ -213,8 +208,8 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameRO
 			return nil, err
 		}
 
-		nameSigs = append(nameSigs, NameROI{text, sigROI})
+		rois = append(rois, NameROI{text, sigROI})
 	}
 
-	return nameSigs, nil
+	return rois, nil
 }
