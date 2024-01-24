@@ -21,6 +21,8 @@ func TestTableColumnCount(t *testing.T) {
 	}
 
 	img = cv.FindTable(img)
+
+	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	table := cv.NewTable(img)
 
 	for idx, row := range table.Rows {
