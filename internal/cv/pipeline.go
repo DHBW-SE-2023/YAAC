@@ -135,7 +135,7 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	results := make([]ReviewedName, 0)
 
 	for _, name := range names {
-		results = append(results, ReviewedName{name.name, false})
+		results = append(results, ReviewedName{name.Name(), false})
 	}
 
 	return results, nil
@@ -144,6 +144,14 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 type NameROI struct {
 	name string
 	roi  image.Rectangle
+}
+
+func (n *NameROI) Name() string {
+	return n.name
+}
+
+func (n *NameROI) ROI() image.Rectangle {
+	return n.roi
 }
 
 func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameROI, error) {
