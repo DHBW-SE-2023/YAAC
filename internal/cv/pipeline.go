@@ -77,15 +77,14 @@ func FindTable(img gocv.Mat) gocv.Mat {
 }
 
 type ReviewedName struct {
-	string
-	bool
+	Name  string
+	Valid bool
 }
 
 // Expects an image which is made up of the table in question.
 func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
-
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.FastNlMeansDenoisingWithParams(img, &img, 10.0, 7, 21)
@@ -129,10 +128,17 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 		return nil, err
 	}
 
-	results := make([]ReviewedName, 0)
+	results := make([]ReviewedName, 0, len(namesROI))
 
-	for _, name := range namesROI {
-		results = append(results, ReviewedName{name.Name(), false})
+	dyBot := 2
+	dyTop := 2
+	dxLeft := 2
+	dxRight := 2
+	for _, n := range namesROI {
+		r := image.Rect(n.ROI().Min.X+dxLeft, n.ROI().Min.Y+dyTop, n.ROI().Max.X-dxRight, n.ROI().Max.Y-dyBot)
+		roi := img.Region(r)
+		valid := ValidSignature(roi.Clone())
+		results = append(results, ReviewedName{n.Name(), valid})
 	}
 
 	return results, nil
@@ -212,4 +218,30 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameRO
 	}
 
 	return rois, nil
+}
+
+func ValidSignature(img gocv.Mat) bool {
+	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
+
+	// Inplace mutation not allowed for gocv.Canny
+	canny := gocv.NewMat()
+	gocv.Canny(img, &canny, 128.0, 255.0)
+	gocv.MorphologyExWithParams(canny, &canny, gocv.MorphClose, kernel, 3, gocv.BorderDefault)
+
+	cnts := gocv.FindContours(canny, gocv.RetrievalExternal, gocv.ChainApproxSimple).ToPoints()
+
+	filteredParts := make([]image.Rectangle, 0)
+	for _, c := range cnts {
+		r := gocv.BoundingRect(gocv.NewPointVectorFromPoints(c))
+
+		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
+			continue
+		}
+
+		filteredParts = append(filteredParts, r)
+	}
+
+	valid := len(filteredParts) == 1
+
+	return valid
 }
