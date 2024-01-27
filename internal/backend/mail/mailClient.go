@@ -117,14 +117,17 @@ func getLatestMessage(serverAddr string, username string, password string) (stri
 	return "Sucessfull!", err
 }
 
+// getBoundary needs the contentType part of the mail and returns the value of boundary
 func getBoundary(contentType string) (string, error) {
 	_, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		return "", err
 	}
-	return params["boundary"], err
+	return params["boundary"], nil
 }
 
+// getMailasString gets a pointer to a imap.message and returns the mail as string
+// returns an error if it is not possible to convert the mail to a string
 func getMailasString(msg *imap.Message) (string, error) {
 	// Get Mail Literal
 	var section imap.BodySectionName
@@ -143,6 +146,9 @@ func getMailasString(msg *imap.Message) (string, error) {
 	return mailString, err
 }
 
+// getBase64AttachmentFromMailString needs the mail as a string
+// returns the base64 encode image file that is attached in the mail
+// returns an error if there is a problem extracting the image or if there is no image
 func getBase64AttachmentFromMailString(mailString string) (string, error) {
 
 	// Read Mail
@@ -193,6 +199,7 @@ func getBase64AttachmentFromMailString(mailString string) (string, error) {
 	return "", err
 }
 
+// getSubject needs the mail as string and return the subject of the mail
 func getSubject(mailString string) (string, error) {
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailString))
@@ -208,7 +215,7 @@ func getSubject(mailString string) (string, error) {
 
 // demo func, need to ne replaced
 func writeToDatabase(base64data string) error {
-	path := "/Users/$USER/image_" + strconv.Itoa(rand.Intn(1000)) + ".jpg"
+	path := "/Users/vinzent/image_" + strconv.Itoa(rand.Intn(1000)) + ".jpg"
 	f, err := os.Create(path)
 	if err != nil {
 		log.Println("Error creating file")
@@ -230,6 +237,8 @@ func writeToDatabase(base64data string) error {
 	return nil
 }
 
+// decodeBase64 needs the base64 encoded string and return the binary data of it
+// returns an error if it is not possible to decode
 func decodeBase64(base64data string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(base64data)
 	if err != nil {
@@ -238,6 +247,8 @@ func decodeBase64(base64data string) ([]byte, error) {
 	return data, nil
 }
 
+// MailService needs the user crudentials and checks the mails every hour
+// contains an endless loop, if there is an error with the login data, it returns an error
 func MailService(serverAddr string, username string, password string) error {
 
 	for {
@@ -401,6 +412,9 @@ func checkMails(messages chan *imap.Message) {
 	log.Println(("End checking mails"))
 }
 
+// checkMailSubject needs the mail string
+// returns true if the subject of the mail contains ""
+// returns true if the subject of the mail contains not "" or there is an error reading the mail subject
 func checkMailSubject(mailstring string) bool {
 	subject, err := getSubject(mailstring)
 	if err != nil {
@@ -413,6 +427,8 @@ func checkMailSubject(mailstring string) bool {
 	return true
 }
 
+// markMailAsRead needs the mail client and the imap message and marks the message as read
+// returns an error if it didn't work otherwise nil
 func markMailAsRead(c *client.Client, msg *imap.Message) error {
 	seqnums := new(imap.SeqSet)
 	seqnums.AddNum(msg.SeqNum)
@@ -424,6 +440,8 @@ func markMailAsRead(c *client.Client, msg *imap.Message) error {
 	return nil
 }
 
+// connectToServer needs the server address and conects to the server
+// returns the client and an error
 func connectToServer(serverAddr string) (*client.Client, error) {
 	// Connect to server
 	c, err := client.DialTLS(serverAddr, nil)
@@ -434,6 +452,8 @@ func connectToServer(serverAddr string) (*client.Client, error) {
 	return c, err
 }
 
+// LogInToInbox needs the client, username and passwort and logs in into INBOX
+// returns the new client and an error
 func LogInToInbox(c *client.Client, username string, password string) (*client.Client, error) {
 	// login to the email server
 	if err := c.Login(username, password); err != nil {
@@ -449,6 +469,8 @@ func LogInToInbox(c *client.Client, username string, password string) (*client.C
 	return c, nil
 }
 
+// getOnlyUnreadMails needs the client and only selects unread mails
+// returns the new client, the imap Seqset, that is need for fetching these unread mails and an error
 func getOnlyUnreadMails(c *client.Client) (*client.Client, *imap.SeqSet, error) {
 	// Get only unseen Messages
 	criteria := imap.NewSearchCriteria()
@@ -463,6 +485,8 @@ func getOnlyUnreadMails(c *client.Client) (*client.Client, *imap.SeqSet, error) 
 	return c, seqset, nil
 }
 
+// fetchMails needs the client, seqset and a imap message channel
+// It fetches the mails and send them to the channel
 func fetchMails(c *client.Client, seqset *imap.SeqSet, messages chan *imap.Message) {
 	// Fetching mails
 	log.Println(("start fetching"))
@@ -472,6 +496,7 @@ func fetchMails(c *client.Client, seqset *imap.SeqSet, messages chan *imap.Messa
 	log.Println(("end fetching"))
 }
 
+// CloseConnection needs the client and closes the connection
 func CloseConnection(c *client.Client) {
 	// close connection to server
 	c.Logout()
