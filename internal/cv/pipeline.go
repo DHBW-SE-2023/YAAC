@@ -77,15 +77,14 @@ func FindTable(img gocv.Mat) gocv.Mat {
 }
 
 type ReviewedName struct {
-	string
-	bool
+	Name  string
+	Valid bool
 }
 
 // Expects an image which is made up of the table in question.
 func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
-
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.FastNlMeansDenoisingWithParams(img, &img, 10.0, 7, 21)
@@ -129,10 +128,17 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 		return nil, err
 	}
 
-	results := make([]ReviewedName, 0)
+	results := make([]ReviewedName, 0, len(namesROI))
 
-	for _, name := range namesROI {
-		results = append(results, ReviewedName{name.Name(), false})
+	dyBot := 2
+	dyTop := 2
+	dxLeft := 2
+	dxRight := 2
+	for _, n := range namesROI {
+		r := image.Rect(n.ROI().Min.X+dxLeft, n.ROI().Min.Y+dyTop, n.ROI().Max.X-dxRight, n.ROI().Max.Y-dyBot)
+		roi := img.Region(r)
+		valid := ValidSignature(roi.Clone())
+		results = append(results, ReviewedName{n.Name(), valid})
 	}
 
 	return results, nil
@@ -212,4 +218,74 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameRO
 	}
 
 	return rois, nil
+}
+
+func ValidSignature(img gocv.Mat) bool {
+	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
+
+	// Inplace mutation not allowed for gocv.Canny
+	canny := gocv.NewMat()
+	gocv.Canny(img, &canny, 128.0, 255.0)
+	gocv.MorphologyExWithParams(canny, &canny, gocv.MorphClose, kernel, 3, gocv.BorderDefault)
+
+	cnts := gocv.FindContours(canny, gocv.RetrievalExternal, gocv.ChainApproxSimple).ToPoints()
+
+	merged := make([]image.Rectangle, 0)
+	for _, c := range cnts {
+		r := gocv.BoundingRect(gocv.NewPointVectorFromPoints(c))
+		merged = append(merged, r)
+	}
+
+	merged = merge(merged, 0.01*float64(img.Cols()))
+
+	filteredParts := make([]image.Rectangle, 0)
+	for _, r := range merged {
+		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
+			continue
+		}
+
+		filteredParts = append(filteredParts, r)
+	}
+
+	valid := len(filteredParts) == 1
+
+	return valid
+}
+
+func merge(merged []image.Rectangle, delta float64) []image.Rectangle {
+	finished := false
+	for !finished {
+		finished = true
+		newMerged := make([]image.Rectangle, 0, len(merged))
+
+		for _, r1 := range merged {
+			wasMerged := false
+			// for _, r2 := range merged[:i] {
+			for _, r2 := range newMerged {
+				dx12 := math.Abs(float64(r1.Max.X - r2.Min.X))
+				dx21 := math.Abs(float64(r2.Max.X - r1.Min.X))
+				dx := min(dx12, dx21)
+
+				closeEnough := dx < delta
+				if r1.Overlaps(r2) || closeEnough {
+					finished = false
+					wasMerged = true
+
+					minX, minY := min(r1.Min.X, r2.Min.X), min(r1.Min.Y, r2.Min.Y)
+					maxX, maxY := max(r1.Max.X, r2.Max.X), max(r1.Max.Y, r2.Max.Y)
+					newMerged = append(newMerged, image.Rect(minX, minY, maxX, maxY))
+				}
+			}
+
+			// No rectangles were merged with r1,
+			// so we append r1 as general to newMerged
+			if !wasMerged {
+				newMerged = append(newMerged, r1)
+			}
+		}
+
+		merged = newMerged
+	}
+
+	return merged
 }
