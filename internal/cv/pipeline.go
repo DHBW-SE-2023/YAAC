@@ -245,7 +245,9 @@ func ValidSignature(img gocv.Mat) bool {
 			wasMerged := false
 			// for _, r2 := range merged[:i] {
 			for _, r2 := range newMerged {
-				dx := math.Abs(float64(r1.Max.X - r2.Min.X))
+				dx12 := math.Abs(float64(r1.Max.X - r2.Min.X))
+				dx21 := math.Abs(float64(r2.Max.X - r1.Min.X))
+				dx := min(dx12, dx21)
 
 				closeEnough := dx < 0.01*float64(img.Cols())
 				if r1.Overlaps(r2) || closeEnough {
