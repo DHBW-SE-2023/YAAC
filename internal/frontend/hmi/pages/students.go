@@ -39,7 +39,6 @@ func studentScreen(_ fyne.Window) fyne.CanvasObject {
 			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
 			StrokeWidth: 2},
 		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		canvas.NewRasterWithPixels(rgbGradient),
 		gradient,
 		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
 	)

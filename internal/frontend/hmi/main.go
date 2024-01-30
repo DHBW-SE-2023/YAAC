@@ -2,14 +2,15 @@
 package main
 
 import (
+	"TestFyne/pages"
+	"image/color"
 	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/DHBW-SE-2023/YAAC/internal/frontend/hmi/pages"
 )
 
 const preferenceCurrentTutorial = "currentTutorial"
@@ -17,16 +18,16 @@ const preferenceCurrentTutorial = "currentTutorial"
 var topWindow fyne.Window
 
 func main() {
-	a := app.NewWithID("io.fyne.demo")
+	a := app.NewWithID("yaac.proto")
 	logLifecycle(a)
 	w := a.NewWindow("YAAC")
 	topWindow = w
-
 	w.SetMaster()
 
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
 	intro := widget.NewLabel("An introduction would probably go\nhere, as well as a")
+	intro.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
 	intro.Wrapping = fyne.TextWrapWord
 	setPage := func(p pages.Page) {
 		if fyne.CurrentDevice().IsMobile() {
@@ -46,9 +47,10 @@ func main() {
 		content.Objects = []fyne.CanvasObject{p.View(w)}
 		content.Refresh()
 	}
-
+	rect := canvas.NewRectangle(color.NRGBA{R: 209, G: 209, B: 209, A: 255})
+	header := container.NewMax(rect, intro)
 	page := container.NewBorder(
-		container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
+		container.NewVBox(header), nil, nil, nil, content)
 	if fyne.CurrentDevice().IsMobile() {
 		w.SetContent(makeNav(setPage, false))
 	} else {
@@ -56,7 +58,7 @@ func main() {
 		split.Offset = 0.2
 		w.SetContent(split)
 	}
-	w.Resize(fyne.NewSize(640, 460))
+	w.Resize(fyne.NewSize(1280, 920))
 	w.ShowAndRun()
 }
 
@@ -111,14 +113,5 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 		tree.Select(currentPref)
 	}
 
-	themes := container.NewGridWithColumns(2,
-		widget.NewButton("Dark", func() {
-			a.Settings().SetTheme(theme.DarkTheme())
-		}),
-		widget.NewButton("Light", func() {
-			a.Settings().SetTheme(theme.LightTheme())
-		}),
-	)
-
-	return container.NewBorder(nil, themes, nil, nil, tree)
+	return container.NewBorder(nil, nil, nil, nil, tree)
 }
