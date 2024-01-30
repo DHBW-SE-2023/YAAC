@@ -4,13 +4,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	yaac_frontend_mail "github.com/DHBW-SE-2023/YAAC/internal/frontend/mail"
-	yaac_frontend_opencv "github.com/DHBW-SE-2023/YAAC/internal/frontend/opencv"
+	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
+const preferedStartPage = "home"
 var gv GlobalVars
 
 type GlobalVars struct {
@@ -44,12 +45,29 @@ func (f *FrontendMain) OpenMainWindow() {
 
 	// handle main window
 	gv.Window.SetContent(makeWindow(f))
+	gv.Window.Resize(fyne.NewSize(1366,768))
 	gv.Window.Show()
 
 	gv.App.Run()
 }
 
-func makeWindow(f *FrontendMain) *fyne.Container {
+func makeWindow(f *FrontendMain) fyne.CanvasObject {
+	content := container.NewStack()
+	title := widget.NewLabel("Component name")
+	intro := widget.NewLabel("An introduction would probably go\nhere, as well as a")
+	intro.Wrapping = fyne.TextWrapWord
+	setPage := func(p pages.Page) {
+		title.SetText(p.Title)
+		intro.SetText(p.Intro)
+
+		content.Objects = []fyne.CanvasObject{p.View(gv.Window)}
+		content.Refresh()
+	}
+	page := container.NewBorder(
+		container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
+	//return container.NewHSplit(makeNav(setPage, true), page)
+	return container.NewBorder(nil, nil, makeNav(setPage, true), nil, page)
+	/*
 	header := widget.NewLabel("Select an action:")
 	mail_button := widget.NewButton(
 		"Open Mail Window",
@@ -65,4 +83,51 @@ func makeWindow(f *FrontendMain) *fyne.Container {
 		mail_button,
 		opencv_button,
 	)
+	*/
+}
+
+func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject {
+	tree := &widget.Tree{
+		ChildUIDs: func(uid string) []string {
+			return pages.PagesIndex[uid]
+		},
+		IsBranch: func(uid string) bool {
+			children, ok := pages.PagesIndex[uid]
+
+			return ok && len(children) > 0
+		},
+		CreateNode: func(branch bool) fyne.CanvasObject {
+			return widget.NewLabel("Collection Widgets")
+		},
+		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
+			p, ok := pages.Pages[uid]
+			if !ok {
+				fyne.LogError("Missing Pages panel: "+uid, nil)
+				return
+			}
+			obj.(*widget.Label).SetText(p.Title)
+		},
+		OnSelected: func(uid string) {
+			if p, ok := pages.Pages[uid]; ok {
+				gv.App.Preferences().SetString(preferedStartPage, uid)
+				setPage(p)
+			}
+		},
+	}
+
+	if loadPrevious {
+		currentPref := gv.App.Preferences().StringWithFallback(preferedStartPage, "home")
+		tree.Select(currentPref)
+	}
+
+	themes := container.NewGridWithColumns(2,
+		widget.NewButton("Dark", func() {
+			gv.App.Settings().SetTheme(theme.DarkTheme())
+		}),
+		widget.NewButton("Light", func() {
+			gv.App.Settings().SetTheme(theme.LightTheme())
+		}),
+	)
+
+	return container.NewBorder(nil, themes, nil, nil, tree)
 }
