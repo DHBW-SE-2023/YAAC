@@ -230,10 +230,46 @@ func ValidSignature(img gocv.Mat) bool {
 
 	cnts := gocv.FindContours(canny, gocv.RetrievalExternal, gocv.ChainApproxSimple).ToPoints()
 
-	filteredParts := make([]image.Rectangle, 0)
+	merged := make([]image.Rectangle, 0)
 	for _, c := range cnts {
 		r := gocv.BoundingRect(gocv.NewPointVectorFromPoints(c))
+		merged = append(merged, r)
+	}
 
+	finished := false
+	for !finished {
+		finished = true
+		newMerged := make([]image.Rectangle, 0, len(merged))
+
+		for _, r1 := range merged {
+			wasMerged := false
+			// for _, r2 := range merged[:i] {
+			for _, r2 := range newMerged {
+				dx := math.Abs(float64(r1.Max.X - r2.Min.X))
+
+				closeEnough := dx < 0.01*float64(img.Cols())
+				if r1.Overlaps(r2) || closeEnough {
+					finished = false
+					wasMerged = true
+
+					minX, minY := min(r1.Min.X, r2.Min.X), min(r1.Min.Y, r2.Min.Y)
+					maxX, maxY := max(r1.Max.X, r2.Max.X), max(r1.Max.Y, r2.Max.Y)
+					newMerged = append(newMerged, image.Rect(minX, minY, maxX, maxY))
+				}
+			}
+
+			// No rectangles were merged with r1,
+			// so we append r1 as general to newMerged
+			if !wasMerged {
+				newMerged = append(newMerged, r1)
+			}
+		}
+
+		merged = newMerged
+	}
+
+	filteredParts := make([]image.Rectangle, 0)
+	for _, r := range merged {
 		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
 			continue
 		}
