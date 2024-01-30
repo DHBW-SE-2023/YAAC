@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// create database if not exists
-	if _, err := os.Stat("./data/data.db"); err == nil {
+	if _, err := os.Stat("./data/data.db"); err != nil {
 		yaac_shared.CreateDatabase()
 	} else {
 		log.Println("Found existing database")
@@ -24,6 +24,13 @@ func main() {
 	if err != nil {
 		log.Fatal("TEST: Could not insert student")
 	}
+
+	student, err := yaac_shared.GetStudentFullNameById(db, 1)
+	if err != nil {
+		log.Fatal("Coult not retrieve data")
+	}
+
+	log.Println(student)
 
 	mvvm := yaac_mvvm.New()
 	mvvm.OpenMainWindow()

@@ -30,21 +30,21 @@ func CreateDatabase() {
 	defer db.Close()
 
 	// create Student table
-	_, err = db.Exec("CREATE TABLE Student (StudentId INTEGER PRIMARY KEY, LName VARCHAR(50) NOT NULL, FName VARCHAR(50) NOT NULL, Course VARCHAR(12) NOT NULL, StatusOfMatriculation BOOLEAN NOT NULL Default=True);")
+	_, err = db.Exec("CREATE TABLE Student (StudentId INTEGER PRIMARY KEY, LName VARCHAR(50) NOT NULL, FName VARCHAR(50) NOT NULL, Course VARCHAR(12) NOT NULL, StatusOfMatriculation BOOLEAN NOT NULL Default True);")
 	if err != nil {
-		log.Fatal("Could not create table on database: ", err)
+		log.Fatal("Could not create student table on database: ", err)
 	}
 
 	// create Attendance table
-	_, err = db.Exec("CREATE TABLE Attendance (StudentId INTEGER NOT NULL, DayOfAttendance TEXT NOT NULL DEFAULT=DATE(), Attending BOOLEAN DEFAULT=False NOT NULL, PRIMARY KEY (DayOfAttendance, StudentId) , FOREIGN KEY (StudentId) REFERENCES Student (StudentId) ON DELETE CASCADE);")
+	_, err = db.Exec("CREATE TABLE Attendance (StudentId INTEGER NOT NULL, DayOfAttendance TEXT NOT NULL, Attending BOOLEAN DEFAULT False NOT NULL, PRIMARY KEY (DayOfAttendance, StudentId) , FOREIGN KEY (StudentId) REFERENCES Student (StudentId) ON DELETE CASCADE);")
 	if err != nil {
-		log.Fatal("Could not create table on database: ", err)
+		log.Fatal("Could not create attendance table on database: ", err)
 	}
 
 	// create AttendanceList table
-	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeRecieved TEXT DEFAULT=DATETIME(),Course VARCHAR(12) NOT NULL, ListPath TEXT NOT NULL;")
+	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeRecieved TEXT,Course VARCHAR(12) NOT NULL, List BLOB NOT NULL);")
 	if err != nil {
-		log.Fatal("Could not create table on database: ", err)
+		log.Fatal("Could not create attendance list table on database: ", err)
 	}
 }
 
@@ -123,7 +123,7 @@ func InsertStudent(db *sql.DB, lName string, fName string, statusOfMatriculation
 }
 
 // InsertAttendanceList inserts list with time=now by its relative link to the content root
-func InsertAttendanceList(db *sql.DB, course string, listPath string) error {
+func InsertAttendanceList(db *sql.DB, course string, list []byte) error {
 	// check constraint matching
 	if len(course) > 12 {
 		log.Println("Maximum length for course is 12")
@@ -131,7 +131,7 @@ func InsertAttendanceList(db *sql.DB, course string, listPath string) error {
 	}
 
 	// prepared statement
-	stmt, err := db.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, ListPath) VALUES (DATETIME(), ?, ?);")
+	stmt, err := db.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (DATETIME(), ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
@@ -139,7 +139,7 @@ func InsertAttendanceList(db *sql.DB, course string, listPath string) error {
 	defer stmt.Close()
 
 	// execute prepared statement
-	_, err = stmt.Exec(course, listPath)
+	_, err = stmt.Exec(course, list)
 	if err != nil {
 		log.Println("Could not add attendance list ", err)
 		return err
