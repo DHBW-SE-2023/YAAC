@@ -236,6 +236,23 @@ func ValidSignature(img gocv.Mat) bool {
 		merged = append(merged, r)
 	}
 
+	merged = merge(merged, 0.01*float64(img.Cols()))
+
+	filteredParts := make([]image.Rectangle, 0)
+	for _, r := range merged {
+		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
+			continue
+		}
+
+		filteredParts = append(filteredParts, r)
+	}
+
+	valid := len(filteredParts) == 1
+
+	return valid
+}
+
+func merge(merged []image.Rectangle, delta float64) []image.Rectangle {
 	finished := false
 	for !finished {
 		finished = true
@@ -249,7 +266,7 @@ func ValidSignature(img gocv.Mat) bool {
 				dx21 := math.Abs(float64(r2.Max.X - r1.Min.X))
 				dx := min(dx12, dx21)
 
-				closeEnough := dx < 0.01*float64(img.Cols())
+				closeEnough := dx < delta
 				if r1.Overlaps(r2) || closeEnough {
 					finished = false
 					wasMerged = true
@@ -270,16 +287,5 @@ func ValidSignature(img gocv.Mat) bool {
 		merged = newMerged
 	}
 
-	filteredParts := make([]image.Rectangle, 0)
-	for _, r := range merged {
-		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
-			continue
-		}
-
-		filteredParts = append(filteredParts, r)
-	}
-
-	valid := len(filteredParts) == 1
-
-	return valid
+	return merged
 }
