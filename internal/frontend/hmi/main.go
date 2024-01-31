@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -24,11 +25,23 @@ func main() {
 	topWindow = w
 	w.SetMaster()
 
+	dialogTitle := canvas.NewText("Willkommen", color.Black)
+	dialogTitle.TextSize = 20
+	dialogTitle.Alignment = fyne.TextAlignCenter
+	dialogTitle.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
+	dialogContent := canvas.NewText("Es sind x neue Listen gekommen", color.Black)
+	dialogContent.TextSize = 14
+	dialogContent.Alignment = fyne.TextAlignCenter
+
+	data := container.NewBorder(dialogTitle, nil, nil, nil, dialogContent)
+	dialogWindow := dialog.NewCustom("", "Okay", data, w)
+	dialogWindow.Resize(fyne.NewSize(400, 200))
+	dialogWindow.Show()
+
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
-	intro := widget.NewLabel("An introduction would probably go\nhere, as well as a")
-	intro.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
-	intro.Wrapping = fyne.TextWrapWord
+	intro := canvas.NewText("An introduction would probably go\nhere, as well as a", color.Black)
+	intro.TextSize = 24
 	setPage := func(p pages.Page) {
 		if fyne.CurrentDevice().IsMobile() {
 			child := a.NewWindow(p.Title)
@@ -42,13 +55,15 @@ func main() {
 		}
 
 		title.SetText(p.Title)
-		intro.SetText(p.Intro)
+		intro.Text = p.Intro
 
 		content.Objects = []fyne.CanvasObject{p.View(w)}
 		content.Refresh()
 	}
 	rect := canvas.NewRectangle(color.NRGBA{R: 209, G: 209, B: 209, A: 255})
-	header := container.NewMax(rect, intro)
+	spacer := canvas.NewText("", color.Black)
+	headerContent := container.NewVBox(intro, spacer)
+	header := container.NewMax(rect, headerContent)
 	page := container.NewBorder(
 		container.NewVBox(header), nil, nil, nil, content)
 	if fyne.CurrentDevice().IsMobile() {
