@@ -22,6 +22,8 @@ type GlobalVars struct {
 func (f *FrontendMain) OpenMainWindow() {
 	gv = GlobalVars{}
 	gv.App = *yaac_shared.GetApp()
+	gv.App.Settings().SetTheme(ytheme)
+
 
 	// setuping window
 	gv.Window = gv.App.NewWindow(yaac_shared.APP_NAME)
@@ -45,7 +47,7 @@ func (f *FrontendMain) OpenMainWindow() {
 
 	// handle main window
 	gv.Window.SetContent(makeWindow(f))
-	gv.Window.Resize(fyne.NewSize(1366,768))
+	gv.Window.Resize(fyne.NewSize(1280,720))
 	gv.Window.Show()
 
 	gv.App.Run()
@@ -121,8 +123,8 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 	}
 
 	themes := container.NewGridWithColumns(2,
-		widget.NewButton("Dark", func() {
-			gv.App.Settings().SetTheme(theme.DarkTheme())
+		widget.NewButton("Yaac", func() {
+			gv.App.Settings().SetTheme(ytheme)
 		}),
 		widget.NewButton("Light", func() {
 			gv.App.Settings().SetTheme(theme.LightTheme())
