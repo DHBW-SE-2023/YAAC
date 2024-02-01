@@ -17,11 +17,15 @@ func rgbGradient(x, y, w, h int) color.Color {
 }
 
 func overviewScreen(_ fyne.Window) fyne.CanvasObject {
+	title := canvas.NewText(" Anwesenheitsliste der Kurse - Heute", color.Black)
+	title.Alignment = fyne.TextAlignLeading
+	title.TextSize = 20
+	title.TextStyle = fyne.TextStyle{Bold: true}
 	grid := container.NewGridWrap(fyne.NewSize(250, 250))
 	for i := 0; i <= 10; i++ {
 		grid.Add(NewOverviewWidget("TIK22", "Max Alberti"))
 	}
-	return container.NewVScroll(grid)
+	return container.NewBorder(title, nil, nil, nil, container.NewVScroll(grid))
 }
 
 type overviewWidget struct {

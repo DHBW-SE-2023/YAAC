@@ -2,8 +2,10 @@ package pages
 
 import (
 	"fmt"
+	"image/color"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
@@ -15,6 +17,10 @@ type students struct {
 }
 
 func studentScreen(_ fyne.Window) fyne.CanvasObject {
+	title := canvas.NewText(" Studenten", color.Black)
+	title.Alignment = fyne.TextAlignLeading
+	title.TextSize = 20
+	title.TextStyle = fyne.TextStyle{Bold: true}
 	student := &students{
 		name:   widget.NewLabel("Max, Alberti"),
 		course: widget.NewLabel(""),
@@ -56,7 +62,7 @@ func studentScreen(_ fyne.Window) fyne.CanvasObject {
 		})
 	attendanceList.SetColumnWidth(0, 140)
 	attendanceList.SetRowHeight(2, 50)
-	studentView := container.NewBorder(dropdownArea, nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
+	studentView := container.NewBorder(container.NewVBox(title, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
 	return studentView
 }
 

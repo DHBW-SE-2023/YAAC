@@ -40,8 +40,6 @@ func main() {
 
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
-	intro := canvas.NewText("An introduction would probably go\nhere, as well as a", color.Black)
-	intro.TextSize = 24
 	setPage := func(p pages.Page) {
 		if fyne.CurrentDevice().IsMobile() {
 			child := a.NewWindow(p.Title)
@@ -55,17 +53,12 @@ func main() {
 		}
 
 		title.SetText(p.Title)
-		intro.Text = p.Intro
 
 		content.Objects = []fyne.CanvasObject{p.View(w)}
 		content.Refresh()
 	}
-	rect := canvas.NewRectangle(color.NRGBA{R: 209, G: 209, B: 209, A: 255})
-	spacer := canvas.NewText("", color.Black)
-	headerContent := container.NewVBox(intro, spacer)
-	header := container.NewMax(rect, headerContent)
 	page := container.NewBorder(
-		container.NewVBox(header), nil, nil, nil, content)
+		nil, nil, nil, nil, content)
 	if fyne.CurrentDevice().IsMobile() {
 		w.SetContent(makeNav(setPage, false))
 	} else {
@@ -128,5 +121,13 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 		tree.Select(currentPref)
 	}
 
-	return container.NewBorder(nil, nil, nil, nil, tree)
+	logo := canvas.NewImageFromFile("data/DHBW.png")
+	logo.FillMode = canvas.ImageFillContain
+	if fyne.CurrentDevice().IsMobile() {
+		logo.SetMinSize(fyne.NewSize(192, 192))
+	} else {
+		logo.SetMinSize(fyne.NewSize(200, 200))
+	}
+
+	return container.NewBorder(logo, nil, nil, nil, tree)
 }
