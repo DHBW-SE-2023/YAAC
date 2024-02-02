@@ -19,15 +19,15 @@ type YaacSidebar struct {
 	Items       *[]*YaacSidebarItem
 	BGColor     color.Color
 	SelectColor color.Color
+	SetPage     func(page pages.Page)
 }
 
-func NewYaacSidebar(pagesIndexMap *map[string][]string, pagesMap *map[string]pages.Page, bgColor color.Color, selectColor color.Color) *YaacSidebar {
+func NewYaacSidebar(pagesIndexMap *map[string][]string, pagesMap *map[string]pages.Page, setPage func(page pages.Page), bgColor color.Color, selectColor color.Color) *YaacSidebar {
 	item := &YaacSidebar{
 		BGColor:     bgColor,
 		SelectColor: selectColor,
+		SetPage:     setPage,
 	}
-	// FIXME - Handle Click event
-	// FIXME - Handle Hover event
 	item.ExtendBaseWidget(item)
 	item.UpdatePages(pagesIndexMap, pagesMap)
 	return item
@@ -38,7 +38,7 @@ func (item *YaacSidebar) UpdatePages(pagesIndexMap *map[string][]string, pagesMa
 	item.Pages = pagesMap
 	titles := make([]*YaacSidebarItem, 0, 10)
 	for _, p := range *item.Pages {
-		titles = append(titles, NewYaacSidebarItem(p.Title, item.BGColor, item.SelectColor))
+		titles = append(titles, NewYaacSidebarItem(p.Title, item.SetPage, p, item.BGColor, item.SelectColor))
 	}
 	item.Items = &titles
 }
@@ -57,14 +57,18 @@ func (item *YaacSidebar) CreateRenderer() fyne.WidgetRenderer {
 type YaacSidebarItem struct {
 	widget.BaseWidget
 	Title       string
+	SetPage     func(page pages.Page)
+	Page        pages.Page
 	BGColor     color.Color
 	SelectColor color.Color
 }
 
-func NewYaacSidebarItem(title string, bgColor color.Color, selectColor color.Color) *YaacSidebarItem {
+func NewYaacSidebarItem(title string, setPage func(page pages.Page), page pages.Page, bgColor color.Color, selectColor color.Color) *YaacSidebarItem {
 	item := &YaacSidebarItem{
 		BGColor:     bgColor,
 		SelectColor: selectColor,
+		SetPage:     setPage,
+		Page:        page,
 	}
 	item.ExtendBaseWidget(item)
 	item.Updateitem(title)
@@ -77,27 +81,37 @@ func (item *YaacSidebarItem) Updateitem(title string) {
 
 func (item *YaacSidebarItem) CreateRenderer() fyne.WidgetRenderer {
 	bg := canvas.NewRectangle(item.BGColor)
+	txt := canvas.NewText(item.Title, color.Black)
 	// FIXME - Design Item here ontop of bg
-	c := container.NewStack(NewYaacSidebarButton(item.Title), bg)
+	// FIXME - Handle Hover event
+	c := container.NewStack(
+		NewYaacSidebarButton(item.Title, item.SetPage, item.Page),
+		container.NewStack(bg, txt),
+	)
 	return widget.NewSimpleRenderer(c)
 }
 
 // Alt. Sidebar Button
 type YaacSidebarButton struct {
 	widget.Button
+	SetPage func(page pages.Page)
+	Page    pages.Page
 }
 
-func NewYaacSidebarButton(title string) *YaacSidebarButton {
+func NewYaacSidebarButton(title string, setPage func(page pages.Page), page pages.Page) *YaacSidebarButton {
 	item := &YaacSidebarButton{}
 	item.ExtendBaseWidget(item)
 
 	item.SetText(title)
+	item.SetPage = setPage
+	item.Page = page
 
 	return item
 }
 
 func (item *YaacSidebarButton) Tapped(_ *fyne.PointEvent) {
 	fmt.Println("Click!")
+	item.SetPage(item.Page)
 }
 
 func (item *YaacSidebarButton) TappedSecondary(_ *fyne.PointEvent) {

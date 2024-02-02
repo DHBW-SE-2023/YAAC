@@ -134,6 +134,7 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 	sbar := NewYaacSidebar(
 		&pages.PagesIndex,
 		&pages.Pages,
+		setPage,
 		ytheme.Color(theme.ColorNameBackground, theme.VariantLight),
 		ytheme.Color(theme.ColorNameSelection, theme.VariantLight),
 	)
