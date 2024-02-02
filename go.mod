@@ -1,4 +1,4 @@
-module github.com/DHBW-SE-2023/yaac-go-prototype
+module github.com/DHBW-SE-2023/YAAC
 
 go 1.21.3
 
@@ -26,6 +26,7 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/mattn/go-sqlite3 v1.14.19 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/otiai10/gosseract v2.2.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect

@@ -3,13 +3,13 @@ package yaac_mvvm
 import (
 	"fmt"
 
-	yaac_backend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/backend"
-	yaac_frontend "github.com/DHBW-SE-2023/yaac-go-prototype/internal/frontend"
+	yaac_backend_opencv "github.com/DHBW-SE-2023/YAAC/internal/backend/opencv"
+	yaac_frontend_opencv "github.com/DHBW-SE-2023/YAAC/internal/frontend/opencv"
 )
 
 func (m *MVVM) StartGoCV(img_path string) {
-	backend := yaac_backend.New(m)
-	frontend := yaac_frontend.New(m)
+	backend := yaac_backend_opencv.New(m)
+	gocv_window := yaac_frontend_opencv.New(m)
 
 	var msg string
 	var suc bool
@@ -18,10 +18,10 @@ func (m *MVVM) StartGoCV(img_path string) {
 		msg, suc = backend.StartGoCV(img_path, ch)
 	}()
 	for elem := range ch {
-		frontend.UpdateProgress(float64(elem) / 100)
+		gocv_window.UpdateProgress(float64(elem) / 100)
 	}
 	if suc {
-		frontend.ShowGeneratedImage(msg)
+		gocv_window.ShowGeneratedImage(msg)
 	} else {
 		fmt.Println(msg)
 	}

@@ -1,36 +1,44 @@
-package yaac_frontend
+package yaac_frontend_mail
 
 import (
 	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/widget"
-	yaac_shared "github.com/DHBW-SE-2023/yaac-go-prototype/internal/shared"
-	resource "github.com/DHBW-SE-2023/yaac-go-prototype/pkg/resource_manager"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
-var mailWindow fyne.Window
-var result_label *widget.Label
+var gv GlobalVars
 
-func (f *Frontend) OpenMailWindow() {
-	mailWindow = App.NewWindow("Mail Demo")
+type GlobalVars struct {
+	App         fyne.App
+	Window      fyne.Window
+	ResultLabel *widget.Label
+}
+
+func (f *WindowMail) Open() {
+	gv = GlobalVars{}
+	gv.App = *yaac_shared.GetApp()
+	gv.Window = gv.App.NewWindow("Mail Demo")
 
 	// set icon
 	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	mailWindow.SetIcon(r)
+	gv.Window.SetIcon(r)
 
-	mailWindow.SetContent(makeFormTab(mailWindow, f))
-	mailWindow.Show()
+	gv.Window.SetContent(makeFormTab(gv.Window, f))
+	gv.Window.Show()
 }
 
-func (f *Frontend) UpdateResultLabel(content string) {
-	result_label.SetText(content)
+func (f *WindowMail) UpdateResultLabel(content string) {
+	gv.ResultLabel.SetText(content)
 	fyne.CurrentApp().SendNotification(&fyne.Notification{
 		Title: content,
 	})
 }
 
-func makeFormTab(_ fyne.Window, f *Frontend) fyne.CanvasObject {
+func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 	mailServer := widget.NewEntry()
 	mailServer.SetPlaceHolder("John Smith")
 
@@ -41,7 +49,7 @@ func makeFormTab(_ fyne.Window, f *Frontend) fyne.CanvasObject {
 	password := widget.NewPasswordEntry()
 	password.SetPlaceHolder("Password")
 
-	result_label = widget.NewLabel("")
+	gv.ResultLabel = widget.NewLabel("")
 
 	form := &widget.Form{
 		Items: []*widget.FormItem{
@@ -62,7 +70,7 @@ func makeFormTab(_ fyne.Window, f *Frontend) fyne.CanvasObject {
 		},
 	}
 	form.Append("Password", password)
-	form.Append("Your first unread message:", result_label)
+	form.Append("Your first unread message:", gv.ResultLabel)
 
 	return form
 }
