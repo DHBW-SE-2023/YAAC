@@ -9,30 +9,29 @@ import (
 )
 
 type yaacTheme struct {
-	bg color.RGBA
-	accent color.RGBA
-	warn color.RGBA
+	bg      color.RGBA
+	accent  color.RGBA
+	warn    color.RGBA
 	page_bg color.RGBA
-	elem color.RGBA
-	hover color.RGBA
-	green color.RGBA
-	yellow color.RGBA
-	text color.RGBA
+	elem    color.RGBA
+	hover   color.RGBA
+	green   color.RGBA
+	yellow  color.RGBA
+	text    color.RGBA
 }
 
-
-// Assert that the Theme implements the theme interface 
+// Assert that the Theme implements the theme interface
 var _ fyne.Theme = (*yaacTheme)(nil)
 var ytheme fyne.Theme = yaacTheme{
-	bg: color.RGBA{255, 255, 255, 255},
-	accent: color.RGBA{227,0,27, 255},
-	warn: color.RGBA{227,0,27, 255},
-	page_bg: color.RGBA{230,233,235, 50},
-	elem: color.RGBA{217,217,217,255},
-	hover: color.RGBA{125,136,142,255},
-	green: color.RGBA{51,255,0,255},
-	yellow: color.RGBA{255,229,0,255},
-	text: color.RGBA{0,0,0,255},
+	bg:      color.RGBA{255, 255, 255, 255},
+	accent:  color.RGBA{227, 0, 27, 255},
+	warn:    color.RGBA{227, 0, 27, 255},
+	page_bg: color.RGBA{230, 233, 235, 50},
+	elem:    color.RGBA{217, 217, 217, 255},
+	hover:   color.RGBA{125, 136, 142, 255},
+	green:   color.RGBA{51, 255, 0, 255},
+	yellow:  color.RGBA{255, 229, 0, 255},
+	text:    color.RGBA{0, 0, 0, 255},
 }
 
 func (m yaacTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
@@ -125,19 +124,19 @@ func (m yaacTheme) Size(name fyne.ThemeSizeName) float32 {
 }
 
 func ParseHexColor(s string) (c color.RGBA, err error) {
-    c.A = 0xff
-    switch len(s) {
-    case 7:
-        _, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-    case 4:
-        _, err = fmt.Sscanf(s, "#%1x%1x%1x", &c.R, &c.G, &c.B)
-        // Double the hex digits:
-        c.R *= 17
-        c.G *= 17
-        c.B *= 17
-    default:
-        err = fmt.Errorf("invalid length, must be 7 or 4")
+	c.A = 0xff
+	switch len(s) {
+	case 7:
+		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+	case 4:
+		_, err = fmt.Sscanf(s, "#%1x%1x%1x", &c.R, &c.G, &c.B)
+		// Double the hex digits:
+		c.R *= 17
+		c.G *= 17
+		c.B *= 17
+	default:
+		err = fmt.Errorf("invalid length, must be 7 or 4")
 
-    }
-    return
+	}
+	return
 }
