@@ -5,12 +5,9 @@ import (
 	"errors"
 	"io"
 	"log"
-	"math/rand"
 	"mime"
 	"mime/multipart"
 	"net/mail"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,7 +17,7 @@ import (
 )
 
 func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
-	go MailService(input.MailServer, input.Email, input.Password)
+	//go MailService(input.MailServer, input.Email, input.Password)
 	return "Please read log!"
 }
 
@@ -28,6 +25,9 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//channel for mails
 	messages := make(chan *imap.Message)
+
+	// array for the maildata
+	var maildata []MailData
 
 	//setup mail client
 	c, seqset, err := b.setupMail()
@@ -43,16 +43,20 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 		//no new unread mail
 		if msg == nil {
-			log.Println("all mails processed")
+			log.Println("all mails fetched")
 			break
 		}
-		b.processMail(msg)
-
+		if msg.Envelope.Date == time.Now() {
+			maildata_temp, err := b.processMail(msg)
+			if err == nil {
+				maildata = append(maildata, maildata_temp)
+			}
+		}
 	}
-	//close connection and wait one hour to fetch mails again
+	//close connection
 	b.closeConnection(c)
 
-	return nil, nil
+	return maildata, nil
 }
 
 // kann gelöscht werden
@@ -244,30 +248,6 @@ func (b *BackendMail) getSubject(mailString string) (string, error) {
 	return contentType, err
 }
 
-// demo func, need to ne replaced
-func (b *BackendMail) writeToDatabase(base64data string) error {
-	path := "/Users/vinzent/image_" + strconv.Itoa(rand.Intn(1000)) + ".jpg"
-	f, err := os.Create(path)
-	if err != nil {
-		log.Println("Error creating file")
-		return err
-	}
-
-	defer f.Close()
-
-	data, err := decodeBase64(base64data)
-	if err != nil {
-		return err
-	}
-
-	bytes, err := f.Write(data)
-	if err != nil {
-		return err
-	}
-	log.Printf(("Wrote data to file: %v Bytes"), bytes)
-	return nil
-}
-
 // decodeBase64 needs the base64 encoded string and return the binary data of it
 // returns an error if it is not possible to decode
 func (b *BackendMail) decodeBase64(base64data string) ([]byte, error) {
@@ -278,6 +258,8 @@ func (b *BackendMail) decodeBase64(base64data string) ([]byte, error) {
 	return data, nil
 }
 
+// Setup sets up the completly mail setup and returns the client and the seqset
+// returns an error if
 func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 	//connect to the mail server
 	c, err := b.connectToServer(b.serverAddr)
@@ -299,193 +281,53 @@ func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 	return c, seqset, nil
 }
 
-func (b *BackendMail) processImage() bool {
-	//get the base64 encoded image from the mail, continue if there is no
-	image, err := b.getBase64AttachmentFromMailString(mailstring)
-	if err != nil {
-		return false
-	}
-	log.Println("Image Attachment identified")
+// processMail processes the whole imap message object
+// returns the MailData Struct with the data
+// returns an error if there went something wrong with decoding and parsing the mail
+func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
 
-	//write that to database
-	err = b.writeToDatabase(image)
-	if err != nil {
-		log.Println(("Error writing to Database"))
-		return false
-	}
+	var mailData = MailData{}
 
-	//mark mail as read in order to show that it has been proceed
-	err = b.markMailAsRead(c, msg)
-	if err != nil {
-		log.Println(("Error marking mail as read!"))
-		log.Print(err)
-		return false
-	}
-	log.Println(("Data successfully stored in data base"))
-
-}
-
-func (b *BackendMail) processMail(msg *imap.Message) bool {
 	//get mail message as string in order to prcess the mail further
 	mailstring, err := b.getMailasString(msg)
 	if err != nil {
 		log.Println("Error decoding mail")
-		return false
+		return mailData, err
 	}
 
-	//check the subject of the mail and process it only if the subject contains "Anwesendtheitsliste"
-	if b.checkMailSubject(mailstring) {
-
-		//get the base64 encoded image from the mail, continue if there is no
-		image, err := b.getBase64AttachmentFromMailString(mailstring)
-		if err != nil {
-			return
-		}
-		log.Println("Image Attachment identified")
-
-		//write that to database
-		err = b.writeToDatabase(image)
-		if err != nil {
-			log.Println(("Error writing to Database"))
-			return
-		}
-
-		//mark mail as read in order to show that it has been proceed
-		err = b.markMailAsRead(c, msg)
-		if err != nil {
-			log.Println(("Error marking mail as read!"))
-			log.Print(err)
-			return
-		}
-		log.Println(("Data successfully put forward"))
-	}
-	return false
-}
-
-// MailService needs the user crudentials and checks the mails every hour
-// contains an endless loop, if there is an error with the login data, it returns an error
-func MailService(serverAddr string, username string, password string) error {
-
-	for {
-
-		//channel for mails
-		messages := make(chan *imap.Message)
-
-		//setup mail client
-		c, seqset, err := setupMail(serverAddr, username, password)
-		if err != nil {
-			return nil
-		}
-
-		//start fetchings mails
-		go b.fetchMails(c, seqset, messages)
-
-		//process fetched mails
-		for msg := range messages {
-
-			//no new unread mail
-			if msg == nil {
-				log.Println("all mails processed")
-				break
-			}
-			pro
-
-		}
-		//close connection and wait one hour to fetch mails again
-		CloseConnection(c)
-		time.Sleep(1 * time.Hour)
-	}
-}
-
-// can be deleted
-func fetchMails_old(serverAddr string, username string, password string, messages chan *imap.Message) error {
-	// init all
-	// Connect to server
-	c, err := client.DialTLS(serverAddr, nil)
+	//get the base64 encoded image from the mail
+	image, err := b.getBase64AttachmentFromMailString(mailstring)
 	if err != nil {
-		return err
+		log.Println("Error Image Attachment Extraction")
+		return mailData, err
 	}
-	log.Println("Connected to server at: ", serverAddr)
 
-	// close connection to server when data was recieved
-	defer c.Logout()
-
-	// login to the email server
-	if err := c.Login(username, password); err != nil {
-		return err
-	}
-	log.Println("Logged in to server at: ", serverAddr)
-
-	// Select to default INBOX, would not work if renamed
-	// TODO: in actual implementation return an error for this and show a filed for inbox selection
-	_, err = c.Select("INBOX", false)
+	mailData.image_data, err = b.decodeBase64(image)
 	if err != nil {
-		return err
+		log.Println("Error decoding base64")
+		return mailData, err
 	}
 
-	// Get only unseen Messages
-	criteria := imap.NewSearchCriteria()
-	criteria.WithoutFlags = []string{imap.SeenFlag}
-	ids, err := c.Search(criteria)
+	mailData.course, err = b.getCourse(mailData) //Subject
 	if err != nil {
-		return err
+		log.Println("Error detecting course")
+		return mailData, err
 	}
 
-	// Create a sequenz for the found mails
-	seqset := new(imap.SeqSet)
-	seqset.AddNum(ids...)
-
-	// Fetching mails
-	log.Println(("start fetching"))
-	if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
-		log.Println("no unread mails:")
+	mailData.datetime, err = b.getDatetime(mailData) //Subject
+	if err != nil {
+		log.Println("Error detecting course")
+		return mailData, err
 	}
-	log.Println(("end fetching"))
-	return nil
-}
 
-// can be deleted
-func checkMails(messages chan *imap.Message) {
-	// Check all unread messages
-	for msg := range messages {
-		if msg == nil {
-			log.Println("Error reading mail")
-			return
-		}
-
-		mailstring, err := getMailasString(msg)
-		if err != nil {
-			log.Println("Error decoding mail")
-		} else {
-			subject, err := getSubject(mailstring)
-			if err != nil {
-				log.Println("Error decoding mail subject")
-			} else {
-				log.Printf("Mail detected with Subject: %v\n", subject)
-
-				// Check if mail Subject is correct
-
-				image, err := getBase64AttachmentFromMailString(mailstring)
-				if err == nil {
-					log.Println("Image Attachment identified")
-					err := writeToDatabase(image)
-					if err != nil {
-						log.Println(("Error writing to Database"))
-					} else {
-						// Mark Mail as read
-					}
-				}
-			}
-		}
-	}
-	log.Println(("End checking mails"))
+	return mailData, err
 }
 
 // checkMailSubject needs the mail string
 // returns true if the subject of the mail contains ""
 // returns true if the subject of the mail contains not "" or there is an error reading the mail subject
 func (b *BackendMail) checkMailSubject(mailstring string) bool {
-	subject, err := getSubject(mailstring)
+	subject, err := b.getSubject(mailstring)
 	if err != nil {
 		log.Println("Error decoding mail subject")
 		return false
@@ -563,7 +405,7 @@ func (b *BackendMail) fetchMails(c *client.Client, seqset *imap.SeqSet, messages
 	log.Println(("end fetching"))
 }
 
-// CloseConnection needs the client and closes the connection
+// CloseConnection closes the connection of the given client
 func (b *BackendMail) closeConnection(c *client.Client) {
 	// close connection to server
 	c.Logout()
