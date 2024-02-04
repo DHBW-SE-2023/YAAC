@@ -9,7 +9,6 @@ import (
 	"mime/multipart"
 	"net/mail"
 	"strings"
-	"time"
 
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
@@ -21,6 +20,10 @@ func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
 	return "Please read log!"
 }
 
+// GetMailsToday fetches all unread mails from today
+// and checks the mails with the subject containing "Anwesenheitsliste".
+// It extracts the attached image as binary data.
+// Returns an array with the maildata from the mails
 func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//channel for mails
@@ -46,7 +49,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 			log.Println("all mails fetched")
 			break
 		}
-		if msg.Envelope.Date == time.Now() {
+		if b.checkSubjekt() && b.mailToday() { //need to be added
 			maildata_temp, err := b.processMail(msg)
 			if err == nil {
 				maildata = append(maildata, maildata_temp)
@@ -181,15 +184,15 @@ func (b *BackendMail) getMailasString(msg *imap.Message) (string, error) {
 	return mailString, err
 }
 
-// getBase64AttachmentFromMailString needs the mail as a string
-// returns the base64 encode image file that is attached in the mail
+// getBinaryImageFromMailString needs the mail as a string
+// returns the binary image file that is attached in the mail
 // returns an error if there is a problem extracting the image or if there is no image
-func (b *BackendMail) getBase64AttachmentFromMailString(mailString string) (string, error) {
+func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, error) {
 
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailString))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Read content type from Mail Header
@@ -199,7 +202,7 @@ func (b *BackendMail) getBase64AttachmentFromMailString(mailString string) (stri
 		// Read Body Boundary from Mail Header
 		boundary, err := b.getBoundary(contentType)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		// Divide Mail into body parts
@@ -215,23 +218,24 @@ func (b *BackendMail) getBase64AttachmentFromMailString(mailString string) (stri
 
 			// Other Error
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			// Read one part
 			body, err := io.ReadAll(part)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
-				return (string(body)), err
+				binaryData, err := base64.StdEncoding.DecodeString(string(body))
+				return binaryData, err
 			}
 		}
 	}
 	// Return Error
 	err = errors.New("Found no attached image in mail")
-	return "", err
+	return nil, err
 }
 
 // getSubject needs the mail as string and return the subject of the mail
@@ -243,22 +247,12 @@ func (b *BackendMail) getSubject(mailString string) (string, error) {
 	}
 
 	// Read content type from Mail Header
-	contentType := message.Header.Get("Subject")
+	subject := message.Header.Get("Subject")
 
-	return contentType, err
+	return subject, err
 }
 
-// decodeBase64 needs the base64 encoded string and return the binary data of it
-// returns an error if it is not possible to decode
-func (b *BackendMail) decodeBase64(base64data string) ([]byte, error) {
-	data, err := base64.StdEncoding.DecodeString(base64data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-// Setup sets up the completly mail setup and returns the client and the seqset
+// setupMail sets up the completly mail setup and returns the client and the seqset
 // returns an error if
 func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 	//connect to the mail server
@@ -296,15 +290,9 @@ func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
 	}
 
 	//get the base64 encoded image from the mail
-	image, err := b.getBase64AttachmentFromMailString(mailstring)
+	mailData.image_data, err = b.getBinaryImageFromMailString(mailstring)
 	if err != nil {
 		log.Println("Error Image Attachment Extraction")
-		return mailData, err
-	}
-
-	mailData.image_data, err = b.decodeBase64(image)
-	if err != nil {
-		log.Println("Error decoding base64")
 		return mailData, err
 	}
 
