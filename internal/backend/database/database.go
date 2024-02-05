@@ -3,6 +3,7 @@ package yaac_backend_database
 import (
 	"database/sql"
 	"errors"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
@@ -163,7 +164,7 @@ func (item *BackendDatabase) GetStudentFullNameById(studentId int) (string, erro
 
 	result := stmt.QueryRow(studentId)
 
-	studentName := ""
+	var studentName string
 
 	if err := result.Scan(&studentName); err != nil {
 		log.Println("Could not get student name by id ", err)
@@ -171,4 +172,114 @@ func (item *BackendDatabase) GetStudentFullNameById(studentId int) (string, erro
 	}
 
 	return studentName, nil
+}
+
+func (item *BackendDatabase) GetLatestListDatePerCourse(course string) (string, error) {
+	if len(course) > 12 {
+		log.Println("Maximum length for course is 12")
+		return "", errors.New("input does not match constraints")
+	}
+
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DATE(TimeRecieved) FROM AttendanceList WHERE Course = ? ORDER BY TimeRecieved DESC LIMIT 1")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement ", err)
+	}
+
+	result := stmt.QueryRow(course)
+
+	var date string
+
+	if err := result.Scan(&date); err != nil {
+		log.Println("Could not get date of latest attendance list for course: "+course+" ", err)
+		return "", errors.New("could not get date of latest attendance list for course:" + course)
+	}
+
+	return date, nil
+}
+
+func (item *BackendDatabase) GetAllCourses() ([]string, error) {
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT Course FROM AttendanceList")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement ", err)
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []string
+	for rows.Next() {
+		var row string
+		if err := rows.Scan(&row); err != nil {
+			log.Println("Could not get all courses")
+			return nil, errors.New("could not get all courses")
+		}
+
+		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+func (item *BackendDatabase) GetAllStudentsPerCourse(course string) ([]yaac_shared.Student, error) {
+	if len(course) > 12 {
+		log.Println("Maximum length for course is 12")
+		return nil, errors.New("input does not match constraints")
+	}
+
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT FName, LName FROM Student WHERE Course = ?")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement ", err)
+	}
+
+	rows, err := stmt.Query(course)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []yaac_shared.Student
+	for rows.Next() {
+		var row yaac_shared.Student
+		if err := rows.Scan(&row.FName, &row.LName); err != nil {
+			log.Println("Could not get all students per course")
+			return nil, errors.New("could not get all students per course")
+		}
+
+		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.Attendance, error) {
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT s.FName, s.LName, a.Attending FROM Attendance AS a LEFT OUTER JOIN Student AS s ON a.StudentId = s.StudentId")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement ", err)
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []yaac_shared.Attendance
+	for rows.Next() {
+		var row yaac_shared.Attendance
+		if err := rows.Scan(&row.Student.FName, &row.Student.LName, &row.Attending); err != nil {
+			log.Println("Could not get all students per course")
+			return nil, errors.New("could not get all students per course")
+		}
+
+		result = append(result, row)
+	}
+
+	return result, nil
 }
