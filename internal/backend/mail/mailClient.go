@@ -57,7 +57,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 		}
 	}
 	//close connection
-	b.closeConnection(c)
+	c.Logout()
 
 	return maildata, nil
 }
@@ -210,8 +210,10 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 
 		for {
 
-			// End of File
+			// Read next part
 			part, err := mr.NextPart()
+
+			// End of file
 			if err == io.EOF {
 				break
 			}
@@ -227,6 +229,7 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 				return nil, err
 			}
 
+			//Check if the part contains a jpeg image
 			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
 				binaryData, err := base64.StdEncoding.DecodeString(string(body))
 				return binaryData, err
@@ -296,13 +299,13 @@ func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
 		return mailData, err
 	}
 
-	mailData.course, err = b.getCourse(mailData) //Subject
+	mailData.course, err = b.getCourse(mailstring)
 	if err != nil {
 		log.Println("Error detecting course")
 		return mailData, err
 	}
 
-	mailData.datetime, err = b.getDatetime(mailData) //Subject
+	mailData.datetime, err = b.getDatetime(mailstring)
 	if err != nil {
 		log.Println("Error detecting course")
 		return mailData, err
@@ -391,11 +394,4 @@ func (b *BackendMail) fetchMails(c *client.Client, seqset *imap.SeqSet, messages
 		log.Println("no unread mails:")
 	}
 	log.Println(("end fetching"))
-}
-
-// CloseConnection closes the connection of the given client
-func (b *BackendMail) closeConnection(c *client.Client) {
-	// close connection to server
-	c.Logout()
-	log.Println("logt out")
 }
