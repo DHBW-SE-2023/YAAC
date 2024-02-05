@@ -135,3 +135,63 @@ func TestStudentNameRecognition(t *testing.T) {
 		}
 	}
 }
+
+func TestReviewTable(t *testing.T) {
+	validSignatures := []cv.ReviewedName{
+		{Name: "Baumann, Lysann", Valid: true},
+		{Name: "Beetz, Robin Georg", Valid: true},
+		{Name: "Beuerle, Marco", Valid: true},
+		{Name: "Domitrovic, Max", Valid: true},
+		{Name: "Druica, Mathias", Valid: true},
+		{Name: "Egger, Julia", Valid: false},
+		{Name: "Fischer, David", Valid: true},
+		{Name: "Fisher, Jamie", Valid: false},
+		{Name: "Gmeiner, Leander Gabriel Mauritius", Valid: true},
+		{Name: "Handschuh, Jannik", Valid: false},
+		{Name: "Hogan, Finley", Valid: true},
+		{Name: "Kiele, Milan", Valid: true},
+		{Name: "Marschall, Linus", Valid: true},
+		{Name: "Medwedkin, Eduard", Valid: false},
+		{Name: "Naas, Jasper", Valid: true},
+		{Name: "Nusch, Hannes", Valid: false},
+		{Name: "Rottweiler, Philipp", Valid: false},
+		{Name: "Schilling, Tobias", Valid: true},
+		{Name: "Schneider, Anna-Sophie", Valid: false},
+		{Name: "Seidel, Yannick", Valid: false},
+		{Name: "Siegert, Daniel Valentin", Valid: false},
+		{Name: "Zagst, Jonas", Valid: false},
+	}
+
+	attendanceListPath := "testdata/list.jpg"
+	img := gocv.IMRead(attendanceListPath, gocv.IMReadAnyColor)
+	if img.Empty() {
+		wd, _ := os.Getwd()
+		t.Fatalf("Could not open image with path %v. The current path is %v", attendanceListPath, wd)
+	}
+
+	img = cv.FindTable(img)
+	signatures, err := cv.ReviewTable(img)
+	if err != nil {
+		t.Fatalf("cv.ReviewTable: %v", err)
+	}
+
+	// FIXME: ReviewTables takes the whole name column
+	// The first two and last two rows are uninteresting to us
+	// len(correctNames) = 26
+	signatures = signatures[2:24]
+
+	if len(signatures) != len(validSignatures) {
+		t.Fatalf("Incorrect length of signatures: %v, correct: %v", len(signatures), len(validSignatures))
+	}
+
+	for i, sig := range validSignatures {
+		s := signatures[i]
+		if s.Name != sig.Name {
+			t.Fatalf("Incorrect name of entry %v: %v, correct: %v", i, s.Name, sig.Name)
+		}
+
+		if s.Valid != sig.Valid {
+			t.Fatalf("Entry %v (%v) incorrectly marked as %v, correct: %v (true means valid)", i, s.Name, s.Valid, sig.Valid)
+		}
+	}
+}
