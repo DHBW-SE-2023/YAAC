@@ -58,18 +58,15 @@ func (f *FrontendMain) OpenMainWindow() {
 func makeWindow(f *FrontendMain) fyne.CanvasObject {
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
-	intro := widget.NewLabel("An introduction would probably go\nhere, as well as a")
-	intro.Wrapping = fyne.TextWrapWord
 	setPage := func(p pages.Page) {
 		title.SetText(p.Title)
-		intro.SetText(p.Intro)
 
 		content.Objects = []fyne.CanvasObject{p.View(gv.Window)}
 		content.Refresh()
 	}
 
 	page := container.NewBorder(
-		container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
+		nil, nil, nil, nil, content)
 
 	return container.NewBorder(nil, nil, makeNav(setPage, true), nil, page)
 }
