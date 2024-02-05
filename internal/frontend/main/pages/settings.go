@@ -29,16 +29,16 @@ func settingsScreen(_ fyne.Window) fyne.CanvasObject {
 		},
 	)
 	navBar := container.NewGridWrap((fyne.NewSize(300, 200)), title, settingList)
-	navFrame := container.NewHBox(container.NewMax(settingNav, navBar))
+	navFrame := container.NewHBox(container.NewStack(settingNav, navBar))
 	settingsContent := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
-	logo := canvas.NewImageFromFile("data/Icon.png")
+	logo := canvas.NewImageFromFile("assets/Icon.png")
 	logo.FillMode = canvas.ImageFillContain
 	if fyne.CurrentDevice().IsMobile() {
 		logo.SetMinSize(fyne.NewSize(192, 192))
 	} else {
 		logo.SetMinSize(fyne.NewSize(200, 200))
 	}
-	contentFrame := container.NewMax(settingsContent, logo)
+	contentFrame := container.NewStack(settingsContent, logo)
 	content := container.NewBorder(nil, nil, navFrame, nil, contentFrame)
 	return content
 }

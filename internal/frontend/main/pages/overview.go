@@ -37,7 +37,7 @@ type overviewWidget struct {
 }
 
 func NewOverviewWidget(title string, attendance string) *overviewWidget {
-	imageResource, _ := fyne.LoadResourceFromPath("data/imageIcon.png")
+	imageResource, _ := fyne.LoadResourceFromPath("assets/imageIcon.png")
 	titleLabel := widget.NewLabel(title)
 	contentLabel := widget.NewLabel(attendance)
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
