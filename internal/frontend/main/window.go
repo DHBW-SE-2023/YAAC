@@ -71,27 +71,7 @@ func makeWindow(f *FrontendMain) fyne.CanvasObject {
 	page := container.NewBorder(
 		container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
 
-	//page := canvas.NewRectangle(color.Black)
-	//return container.NewHSplit(makeNav(setPage, true), page)
 	return container.NewBorder(nil, nil, makeNav(setPage, true), nil, page)
-	//return page
-	/*
-		header := widget.NewLabel("Select an action:")
-		mail_button := widget.NewButton(
-			"Open Mail Window",
-			yaac_frontend_mail.New(f.MVVM).Open,
-		)
-		opencv_button := widget.NewButton(
-			"Open OpenCV Demo Window",
-			yaac_frontend_opencv.New(f.MVVM).Open,
-		)
-
-		return container.NewVBox(
-			header,
-			mail_button,
-			opencv_button,
-		)
-	*/
 }
 
 func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject {
@@ -130,22 +110,7 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 
 	logo := canvas.NewImageFromFile("assets/DHBW.png")
 	logo.FillMode = canvas.ImageFillContain
-	if fyne.CurrentDevice().IsMobile() {
-		logo.SetMinSize(fyne.NewSize(192, 192))
-	} else {
-		logo.SetMinSize(fyne.NewSize(200, 200))
-	}
+	logo.SetMinSize(fyne.NewSize(200, 200))
 
 	return container.NewBorder(logo, nil, nil, nil, tree)
-	/*
-		sbar := NewYaacSidebar(
-			&pages.PagesIndex,
-			&pages.Pages,
-			setPage,
-			ytheme.Color(theme.ColorNameBackground, theme.VariantLight),
-			ytheme.Color(theme.ColorNameSelection, theme.VariantLight),
-		)
-
-		return sbar
-	*/
 }

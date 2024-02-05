@@ -21,11 +21,7 @@ func parseURL(urlStr string) *url.URL {
 func landingScreen(_ fyne.Window) fyne.CanvasObject {
 	logo := canvas.NewImageFromFile("assets/Icon.png")
 	logo.FillMode = canvas.ImageFillContain
-	if fyne.CurrentDevice().IsMobile() {
-		logo.SetMinSize(fyne.NewSize(192, 192))
-	} else {
-		logo.SetMinSize(fyne.NewSize(256, 256))
-	}
+	logo.SetMinSize(fyne.NewSize(256, 256))
 
 	return container.NewCenter(container.NewVBox(
 		widget.NewLabelWithStyle("Willkommen zurück XD", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),

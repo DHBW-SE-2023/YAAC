@@ -33,12 +33,27 @@ func settingsScreen(_ fyne.Window) fyne.CanvasObject {
 	settingsContent := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
 	logo := canvas.NewImageFromFile("assets/Icon.png")
 	logo.FillMode = canvas.ImageFillContain
-	if fyne.CurrentDevice().IsMobile() {
-		logo.SetMinSize(fyne.NewSize(192, 192))
-	} else {
-		logo.SetMinSize(fyne.NewSize(200, 200))
-	}
+	logo.SetMinSize(fyne.NewSize(200, 200))
 	contentFrame := container.NewStack(settingsContent, logo)
 	content := container.NewBorder(nil, nil, navFrame, nil, contentFrame)
+
+	/*
+		header := widget.NewLabel("Select an action:")
+		mail_button := widget.NewButton(
+			"Open Mail Window",
+			yaac_frontend_mail.New(f.MVVM).Open,
+		)
+		opencv_button := widget.NewButton(
+			"Open OpenCV Demo Window",
+			yaac_frontend_opencv.New(f.MVVM).Open,
+		)
+
+		return container.NewVBox(
+			header,
+			mail_button,
+			opencv_button,
+		)
+	*/
+
 	return content
 }
