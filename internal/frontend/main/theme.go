@@ -1,7 +1,6 @@
 package yaac_frontend_main
 
 import (
-	"fmt"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -74,7 +73,7 @@ func (m yaacTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) co
 		return theme.DefaultTheme().Color(name, theme.VariantLight)
 	case theme.ColorNameMenuBackground:
 		// Handle menu background color
-		return m.page_bg
+		return theme.DefaultTheme().Color(name, theme.VariantLight)
 	case theme.ColorNameOverlayBackground:
 		// Handle overlay background color
 		return theme.DefaultTheme().Color(name, theme.VariantLight)
@@ -121,22 +120,4 @@ func (m yaacTheme) Font(style fyne.TextStyle) fyne.Resource {
 
 func (m yaacTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
-}
-
-func ParseHexColor(s string) (c color.RGBA, err error) {
-	c.A = 0xff
-	switch len(s) {
-	case 7:
-		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-	case 4:
-		_, err = fmt.Sscanf(s, "#%1x%1x%1x", &c.R, &c.G, &c.B)
-		// Double the hex digits:
-		c.R *= 17
-		c.G *= 17
-		c.B *= 17
-	default:
-		err = fmt.Errorf("invalid length, must be 7 or 4")
-
-	}
-	return
 }
