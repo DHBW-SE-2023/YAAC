@@ -2,12 +2,11 @@ package pages
 
 import (
 	"image/color"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func rgbGradient(x, y, w, h int) color.Color {
@@ -18,36 +17,57 @@ func rgbGradient(x, y, w, h int) color.Color {
 }
 
 func overviewScreen(_ fyne.Window) fyne.CanvasObject {
-	gradient := canvas.NewHorizontalGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0, 0xff})
-	go func() {
-		for {
-			time.Sleep(time.Second)
+	title := canvas.NewText(" Anwesenheitsliste der Kurse - Heute", color.Black)
+	title.Alignment = fyne.TextAlignLeading
+	title.TextSize = 20
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	grid := container.NewGridWrap(fyne.NewSize(250, 250))
+	for i := 0; i <= 10; i++ {
+		grid.Add(NewOverviewWidget("TIK22", "Max Alberti"))
+	}
+	return container.NewBorder(title, nil, nil, nil, container.NewVScroll(grid))
+}
 
-			gradient.Angle += 45
-			if gradient.Angle >= 360 {
-				gradient.Angle -= 360
-			}
-			canvas.Refresh(gradient)
-		}
-	}()
+type overviewWidget struct {
+	widget.BaseWidget
+	frame   *canvas.Rectangle
+	title   *fyne.Container
+	content *fyne.Container
+	button  *widget.Button
+}
 
-	return container.NewGridWrap(fyne.NewSize(90, 90),
-		canvas.NewImageFromResource(data.FyneLogo),
-		&canvas.Rectangle{FillColor: color.NRGBA{0x80, 0, 0, 0xff},
-			StrokeColor: color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth: 1},
-		&canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 255, G: 200, B: 0, A: 180},
-			StrokeColor:  color.NRGBA{R: 255, G: 120, B: 0, A: 255},
+func NewOverviewWidget(title string, attendance string) *overviewWidget {
+	imageResource, _ := fyne.LoadResourceFromPath("data/imageIcon.png")
+	titleLabel := widget.NewLabel(title)
+	contentLabel := widget.NewLabel(attendance)
+	titleLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
+	titleLabel.Alignment = fyne.TextAlignCenter
+	contentLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
+	contentLabel.Alignment = fyne.TextAlignCenter
+	item := &overviewWidget{
+		frame: &canvas.Rectangle{
+			FillColor:    color.NRGBA{R: 245, G: 245, B: 245, A: 255},
+			StrokeColor:  color.NRGBA{R: 209, G: 209, B: 209, A: 255},
 			StrokeWidth:  4.0,
-			CornerRadius: 20},
-		&canvas.Line{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff}, StrokeWidth: 5},
-		&canvas.Circle{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff},
-			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
-			StrokeWidth: 2},
-		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		canvas.NewRasterWithPixels(rgbGradient),
-		gradient,
-		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
+			CornerRadius: 20,
+		},
+		title:   container.NewVBox(titleLabel),
+		content: container.NewVBox(contentLabel),
+		button: widget.NewButtonWithIcon("", imageResource, func() {
+			println("Show Image!")
+		}),
+	}
+	item.ExtendBaseWidget(item)
+
+	return item
+}
+
+func (item *overviewWidget) CreateRenderer() fyne.WidgetRenderer {
+	item.frame.Resize(fyne.NewSize(250, 250))
+	header := container.NewPadded(container.NewPadded(container.NewGridWithColumns(2, item.title, item.button)))
+	c := container.NewPadded(
+		item.frame,
+		container.NewBorder(header, nil, nil, nil, item.content),
 	)
+	return widget.NewSimpleRenderer(c)
 }

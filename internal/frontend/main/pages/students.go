@@ -1,46 +1,71 @@
 package pages
 
 import (
+	"fmt"
 	"image/color"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
+type students struct {
+	name   *widget.Label
+	course *widget.Label
+	year   *widget.Label
+}
+
 func studentScreen(_ fyne.Window) fyne.CanvasObject {
-	gradient := canvas.NewHorizontalGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0, 0xff})
-	go func() {
-		for {
-			time.Sleep(time.Second)
+	title := canvas.NewText(" Studenten", color.Black)
+	title.Alignment = fyne.TextAlignLeading
+	title.TextSize = 20
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	student := &students{
+		name:   widget.NewLabel("Max, Alberti"),
+		course: widget.NewLabel(""),
+		year:   widget.NewLabel(""),
+	}
+	selection := widget.NewLabel("")
+	courseDropdown := widget.NewSelect([]string{
+		"TIK",
+		"TIT",
+	}, func(s string) {
+		student.course.SetText(s)
+		selection.SetText(updateSelection(student))
+	})
+	yearDropdown := widget.NewSelect([]string{
+		"2021",
+		"2022",
+		"2023",
+	}, func(s string) {
+		student.year.SetText(s)
+		selection.SetText(updateSelection(student))
+	})
 
-			gradient.Angle += 45
-			if gradient.Angle >= 360 {
-				gradient.Angle -= 360
-			}
-			canvas.Refresh(gradient)
-		}
-	}()
+	dropdownArea := container.NewHBox(courseDropdown, yearDropdown)
+	selectionArea := container.NewVBox(selection, widget.NewSeparator())
 
-	return container.NewGridWrap(fyne.NewSize(90, 90),
-		canvas.NewImageFromResource(data.FyneLogo),
-		&canvas.Rectangle{FillColor: color.NRGBA{0x80, 0, 0, 0xff},
-			StrokeColor: color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth: 1},
-		&canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 255, G: 200, B: 0, A: 180},
-			StrokeColor:  color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth:  4.0,
-			CornerRadius: 20},
-		&canvas.Line{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff}, StrokeWidth: 5},
-		&canvas.Circle{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff},
-			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
-			StrokeWidth: 2},
-		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		canvas.NewRasterWithPixels(rgbGradient),
-		gradient,
-		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
-	)
+	var attendanceData = [][]string{
+		[]string{"Datum", "Anwesenheit"},
+		[]string{"10.10.2023", "Anwesend"},
+		[]string{"11.10.2023", "Anwesend"}}
+	attendanceList := widget.NewTable(
+		func() (int, int) {
+			return len(attendanceData), len(attendanceData[0])
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("Template")
+		},
+		func(i widget.TableCellID, cell fyne.CanvasObject) {
+			cell.(*widget.Label).SetText(attendanceData[i.Row][i.Col])
+		})
+	attendanceList.SetColumnWidth(0, 140)
+	attendanceList.SetRowHeight(2, 50)
+	studentView := container.NewBorder(container.NewVBox(title, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
+	return studentView
+}
+
+func updateSelection(student *students) string {
+	return fmt.Sprintf("%s - %s %s", student.name.Text, student.course.Text, student.year.Text)
 }

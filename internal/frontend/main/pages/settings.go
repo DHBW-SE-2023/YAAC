@@ -2,45 +2,43 @@ package pages
 
 import (
 	"image/color"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func settingsScreen(_ fyne.Window) fyne.CanvasObject {
-	gradient := canvas.NewHorizontalGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0, 0xff})
-	go func() {
-		for {
-			time.Sleep(time.Second)
-
-			gradient.Angle += 45
-			if gradient.Angle >= 360 {
-				gradient.Angle -= 360
-			}
-			canvas.Refresh(gradient)
-		}
-	}()
-
-	return container.NewGridWrap(fyne.NewSize(90, 90),
-		canvas.NewImageFromResource(data.FyneLogo),
-		&canvas.Rectangle{FillColor: color.NRGBA{0x80, 0, 0, 0xff},
-			StrokeColor: color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth: 1},
-		&canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 255, G: 200, B: 0, A: 180},
-			StrokeColor:  color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth:  4.0,
-			CornerRadius: 20},
-		&canvas.Line{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff}, StrokeWidth: 5},
-		&canvas.Circle{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff},
-			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
-			StrokeWidth: 2},
-		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		canvas.NewRasterWithPixels(rgbGradient),
-		gradient,
-		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
+	title := canvas.NewText("Einstellungen", color.Black)
+	title.TextSize = 20
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Alignment = fyne.TextAlignCenter
+	settingNav := canvas.NewRectangle(color.NRGBA{R: 230, G: 233, B: 235, A: 255})
+	settingNav.Resize(fyne.NewSize(400, 400))
+	var settingOptions = []string{"Allgemein", "Datenbank", "Email", "Wiki", "Impressum"}
+	settingList := widget.NewList(
+		func() int {
+			return len(settingOptions)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("Template")
+		},
+		func(li widget.ListItemID, co fyne.CanvasObject) {
+			co.(*widget.Label).SetText(settingOptions[li])
+		},
 	)
+	navBar := container.NewGridWrap((fyne.NewSize(300, 200)), title, settingList)
+	navFrame := container.NewHBox(container.NewMax(settingNav, navBar))
+	settingsContent := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
+	logo := canvas.NewImageFromFile("data/Icon.png")
+	logo.FillMode = canvas.ImageFillContain
+	if fyne.CurrentDevice().IsMobile() {
+		logo.SetMinSize(fyne.NewSize(192, 192))
+	} else {
+		logo.SetMinSize(fyne.NewSize(200, 200))
+	}
+	contentFrame := container.NewMax(settingsContent, logo)
+	content := container.NewBorder(nil, nil, navFrame, nil, contentFrame)
+	return content
 }
