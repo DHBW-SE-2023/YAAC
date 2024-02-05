@@ -4,14 +4,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
-// const preferedStartPage = "home"
+const preferedStartPage = "home"
+
 var gv GlobalVars
 
 type GlobalVars struct {
@@ -94,50 +94,49 @@ func makeWindow(f *FrontendMain) fyne.CanvasObject {
 }
 
 func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject {
+	tree := &widget.Tree{
+		ChildUIDs: func(uid string) []string {
+			return pages.PagesIndex[uid]
+		},
+		IsBranch: func(uid string) bool {
+			children, ok := pages.PagesIndex[uid]
+
+			return ok && len(children) > 0
+		},
+		CreateNode: func(branch bool) fyne.CanvasObject {
+			return widget.NewLabel("Collection Widgets")
+		},
+		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
+			p, ok := pages.Pages[uid]
+			if !ok {
+				fyne.LogError("Missing Pages panel: "+uid, nil)
+				return
+			}
+			obj.(*widget.Label).SetText(p.Title)
+		},
+		OnSelected: func(uid string) {
+			if p, ok := pages.Pages[uid]; ok {
+				gv.App.Preferences().SetString(preferedStartPage, uid)
+				setPage(p)
+			}
+		},
+	}
+
+	if loadPrevious {
+		currentPref := gv.App.Preferences().StringWithFallback(preferedStartPage, "home")
+		tree.Select(currentPref)
+	}
+
+	return tree
 	/*
-		tree := &widget.Tree{
-			ChildUIDs: func(uid string) []string {
-				return pages.PagesIndex[uid]
-			},
-			IsBranch: func(uid string) bool {
-				children, ok := pages.PagesIndex[uid]
+		sbar := NewYaacSidebar(
+			&pages.PagesIndex,
+			&pages.Pages,
+			setPage,
+			ytheme.Color(theme.ColorNameBackground, theme.VariantLight),
+			ytheme.Color(theme.ColorNameSelection, theme.VariantLight),
+		)
 
-				return ok && len(children) > 0
-			},
-			CreateNode: func(branch bool) fyne.CanvasObject {
-				return NewYaacSidebarItem("Sidebar Item")
-				//return widget.NewLabel("Collection Widgets")
-			},
-			UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
-				p, ok := pages.Pages[uid]
-				if !ok {
-					fyne.LogError("Missing Pages panel: "+uid, nil)
-					return
-				}
-				obj.(*YaacSidebarItem).Title.SetText(p.Title)
-			},
-			OnSelected: func(uid string) {
-				if p, ok := pages.Pages[uid]; ok {
-					gv.App.Preferences().SetString(preferedStartPage, uid)
-					setPage(p)
-				}
-			},
-		}
-
-
-		if loadPrevious {
-			currentPref := gv.App.Preferences().StringWithFallback(preferedStartPage, "home")
-			tree.Select(currentPref)
-		}
+		return sbar
 	*/
-
-	sbar := NewYaacSidebar(
-		&pages.PagesIndex,
-		&pages.Pages,
-		setPage,
-		ytheme.Color(theme.ColorNameBackground, theme.VariantLight),
-		ytheme.Color(theme.ColorNameSelection, theme.VariantLight),
-	)
-
-	return sbar
 }
