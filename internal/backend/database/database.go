@@ -1,4 +1,4 @@
-package yaac_shared
+package yaac_backend_database
 
 import (
 	"database/sql"
@@ -9,18 +9,18 @@ import (
 )
 
 // CreateDatabase creates a database in ./data
-func CreateDatabase() {
-	err := os.MkdirAll("./data", 0755)
+func (item *BackendDatabase) CreateDatabase() {
+	err := os.MkdirAll(item.path, 0755)
 	if err != nil {
 		log.Fatal("Could not create database folder: ", err)
 	}
 
-	_, err = os.Create("./data/data.db")
+	_, err = os.Create(item.path + item.dbName)
 	if err != nil {
 		log.Fatal("Could not create database file: ", err)
 	}
 
-	db, err := sql.Open("sqlite3", "./data/data.db")
+	db, err := sql.Open("sqlite3", item.path+item.dbName)
 	if err != nil {
 		log.Fatal("Connecting to database failed: ", err)
 	}
@@ -48,28 +48,28 @@ func CreateDatabase() {
 	}
 }
 
-// ConnectDatabase creates a connection to the database at ./data/data.db
-func ConnectDatabase() *sql.DB {
-	db, err := sql.Open("sqlite3", "./data/data.db")
+// ConnectDatabase creates a connection to the database at given path
+func (item *BackendDatabase) ConnectDatabase() {
+	db, err := sql.Open("sqlite3", item.path+item.dbName)
 	if err != nil {
 		log.Fatal("Connecting to database failed: ", err)
 	}
 
-	return db
+	item.database = db
 }
 
 // DisconnectDatabase closes the connection to the database
-func DisconnectDatabase(db *sql.DB) {
-	err := db.Close()
+func (item *BackendDatabase) DisconnectDatabase() {
+	err := item.database.Close()
 	if err != nil {
 		log.Println("Failed to close connection to database")
 	}
 }
 
-// inserts attendance for today
-func insertAttendance(db *sql.DB, attending bool) error {
+// InsertAttendance inserts attendance for today
+func (item *BackendDatabase) InsertAttendance(attending bool) error {
 	// use prepared statement for faster execution and to prevent sql injection attacks
-	stmt, err := db.Prepare("INSERT INTO Attendance (DayOfAttendance, Attending) VALUES (DATE(), ?);")
+	stmt, err := item.database.Prepare("INSERT INTO Attendance (DayOfAttendance, Attending) VALUES (DATE(), ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement ", err)
 	}
@@ -87,7 +87,7 @@ func insertAttendance(db *sql.DB, attending bool) error {
 }
 
 // InsertStudent inserts student to the database
-func InsertStudent(db *sql.DB, lName string, fName string, statusOfMatriculation bool, course string) error {
+func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfMatriculation bool, course string) error {
 	// check constraints matching
 	if len(lName) > 50 {
 		log.Println("Maximum length for last name is 50")
@@ -105,7 +105,7 @@ func InsertStudent(db *sql.DB, lName string, fName string, statusOfMatriculation
 	}
 
 	// use prepared statement for faster execution and to prevent sql injection attacks
-	stmt, err := db.Prepare("INSERT INTO Student (LName, FName, Course, StatusOfMatriculation) VALUES (?, ?, ?, ?);")
+	stmt, err := item.database.Prepare("INSERT INTO Student (LName, FName, Course, StatusOfMatriculation) VALUES (?, ?, ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement ", err)
 	}
@@ -123,7 +123,7 @@ func InsertStudent(db *sql.DB, lName string, fName string, statusOfMatriculation
 }
 
 // InsertAttendanceList inserts list with time=now by its relative link to the content root
-func InsertAttendanceList(db *sql.DB, course string, list []byte) error {
+func (item *BackendDatabase) InsertAttendanceList(course string, list []byte) error {
 	// check constraint matching
 	if len(course) > 12 {
 		log.Println("Maximum length for course is 12")
@@ -131,7 +131,7 @@ func InsertAttendanceList(db *sql.DB, course string, list []byte) error {
 	}
 
 	// prepared statement
-	stmt, err := db.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (DATETIME(), ?, ?);")
+	stmt, err := item.database.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (DATETIME(), ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
@@ -149,14 +149,14 @@ func InsertAttendanceList(db *sql.DB, course string, list []byte) error {
 }
 
 // GetStudentFullNameById takes a StudentId and returnes the students full name in one column
-func GetStudentFullNameById(db *sql.DB, studentId int) (string, error) {
+func (item *BackendDatabase) GetStudentFullNameById(studentId int) (string, error) {
 	if studentId < 0 {
 		log.Println("StudentId must be positive integer")
 		return "", errors.New("input does not match constraints")
 	}
 
 	// prepare statement
-	stmt, err := db.Prepare("SELECT FName || ' ' || LName FROM Student WHERE StudentId = ?")
+	stmt, err := item.database.Prepare("SELECT FName || ' ' || LName FROM Student WHERE StudentId = ?")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement ", err)
 	}
