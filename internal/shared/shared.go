@@ -22,3 +22,13 @@ type EmailData struct {
 	Email      string
 	Password   string
 }
+
+type Student struct {
+	LName string
+	FName string
+}
+
+type Attendance struct {
+	Student   Student
+	Attending bool
+}
