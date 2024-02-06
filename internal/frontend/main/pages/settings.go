@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
 )
 
 func settingsScreen(_ fyne.Window) fyne.CanvasObject {
@@ -16,44 +17,43 @@ func settingsScreen(_ fyne.Window) fyne.CanvasObject {
 	title.Alignment = fyne.TextAlignCenter
 	settingNav := canvas.NewRectangle(color.NRGBA{R: 230, G: 233, B: 235, A: 255})
 	settingNav.Resize(fyne.NewSize(400, 400))
-	var settingOptions = []string{"Allgemein", "Datenbank", "Email", "Wiki", "Impressum"}
-	settingList := widget.NewList(
-		func() int {
-			return len(settingOptions)
+
+	content := container.NewStack()
+
+	setContent := func(s settings.Setting) {
+		content.Objects = []fyne.CanvasObject{s.View()}
+		content.Refresh()
+	}
+
+	tree := &widget.Tree{
+		ChildUIDs: func(uid string) []string {
+			return settings.SettingPagesIndex[uid]
 		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("Template")
+		IsBranch: func(uid string) bool {
+			children, ok := settings.SettingPagesIndex[uid]
+
+			return ok && len(children) > 0
 		},
-		func(li widget.ListItemID, co fyne.CanvasObject) {
-			co.(*widget.Label).SetText(settingOptions[li])
+		CreateNode: func(branch bool) fyne.CanvasObject {
+			return widget.NewLabel("Collection Widgets")
 		},
-	)
-	navBar := container.NewGridWrap((fyne.NewSize(300, 200)), title, settingList)
+		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
+			p, ok := settings.SettingPages[uid]
+			if !ok {
+				fyne.LogError("Missing Pages panel: "+uid, nil)
+				return
+			}
+			obj.(*widget.Label).SetText(p.Title)
+		},
+		OnSelected: func(uid string) {
+			if p, ok := settings.SettingPages[uid]; ok {
+				setContent(p)
+			}
+		},
+	}
+	navBar := container.NewGridWrap((fyne.NewSize(300, 200)), title, tree)
 	navFrame := container.NewHBox(container.NewStack(settingNav, navBar))
-	settingsContent := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
-	logo := canvas.NewImageFromFile("assets/Icon.png")
-	logo.FillMode = canvas.ImageFillContain
-	logo.SetMinSize(fyne.NewSize(200, 200))
-	contentFrame := container.NewStack(settingsContent, logo)
-	content := container.NewBorder(nil, nil, navFrame, nil, contentFrame)
-
-	/*
-		header := widget.NewLabel("Select an action:")
-		mail_button := widget.NewButton(
-			"Open Mail Window",
-			yaac_frontend_mail.New(f.MVVM).Open,
-		)
-		opencv_button := widget.NewButton(
-			"Open OpenCV Demo Window",
-			yaac_frontend_opencv.New(f.MVVM).Open,
-		)
-
-		return container.NewVBox(
-			header,
-			mail_button,
-			opencv_button,
-		)
-	*/
-
-	return content
+	contentFrame := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
+	page := container.NewBorder(nil, nil, navFrame, nil, container.NewMax(contentFrame, content))
+	return page
 }

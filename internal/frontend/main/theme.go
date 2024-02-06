@@ -22,12 +22,12 @@ type yaacTheme struct {
 // Assert that the Theme implements the theme interface
 var _ fyne.Theme = (*yaacTheme)(nil)
 var ytheme fyne.Theme = yaacTheme{
-	bg:      color.RGBA{255, 255, 255, 255},
+	bg:      color.RGBA{230, 233, 235, 127},
 	accent:  color.RGBA{227, 0, 27, 255},
 	warn:    color.RGBA{227, 0, 27, 255},
 	page_bg: color.RGBA{230, 233, 235, 50},
-	elem:    color.RGBA{217, 217, 217, 255},
-	hover:   color.RGBA{125, 136, 142, 255},
+	elem:    color.RGBA{255, 255, 255, 0},
+	hover:   color.RGBA{209, 209, 209, 125},
 	green:   color.RGBA{51, 255, 0, 255},
 	yellow:  color.RGBA{255, 229, 0, 255},
 	text:    color.RGBA{0, 0, 0, 255},

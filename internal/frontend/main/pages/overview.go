@@ -19,13 +19,14 @@ func rgbGradient(x, y, w, h int) color.Color {
 func overviewScreen(_ fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText(" Anwesenheitsliste der Kurse - Heute", color.Black)
 	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = 20
+	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	grid := container.NewGridWrap(fyne.NewSize(250, 250))
 	for i := 0; i <= 10; i++ {
 		grid.Add(NewOverviewWidget("TIK22", "Max Alberti"))
 	}
-	return container.NewBorder(title, nil, nil, nil, container.NewVScroll(grid))
+	header := container.NewVBox(container.NewGridWrap(fyne.NewSize(400, 200), title), widget.NewSeparator())
+	return container.NewBorder(header, nil, nil, nil, container.NewVScroll(grid))
 }
 
 type overviewWidget struct {
@@ -46,7 +47,7 @@ func NewOverviewWidget(title string, attendance string) *overviewWidget {
 	contentLabel.Alignment = fyne.TextAlignCenter
 	item := &overviewWidget{
 		frame: &canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 245, G: 245, B: 245, A: 255},
+			FillColor:    color.NRGBA{R: 209, G: 209, B: 209, A: 255},
 			StrokeColor:  color.NRGBA{R: 209, G: 209, B: 209, A: 255},
 			StrokeWidth:  4.0,
 			CornerRadius: 20,

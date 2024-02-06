@@ -26,3 +26,19 @@ var (
 		"": {"home", "overview", "courses", "students", "settings"},
 	}
 )
+
+var (
+	// Tutorials defines the metadata for each tutorial
+	SettingPages = map[string]Page{
+		"general":   {"Allgemein", landingScreen, true},
+		"database":  {"Datenbank", overviewScreen, true},
+		"email":     {"Email", coursesScreen, true},
+		"wiki":      {"WIKI", studentScreen, true},
+		"impressum": {"Impressum", settingsScreen, true},
+	}
+
+	// TutorialIndex  defines how our tutorials should be laid out in the index tree
+	SettingPagesIndex = map[string][]string{
+		"": {"general", "database", "email", "wiki", "impressum"},
+	}
+)

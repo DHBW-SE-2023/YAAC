@@ -19,7 +19,7 @@ type students struct {
 func studentScreen(_ fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText(" Studenten", color.Black)
 	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = 20
+	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	student := &students{
 		name:   widget.NewLabel("Max, Alberti"),
@@ -62,7 +62,8 @@ func studentScreen(_ fyne.Window) fyne.CanvasObject {
 		})
 	attendanceList.SetColumnWidth(0, 140)
 	attendanceList.SetRowHeight(2, 50)
-	studentView := container.NewBorder(container.NewVBox(title, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
+	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
+	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
 	return studentView
 }
 

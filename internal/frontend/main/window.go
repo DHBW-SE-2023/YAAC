@@ -1,6 +1,8 @@
 package yaac_frontend_main
 
 import (
+	"image/color"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -106,8 +108,9 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 	}
 
 	logo := canvas.NewImageFromFile("assets/DHBW.png")
+	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
 
-	return container.NewBorder(logo, nil, nil, nil, tree)
+	return container.NewMax(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
 }
