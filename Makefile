@@ -23,3 +23,9 @@ package:
 clean:
 	go clean
 	rm ./$(BINARY_PATH)
+
+build-docker:
+	docker build -t yaac-image .
+
+run-docker:
+	docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix yaac-image
