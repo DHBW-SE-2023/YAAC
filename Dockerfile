@@ -1,4 +1,4 @@
-FROM gocv/opencv:latest
+FROM docker.io/gocv/opencv:latest
 # Debian based
 MAINTAINER YAAC Team
 # Update
