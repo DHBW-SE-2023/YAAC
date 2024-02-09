@@ -7,6 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
+	"time"
 )
 
 // CreateDatabase creates a database in ./data
@@ -67,10 +68,13 @@ func (item *BackendDatabase) DisconnectDatabase() {
 	}
 }
 
-// InsertAttendance inserts attendance for today
-func (item *BackendDatabase) InsertAttendance(attending bool) error {
+// InsertAttendance inserts attendance
+func (item *BackendDatabase) InsertAttendance(timeOfAttendance time.Time, attending bool) error {
+	// convert Time to YYYY-MM-DD
+	date := timeOfAttendance.Format("2006-01-02")
+
 	// use prepared statement for faster execution and to prevent sql injection attacks
-	stmt, err := item.database.Prepare("INSERT INTO Attendance (DayOfAttendance, Attending) VALUES (DATE(), ?);")
+	stmt, err := item.database.Prepare("INSERT INTO Attendance (DayOfAttendance, Attending) VALUES (?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement ", err)
 	}
@@ -78,9 +82,40 @@ func (item *BackendDatabase) InsertAttendance(attending bool) error {
 	defer stmt.Close()
 
 	// execute prepared statement
-	_, err = stmt.Exec(attending)
+	_, err = stmt.Exec(date, attending)
 	if err != nil {
 		log.Println("Could not add attendance: ", err)
+		return err
+	}
+
+	return nil
+}
+
+// InsertCurrentAttendance inserts attendance for the current day
+func (item *BackendDatabase) InsertCurrentAttendance(attending bool) error {
+	if err := item.InsertAttendance(time.Now(), attending); err != nil {
+		log.Println("Could not add attendance: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (item *BackendDatabase) UpdateAttendance(studentId int, timeOfAttendance time.Time, attending bool) error {
+	// convert Time to YYYY-MM-DD
+	date := timeOfAttendance.Format("2006-01-02")
+
+	// prepared statement
+	stmt, err := item.database.Prepare("UPDATE Attendance SET Attending = ? WHERE StudentId = ? AND DayOfAttendance = ?;")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement ", err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(attending, studentId, date)
+	if err != nil {
+		log.Println("Could not update attendance: ", err)
 		return err
 	}
 
@@ -124,25 +159,84 @@ func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfM
 }
 
 // InsertAttendanceList inserts list with time=now by its relative link to the content root
-func (item *BackendDatabase) InsertAttendanceList(course string, list []byte) error {
+func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course string, list []byte) error {
 	// check constraint matching
 	if len(course) > 12 {
 		log.Println("Maximum length for course is 12")
 		return errors.New("input does not match constraints")
 	}
 
-	// prepared statement
-	stmt, err := item.database.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (DATETIME(), ?, ?);")
+	// check for already existing attendance lists for the current day and override if they are older
+	// prepared statement to check if an attendance list fot the same day already exists
+	searchList, err := item.database.Prepare("SELECT TimeRecieved FROM AttendanceList WHERE Course = ? AND DATE(TimeRecieved) = DATE(?)")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
+	defer searchList.Close()
 
-	defer stmt.Close()
+	result := searchList.QueryRow(course, dateTime)
+
+	var timeRecievedStr string
+
+	err = result.Scan(&timeRecievedStr)
+	if err == nil {
+		// found existing attendance lists
+		timeExisting, err := time.Parse("2006-01-02 15:04:05", timeRecievedStr)
+		if err != nil {
+			log.Println("Could not pare time from sqlite to go")
+			return err
+		}
+
+		// check if existing list needs to be overwritten and overwrite if true
+		if timeExisting.Before(dateTime) {
+			deleteList, err := item.database.Prepare("DELETE FROM AttendanceList WHERE TimeRecieved = ? AND Course = ?")
+			if err != nil {
+				log.Fatal("Could not create database prepared statement", err)
+			}
+			defer deleteList.Close()
+
+			// execute delete statement
+			if _, err = deleteList.Exec(timeExisting, course); err != nil {
+				log.Println("Could not delete existing attendance list to override")
+				return err
+			}
+
+			err = item.insertAttendanceListHelper(dateTime, course, list)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// no existing attendance lists found
+		err := item.insertAttendanceListHelper(dateTime, course, list)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (item *BackendDatabase) insertAttendanceListHelper(dateTime time.Time, course string, list []byte) error {
+	// prepared statement to insert new attendance list
+	insertList, err := item.database.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (?, ?, ?);")
+	if err != nil {
+		log.Fatal("Could not create database prepared statement", err)
+	}
+	defer insertList.Close()
 
 	// execute prepared statement
-	_, err = stmt.Exec(course, list)
+	_, err = insertList.Exec(dateTime, course, list)
 	if err != nil {
 		log.Println("Could not add attendance list ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (item *BackendDatabase) InsertCurrentAttendanceList(course string, list []byte) error {
+	if err := item.InsertAttendanceList(time.Now(), course, list); err != nil {
+		log.Println("Could not add attendance list: ", err)
 		return err
 	}
 
