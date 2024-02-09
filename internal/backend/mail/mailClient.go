@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/mail"
 	"strings"
+	"time"
 
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
@@ -312,6 +313,14 @@ func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
 	}
 
 	return mailData, err
+}
+
+func (b *BackendMail) getCourse() (string, error) {
+	return "TestKurs123", nil
+}
+
+func (b *BackendMail) getDatetime() (time.Time, error) {
+	return nil, nil
 }
 
 // checkMailSubject needs the mail string
