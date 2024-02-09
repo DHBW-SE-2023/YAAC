@@ -4,9 +4,9 @@ MAINTAINER YAAC Team
 # Update
 RUN apt-get update && apt-get upgrade -y
 # Get General Dependencies
-RUN apt-get install -y git make
+RUN apt-get install -y git make mesa-utils libglfw3
 # Get Fyne Dependencies
-RUN apt-get install -y gcc libgl1-mesa-dev xorg-dev mesa-utils
+RUN apt-get install -y gcc libgl1-mesa-dev xorg-dev
 # Get gocv dependencies
 #RUN apt-get
 # Get Repo - WORKDIR is /go
