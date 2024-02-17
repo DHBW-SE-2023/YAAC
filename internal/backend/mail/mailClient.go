@@ -17,6 +17,7 @@ import (
 )
 
 func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
+	b.GetMailsToday()
 	//go MailService(input.MailServer, input.Email, input.Password)
 	return "Please read log!"
 }
@@ -50,8 +51,16 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 			log.Println("all mails fetched")
 			break
 		}
-		if b.checkSubjekt() && b.mailToday() { //need to be added
-			maildata_temp, err := b.processMail(msg)
+
+		//get mail message as string in order to prcess the mail further
+		mailstring, err := b.getMailasString(msg)
+		if err != nil {
+			log.Println("Error decoding mail")
+			continue
+		}
+
+		if b.checkMailSubject(mailstring) && b.checkDatetime(mailstring) { //need to be added
+			maildata_temp, err := b.processMail(mailstring)
 			if err == nil {
 				maildata = append(maildata, maildata_temp)
 			}
@@ -63,7 +72,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	return maildata, nil
 }
 
-// kann gelöscht werden
+/* kann gelöscht werden
 func getLatestMessage(serverAddr string, username string, password string) (string, error) {
 
 	// Connect to server
@@ -156,6 +165,8 @@ func getLatestMessage(serverAddr string, username string, password string) (stri
 	return "Sucessfull!", err
 }
 
+*/
+
 // getBoundary needs the contentType part of the mail and returns the value of boundary
 func (b *BackendMail) getBoundary(contentType string) (string, error) {
 	_, params, err := mime.ParseMediaType(contentType)
@@ -172,7 +183,7 @@ func (b *BackendMail) getMailasString(msg *imap.Message) (string, error) {
 	var section imap.BodySectionName
 	mailLiteral := msg.GetBody(&section)
 	if mailLiteral == nil {
-		err := errors.New("No litteral in mail body found")
+		err := errors.New("no litteral in mail body found")
 		return "", err
 	}
 
@@ -238,7 +249,7 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 		}
 	}
 	// Return Error
-	err = errors.New("Found no attached image in mail")
+	err = errors.New("found no attached image in mail")
 	return nil, err
 }
 
@@ -282,16 +293,11 @@ func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 // processMail processes the whole imap message object
 // returns the MailData Struct with the data
 // returns an error if there went something wrong with decoding and parsing the mail
-func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
+func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 
 	var mailData = MailData{}
 
-	//get mail message as string in order to prcess the mail further
-	mailstring, err := b.getMailasString(msg)
-	if err != nil {
-		log.Println("Error decoding mail")
-		return mailData, err
-	}
+	var err error
 
 	//get the base64 encoded image from the mail
 	mailData.image_data, err = b.getBinaryImageFromMailString(mailstring)
@@ -315,25 +321,51 @@ func (b *BackendMail) processMail(msg *imap.Message) (MailData, error) {
 	return mailData, err
 }
 
-func (b *BackendMail) getCourse() (string, error) {
+func (b *BackendMail) getCourse(mailstring string) (string, error) {
 	return "TestKurs123", nil
 }
 
-func (b *BackendMail) getDatetime() (time.Time, error) {
-	return nil, nil
+func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
+	// Read Mail
+	message, err := mail.ReadMessage(strings.NewReader(mailstring))
+	if err != nil {
+		return time.Now(), err
+	}
+
+	// Read datetime from Mail Header
+	datestring := message.Header.Get("Date")
+	return time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", datestring)
+}
+
+func (b *BackendMail) checkDatetime(mailsting string) bool {
+	maildate, err := b.getDatetime(mailsting)
+	if err != nil {
+		return false
+	}
+	mail_year, mail_month, mail_day := maildate.Local().Date()
+	current_year, current_month, current_day := time.Now().Date()
+	if mail_year == current_year && mail_month == current_month && mail_day == current_day {
+		log.Printf("Fiting Date: %v", maildate.Local())
+		return true
+	}
+	log.Printf("Not Fiting Date: %v", maildate.Local())
+	return false
 }
 
 // checkMailSubject needs the mail string
-// returns true if the subject of the mail contains ""
-// returns true if the subject of the mail contains not "" or there is an error reading the mail subject
+// returns true if the subject of the mail contains "Anwesenheitsliste"
+// returns true if the subject of the mail contains not "Anwesenheitsliste" or there is an error reading the mail subject
 func (b *BackendMail) checkMailSubject(mailstring string) bool {
 	subject, err := b.getSubject(mailstring)
 	if err != nil {
 		log.Println("Error decoding mail subject")
 		return false
 	}
-	log.Printf("Mail detected with Subject: %v\n", subject)
-	return strings.Contains(subject, "Anwesenheitsliste")
+	if strings.Contains(subject, "Anwesenheitsliste") {
+		log.Printf(("Fiting Subject: %v"), subject)
+		return true
+	}
+	return false
 }
 
 // markMailAsRead needs the mail client and the imap message and marks the message as read
