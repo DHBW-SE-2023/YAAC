@@ -322,10 +322,14 @@ func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 	return mailData, err
 }
 
+// getCourse extractes Course from mail subject and returns the course as string
+// returns an error if it is not possilble to read the mail or if there is no course found in the subject
 func (b *BackendMail) getCourse(mailstring string) (string, error) {
 	return "TestKurs123", nil
 }
 
+// getDatetime extraces the date and time of the mail and returns it as time struct
+// returns an error if it is not possilble to read the mail or if there occurs an error parsing the date or time
 func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailstring))
@@ -338,6 +342,8 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	return time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", datestring)
 }
 
+// checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
+// returns true if the mail is from today otherwise false
 func (b *BackendMail) checkDatetime(mailsting string) bool {
 	maildate, err := b.getDatetime(mailsting)
 	if err != nil {
