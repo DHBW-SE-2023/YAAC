@@ -16,6 +16,7 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
+// can be deleted
 func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
 	b.GetMailsToday()
 	//go MailService(input.MailServer, input.Email, input.Password)
@@ -368,6 +369,7 @@ func (b *BackendMail) checkMailSubject(mailstring string) bool {
 	return false
 }
 
+/*
 // markMailAsRead needs the mail client and the imap message and marks the message as read
 // returns an error if it didn't work otherwise nil
 func (b *BackendMail) markMailAsRead(c *client.Client, msg *imap.Message) error {
@@ -380,6 +382,8 @@ func (b *BackendMail) markMailAsRead(c *client.Client, msg *imap.Message) error 
 	}
 	return nil
 }
+
+*/
 
 // connectToServer needs the server address and conects to the server
 // returns the client and an error
