@@ -69,20 +69,21 @@ func (item *BackendDatabase) DisconnectDatabase() {
 }
 
 // InsertAttendance inserts attendance
-func (item *BackendDatabase) InsertAttendance(timeOfAttendance time.Time, attending bool) error {
+func (item *BackendDatabase) InsertAttendance(studentId int, timeOfAttendance time.Time, attending bool) error {
 	// convert Time to YYYY-MM-DD
 	date := timeOfAttendance.Format("2006-01-02")
 
 	// use prepared statement for faster execution and to prevent sql injection attacks
-	stmt, err := item.database.Prepare("INSERT INTO Attendance (DayOfAttendance, Attending) VALUES (?, ?);")
+	stmt, err := item.database.Prepare("INSERT INTO Attendance (StudentId, DayOfAttendance, Attending) VALUES (?, ?, ?);")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return err
 	}
 
 	defer stmt.Close()
 
 	// execute prepared statement
-	_, err = stmt.Exec(date, attending)
+	_, err = stmt.Exec(studentId, date, attending)
 	if err != nil {
 		log.Println("Could not add attendance: ", err)
 		return err
@@ -92,8 +93,8 @@ func (item *BackendDatabase) InsertAttendance(timeOfAttendance time.Time, attend
 }
 
 // InsertCurrentAttendance inserts attendance for the current day
-func (item *BackendDatabase) InsertCurrentAttendance(attending bool) error {
-	if err := item.InsertAttendance(time.Now(), attending); err != nil {
+func (item *BackendDatabase) InsertCurrentAttendance(studentId int, attending bool) error {
+	if err := item.InsertAttendance(studentId, time.Now(), attending); err != nil {
 		log.Println("Could not add attendance: ", err)
 		return err
 	}
@@ -253,7 +254,8 @@ func (item *BackendDatabase) GetStudentFullNameById(studentId int) (string, erro
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT FName || ' ' || LName FROM Student WHERE StudentId = ?")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return "", err
 	}
 
 	result := stmt.QueryRow(studentId)
@@ -277,7 +279,8 @@ func (item *BackendDatabase) GetLatestListDatePerCourse(course string) (string, 
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT DATE(TimeRecieved) FROM AttendanceList WHERE Course = ? ORDER BY TimeRecieved DESC LIMIT 1")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return "", err
 	}
 
 	result := stmt.QueryRow(course)
@@ -296,7 +299,8 @@ func (item *BackendDatabase) GetAllCourses() ([]string, error) {
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT DISTINCT Course FROM AttendanceList")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return nil, err
 	}
 
 	rows, err := stmt.Query()
@@ -328,7 +332,8 @@ func (item *BackendDatabase) GetAllStudentsPerCourse(course string) ([]yaac_shar
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT DISTINCT FName, LName FROM Student WHERE Course = ?")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return nil, err
 	}
 
 	rows, err := stmt.Query(course)
@@ -355,7 +360,8 @@ func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.At
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT DISTINCT s.FName, s.LName, a.Attending FROM Attendance AS a LEFT OUTER JOIN Student AS s ON a.StudentId = s.StudentId")
 	if err != nil {
-		log.Fatal("Could not create database prepared statement ", err)
+		log.Println("Could not create database prepared statement ", err)
+		return nil, err
 	}
 
 	rows, err := stmt.Query()
