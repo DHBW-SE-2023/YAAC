@@ -325,7 +325,18 @@ func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 // getCourse extractes Course from mail subject and returns the course as string
 // returns an error if it is not possilble to read the mail or if there is no course found in the subject
 func (b *BackendMail) getCourse(mailstring string) (string, error) {
-	return "TestKurs123", nil
+	subject, err := b.getSubject(mailstring)
+	if err != nil {
+		return "", err
+	}
+	words := strings.Fields(subject)
+	for _, word := range words {
+		if strings.Contains(word, "TI") {
+			return word, nil
+		}
+	}
+	err = errors.New("no course found in subject")
+	return "", err
 }
 
 // getDatetime extraces the date and time of the mail and returns it as time struct
