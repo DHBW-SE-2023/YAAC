@@ -29,6 +29,7 @@ type Student struct {
 }
 
 type Attendance struct {
-	Student   Student
-	Attending bool
+	Student         Student
+	Attending       bool
+	DayOfAttendance string
 }

@@ -358,7 +358,7 @@ func (item *BackendDatabase) GetAllStudentsPerCourse(course string) ([]yaac_shar
 
 func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.Attendance, error) {
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DISTINCT s.FName, s.LName, a.Attending FROM Attendance AS a LEFT OUTER JOIN Student AS s ON a.StudentId = s.StudentId")
+	stmt, err := item.database.Prepare("SELECT DISTINCT s.FName, s.LName, a.Attending, a.DayOfAttendance FROM Attendance AS a LEFT OUTER JOIN Student AS s ON a.StudentId = s.StudentId")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return nil, err
@@ -373,7 +373,7 @@ func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.At
 	var result []yaac_shared.Attendance
 	for rows.Next() {
 		var row yaac_shared.Attendance
-		if err := rows.Scan(&row.Student.FName, &row.Student.LName, &row.Attending); err != nil {
+		if err := rows.Scan(&row.Student.FName, &row.Student.LName, &row.Attending, &row.DayOfAttendance); err != nil {
 			log.Println("Could not get all students per course")
 			return nil, errors.New("could not get all students per course")
 		}
