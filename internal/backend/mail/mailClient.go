@@ -71,6 +71,10 @@ func (b *BackendMail) getBoundary(contentType string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if params["boundary"] == "" {
+		err := errors.New("no boundary found")
+		return "", err
+	}
 	return params["boundary"], nil
 }
 
