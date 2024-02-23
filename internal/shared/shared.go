@@ -33,3 +33,10 @@ type Attendance struct {
 	Attending       bool
 	DayOfAttendance string
 }
+
+type AttendanceList struct {
+	Id           int
+	TimeReceived string
+	Course       string
+	List         []byte
+}

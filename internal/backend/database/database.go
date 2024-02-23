@@ -44,7 +44,7 @@ func (item *BackendDatabase) CreateDatabase() {
 	}
 
 	// create AttendanceList table
-	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeRecieved TEXT,Course VARCHAR(12) NOT NULL, List BLOB NOT NULL);")
+	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeReceived TEXT,Course VARCHAR(12) NOT NULL, List BLOB NOT NULL);")
 	if err != nil {
 		log.Fatal("Could not create attendance list table on database: ", err)
 	}
@@ -169,7 +169,7 @@ func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course str
 
 	// check for already existing attendance lists for the current day and override if they are older
 	// prepared statement to check if an attendance list fot the same day already exists
-	searchList, err := item.database.Prepare("SELECT TimeRecieved FROM AttendanceList WHERE Course = ? AND DATE(TimeRecieved) = DATE(?)")
+	searchList, err := item.database.Prepare("SELECT TimeReceived FROM AttendanceList WHERE Course = ? AND DATE(TimeReceived) = DATE(?)")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
@@ -177,20 +177,20 @@ func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course str
 
 	result := searchList.QueryRow(course, dateTime)
 
-	var timeRecievedStr string
+	var timeReceivedStr string
 
-	err = result.Scan(&timeRecievedStr)
+	err = result.Scan(&timeReceivedStr)
 	if err == nil {
 		// found existing attendance lists
-		timeExisting, err := time.Parse("2006-01-02 15:04:05", timeRecievedStr)
+		timeExisting, err := time.Parse("2006-01-02 15:04:05", timeReceivedStr)
 		if err != nil {
-			log.Println("Could not pare time from sqlite to go")
+			log.Println("Could not parse time from sqlite to go")
 			return err
 		}
 
 		// check if existing list needs to be overwritten and overwrite if true
 		if timeExisting.Before(dateTime) {
-			deleteList, err := item.database.Prepare("DELETE FROM AttendanceList WHERE TimeRecieved = ? AND Course = ?")
+			deleteList, err := item.database.Prepare("DELETE FROM AttendanceList WHERE TimeReceived = ? AND Course = ?")
 			if err != nil {
 				log.Fatal("Could not create database prepared statement", err)
 			}
@@ -219,14 +219,14 @@ func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course str
 
 func (item *BackendDatabase) insertAttendanceListHelper(dateTime time.Time, course string, list []byte) error {
 	// prepared statement to insert new attendance list
-	insertList, err := item.database.Prepare("INSERT INTO AttendanceList (TimeRecieved, Course, List) VALUES (?, ?, ?);")
+	insertList, err := item.database.Prepare("INSERT INTO AttendanceList (TimeReceived, Course, List) VALUES (?, ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
 	defer insertList.Close()
 
 	// execute prepared statement
-	_, err = insertList.Exec(dateTime, course, list)
+	_, err = insertList.Exec(dateTime.Format("2006-01-02 15:04:05"), course, list)
 	if err != nil {
 		log.Println("Could not add attendance list ", err)
 		return err
@@ -277,7 +277,7 @@ func (item *BackendDatabase) GetLatestListDatePerCourse(course string) (string, 
 	}
 
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DATE(TimeRecieved) FROM AttendanceList WHERE Course = ? ORDER BY TimeRecieved DESC LIMIT 1")
+	stmt, err := item.database.Prepare("SELECT DATE(TimeReceived) FROM AttendanceList WHERE Course = ? ORDER BY TimeReceived DESC LIMIT 1")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return "", err
@@ -378,6 +378,33 @@ func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.At
 			return nil, errors.New("could not get all students per course")
 		}
 
+		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+func (item *BackendDatabase) GetAllAttendanceLists() ([]yaac_shared.AttendanceList, error) {
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT ListId, TimeReceived, Course, List FROM AttendanceList")
+	if err != nil {
+		log.Println("Could not create database prepared statement ", err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []yaac_shared.AttendanceList
+	for rows.Next() {
+		var row yaac_shared.AttendanceList
+		if err := rows.Scan(&row.Id, &row.TimeReceived, &row.Course, &row.List); err != nil {
+			log.Println("Could not get all attendance lists")
+			return nil, errors.New("could not get all attendance lists")
+		}
 		result = append(result, row)
 	}
 
