@@ -11,17 +11,9 @@ import (
 	"strings"
 	"time"
 
-	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 )
-
-// can be deleted
-func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
-	b.GetMailsToday()
-	//go MailService(input.MailServer, input.Email, input.Password)
-	return "Please read log!"
-}
 
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
@@ -60,7 +52,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 			continue
 		}
 
-		if b.checkMailSubject(mailstring) && b.checkDatetime(mailstring) { //need to be added
+		if b.checkMailSubject(mailstring) && b.checkDatetime(mailstring) {
 			maildata_temp, err := b.processMail(mailstring)
 			if err == nil {
 				maildata = append(maildata, maildata_temp)
@@ -72,101 +64,6 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	return maildata, nil
 }
-
-/* kann gelöscht werden
-func getLatestMessage(serverAddr string, username string, password string) (string, error) {
-
-	// Connect to server
-	c, err := client.DialTLS(serverAddr, nil)
-	if err != nil {
-		return "", err
-	}
-	log.Println("Connected to server at: ", serverAddr)
-
-	// close connection to server when data was recieved
-	defer c.Logout()
-
-	// login to the email server
-	if err := c.Login(username, password); err != nil {
-		return "", err
-	}
-	log.Println("Logged in to server at: ", serverAddr)
-
-	// Select to default INBOX, would not work if renamed
-	// TODO: in actual implementation return an error for this and show a filed for inbox selection
-	_, err = c.Select("INBOX", false)
-	if err != nil {
-		return "", err
-	}
-
-	// Get first unseen message
-	//firstUnseen := mbox.UnseenSeqNum
-	//seqset := new(imap.SeqSet)
-	//seqset.AddRange(firstUnseen, mbox.Messages)
-	//seqset.AddNum(firstUnseen)
-	//seqset.AddRange(1, mbox.Messages)
-
-	// Get the whole message body
-	//items := []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}
-
-	// Get only unseen Messages
-	criteria := imap.NewSearchCriteria()
-	criteria.WithoutFlags = []string{imap.SeenFlag}
-	ids, err := c.Search(criteria)
-	if err != nil {
-		return "", err
-	}
-
-	// Create a sequenz for the found mails
-	seqset := new(imap.SeqSet)
-	seqset.AddNum(ids...)
-
-	// Channel for mail messages
-	messages := make(chan *imap.Message)
-
-	// Fetching mails
-	go func() {
-		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
-			log.Println(err)
-		}
-	}()
-
-	// Check all unread messages
-	for msg := range messages {
-		if msg == nil {
-			log.Println("Error: Could not read Mail")
-			continue
-		}
-
-		mailstring, err := getMailasString(msg)
-		if err == nil {
-			log.Println("Error decoding mail")
-		} else {
-			subject, err := getSubject(mailstring)
-			if err == nil {
-				log.Println("Error decoding mail")
-			} else {
-				log.Printf("Mail detected with Subject: %v\n", subject)
-
-				// Check if mail Subject is correct
-
-				image, err := getBase64AttachmentFromMailString(mailstring)
-				if err == nil {
-					log.Println("Image Attachment identified")
-					err := writeToDatabase(image)
-					if err != nil {
-						log.Println(("Error writing to Database"))
-					} else {
-						// Mark Mail as read
-					}
-				}
-			}
-		}
-	}
-	return "Sucessfull!", err
-}
-
-*/
 
 // getBoundary needs the contentType part of the mail and returns the value of boundary
 func (b *BackendMail) getBoundary(contentType string) (string, error) {
@@ -249,7 +146,7 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 			}
 		}
 	}
-	// Return Error
+	// Return Error if no image found
 	err = errors.New("found no attached image in mail")
 	return nil, err
 }
@@ -385,22 +282,6 @@ func (b *BackendMail) checkMailSubject(mailstring string) bool {
 	}
 	return false
 }
-
-/*
-// markMailAsRead needs the mail client and the imap message and marks the message as read
-// returns an error if it didn't work otherwise nil
-func (b *BackendMail) markMailAsRead(c *client.Client, msg *imap.Message) error {
-	seqnums := new(imap.SeqSet)
-	seqnums.AddNum(msg.SeqNum)
-	item := imap.FormatFlagsOp(imap.AddFlags, true)
-	flags := []interface{}{imap.SeenFlag}
-	if err := c.Store(seqnums, item, flags, nil); err != nil {
-		return err
-	}
-	return nil
-}
-
-*/
 
 // connectToServer needs the server address and conects to the server
 // returns the client and an error
