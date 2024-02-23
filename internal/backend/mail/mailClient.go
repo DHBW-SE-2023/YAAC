@@ -181,7 +181,6 @@ func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 		return nil, nil, err
 	}
 
-
 	//login with the user crudentials
 	c, err = b.logInToInbox(c, b.username, b.password)
 	if err != nil {
@@ -298,7 +297,7 @@ func (b *BackendMail) connectToServer(serverAddr string) (*client.Client, error)
 	c, err := client.DialTLS(serverAddr, nil)
 	if err != nil {
 		log.Printf("Error: %v. Trying without TLS ...", err)
-		c, err := client.Dial(serverAddr)
+		c, err = client.Dial(serverAddr)
 		if err != nil {
 			log.Printf("Error: %v", err)
 			return nil, err
