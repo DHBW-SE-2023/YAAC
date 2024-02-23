@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DHBW-SE-2023/YAAC/internal/cv"
+	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
 	"github.com/otiai10/gosseract"
 	"gocv.io/x/gocv"
 )
@@ -45,7 +45,7 @@ func TestStudentNameRecognition(t *testing.T) {
 		t.Fatalf("Could not open image with path %v. The current path is %v", attendanceListPath, wd)
 	}
 
-	img = cv.FindTable(img)
+	img = imgproc.FindTable(img)
 
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
@@ -69,7 +69,7 @@ func TestStudentNameRecognition(t *testing.T) {
 
 	gocv.Filter2D(img, &img, -1, sharpeningKernel, image.Pt(-1, -1), 0, gocv.BorderDefault)
 
-	table := cv.NewTable(img)
+	table := imgproc.NewTable(img)
 	img = table.Image.Clone()
 
 	kernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))

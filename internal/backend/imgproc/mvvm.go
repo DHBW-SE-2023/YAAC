@@ -1,4 +1,4 @@
-package yaac_backend_opencv
+package yaac_backend_imgproc
 
 type mvvm interface {
 }

@@ -1,4 +1,4 @@
-package cv
+package yaac_backend_imgproc
 
 import (
 	"bytes"
