@@ -10,6 +10,6 @@ func (m *MVVM) MailFormUpdated(data yaac_shared.EmailData) {
 	var mail_window = yaac_frontend_mail.New(m)
 	var backend, _ = yaac_backend_mail.New(m, "webserver:port", "mail-adresse", "password")
 
-	resp := backend.GetResponse(data)
+	resp := backend.GetResponse()
 	mail_window.UpdateResultLabel(resp)
 }

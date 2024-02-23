@@ -15,6 +15,13 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
+// only for testing, can be removed
+func (b *BackendMail) GetResponse() string {
+	//msg, err := getLatestMessage(input.MailServer, input.Email, input.Password)
+	b.GetMailsToday()
+	return "read lg"
+}
+
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
 // It extracts the attached image as binary data.
