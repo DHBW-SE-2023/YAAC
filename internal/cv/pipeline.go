@@ -8,6 +8,8 @@ import (
 
 	"github.com/otiai10/gosseract"
 	"gocv.io/x/gocv"
+
+	"golang.org/x/exp/slices"
 )
 
 func FindTable(img gocv.Mat) gocv.Mat {
@@ -76,13 +78,8 @@ func FindTable(img gocv.Mat) gocv.Mat {
 	return img
 }
 
-type ReviewedName struct {
-	Name  string
-	Valid bool
-}
-
 // Expects an image which is made up of the table in question.
-func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
+func ReviewTable(img gocv.Mat) (Table, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
@@ -102,7 +99,7 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 
 	sharpeningKernel, err := gocv.NewMatFromBytes(3, 3, gocv.MatTypeCV8S, binaryK.Bytes())
 	if err != nil {
-		return nil, err
+		return Table{}, err
 	}
 
 	gocv.Filter2D(img, &img, -1, sharpeningKernel, image.Pt(-1, -1), 0, gocv.BorderDefault)
@@ -123,101 +120,52 @@ func ReviewTable(img gocv.Mat) ([]ReviewedName, error) {
 	defer tesseractClient.Close()
 	tesseractClient.SetLanguage("deu")
 
-	namesROI, err := StudentNames(img, table, tesseractClient)
+	table, err = StudentNames(img, table, tesseractClient)
 	if err != nil {
-		return nil, err
+		return Table{}, err
 	}
-
-	results := make([]ReviewedName, 0, len(namesROI))
 
 	dyBot := 2
 	dyTop := 2
 	dxLeft := 2
 	dxRight := 2
-	for _, n := range namesROI {
-		r := image.Rect(n.ROI().Min.X+dxLeft, n.ROI().Min.Y+dyTop, n.ROI().Max.X-dxRight, n.ROI().Max.Y-dyBot)
+	for i, row := range table.Rows {
+		r := image.Rect(row.SignatureROI.Min.X+dxLeft, row.SignatureROI.Min.Y+dyTop, row.SignatureROI.Max.X-dxRight, row.SignatureROI.Max.Y-dyBot)
 		roi := img.Region(r)
 		valid := ValidSignature(roi.Clone())
-		results = append(results, ReviewedName{n.Name(), valid})
+		table.Rows[i].Valid = valid
 	}
 
-	return results, nil
+	return table, nil
 }
 
-type NameROI struct {
-	name string
-	roi  image.Rectangle
-}
-
-func (n *NameROI) Name() string {
-	return n.name
-}
-
-func (n *NameROI) ROI() image.Rectangle {
-	return n.roi
-}
-
-func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) ([]NameROI, error) {
-	shape := table.Image.Size()
+func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, error) {
 	dyBot := 2
 	dyTop := 4
 	dxLeft := 2
 	dxRight := 30
 
-	rois := make([]NameROI, 0, len(table.Rows))
-	for _, row := range table.Rows {
-		// If len(row) > 10, then we assume the row is deformed
-		if len(row) > 10 {
-			continue
-		}
-
-		// We need the columns num, name, signature
-		if len(row) < 2 {
-			continue
-		}
-
-		var nameCell image.Rectangle
-		nextIdx := 0
-		for _, r := range row {
-			// The name and signature column have at least a width of 30%
-			nextIdx = nextIdx + 1
-			if r.Dx() <= int(0.30*float32(shape[0])) || r.Dy() <= int(0.01*float32(shape[1])) {
-				continue
-			}
-
-			nameCell = r
-			break
-		}
-
-		// We need at least two columns left
-		if nextIdx > len(row)-1 {
-			nextIdx = 0
-			continue
-		}
-
-		sigCell := row[nextIdx]
-		roi := image.Rect(nameCell.Min.X+dxLeft, nameCell.Min.Y+dyTop, nameCell.Max.X-dxRight, nameCell.Max.Y-dyBot)
-		sigROI := image.Rect(sigCell.Min.X+dxLeft, sigCell.Min.Y+dyTop, sigCell.Max.X-dxRight, sigCell.Max.Y-dyBot)
-
-		roiImg := img.Region(roi)
+	for i, row := range table.Rows {
+		nameROI := image.Rect(row.NameROI.Min.X+dxLeft, row.NameROI.Min.Y+dyTop, row.NameROI.Max.X-dxRight, row.NameROI.Max.Y-dyBot)
+		nameROIImg := img.Region(nameROI)
 
 		// Tesseract accepts (among others) the following formats: PNG, JPEG, ...
 		// We choose PNG, because it is lossless and it doesn't have block artifacts
-		roiPng, err := gocv.IMEncode(gocv.PNGFileExt, roiImg)
+		roiPng, err := gocv.IMEncode(gocv.PNGFileExt, nameROIImg)
 		if err != nil {
-			return nil, err
+			return Table{}, err
 		}
 
 		client.SetImageFromBytes(roiPng.GetBytes())
-		text, err := client.Text()
+		name, err := client.Text()
 		if err != nil {
-			return nil, err
+			return Table{}, err
 		}
 
-		rois = append(rois, NameROI{text, sigROI})
+		table.Rows[i].Name = name
 	}
 
-	return rois, nil
+	return table, nil
 }
 
 func ValidSignature(img gocv.Mat) bool {
@@ -236,11 +184,13 @@ func ValidSignature(img gocv.Mat) bool {
 		merged = append(merged, r)
 	}
 
-	merged = merge(merged, 0.01*float64(img.Cols()))
+	merged = merge(merged, 0.01*float64(img.Cols()), 0.01*float64(img.Rows()))
 
 	filteredParts := make([]image.Rectangle, 0)
+	minWidth := img.Cols() / 10
+	minHeight := img.Rows() / 2
 	for _, r := range merged {
-		if r.Dx() < img.Cols()/10 || r.Dy() < img.Rows()/2 {
+		if r.Dx() < minWidth || r.Dy() < minHeight {
 			continue
 		}
 
@@ -248,44 +198,36 @@ func ValidSignature(img gocv.Mat) bool {
 	}
 
 	valid := len(filteredParts) == 1
-
 	return valid
 }
 
-func merge(merged []image.Rectangle, delta float64) []image.Rectangle {
-	finished := false
-	for !finished {
-		finished = true
-		newMerged := make([]image.Rectangle, 0, len(merged))
+func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rectangle {
+	merged := make([]image.Rectangle, 0, len(rects))
 
-		for _, r1 := range merged {
-			wasMerged := false
-			// for _, r2 := range merged[:i] {
-			for _, r2 := range newMerged {
-				dx12 := math.Abs(float64(r1.Max.X - r2.Min.X))
-				dx21 := math.Abs(float64(r2.Max.X - r1.Min.X))
-				dx := min(dx12, dx21)
-
-				closeEnough := dx < delta
-				if r1.Overlaps(r2) || closeEnough {
-					finished = false
-					wasMerged = true
-
-					minX, minY := min(r1.Min.X, r2.Min.X), min(r1.Min.Y, r2.Min.Y)
-					maxX, maxY := max(r1.Max.X, r2.Max.X), max(r1.Max.Y, r2.Max.Y)
-					newMerged = append(newMerged, image.Rect(minX, minY, maxX, maxY))
-				}
+	for i, r1 := range rects {
+		mr := r1
+		for j, r2 := range rects {
+			if i == j {
+				continue
 			}
 
-			// No rectangles were merged with r1,
-			// so we append r1 as general to newMerged
-			if !wasMerged {
-				newMerged = append(newMerged, r1)
+			dx12 := math.Abs(float64(r1.Max.X - r2.Min.X))
+			dx21 := math.Abs(float64(r2.Max.X - r1.Min.X))
+			dx := min(dx12, dx21)
+
+			dy12 := math.Abs(float64(r1.Max.Y - r2.Min.Y))
+			dy21 := math.Abs(float64(r2.Max.Y - r1.Min.Y))
+			dy := min(dy12, dy21)
+
+			closeEnough := dx < deltaX && dy < deltaY
+			if r1.Overlaps(r2) || closeEnough {
+				mr = mr.Union(r2)
 			}
 		}
-
-		merged = newMerged
+		merged = append(merged, mr)
 	}
+
+	slices.Compact[[]image.Rectangle, image.Rectangle](merged)
 
 	return merged
 }

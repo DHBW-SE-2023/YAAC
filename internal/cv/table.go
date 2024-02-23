@@ -9,7 +9,15 @@ import (
 
 type Table struct {
 	Image gocv.Mat
-	Rows  [][]image.Rectangle
+	Rows  []TableRow
+}
+
+type TableRow struct {
+	Name         string
+	Valid        bool
+	NameROI      image.Rectangle
+	SignatureROI image.Rectangle
+	TotalROI     image.Rectangle
 }
 
 // Expects a grayscale image
@@ -22,11 +30,11 @@ func NewTable(img gocv.Mat) Table {
 
 	invImg := img.Clone()
 
-	size := img.Size()
+	shape := img.Size()
 
 	// TODO: This needs some more work, why 50 and 35?
-	horizontalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(size[0]/50, 1))
-	verticalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, size[1]/35))
+	horizontalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[0]/50, 1))
+	verticalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, shape[1]/35))
 	vhKernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
 
 	// TODO: Tweek this number or it takes longer than necessary
@@ -64,7 +72,7 @@ func NewTable(img gocv.Mat) Table {
 		return boundingRects[i].Max.Y < boundingRects[j].Max.Y
 	})
 
-	rows := [][]image.Rectangle{}
+	rows := []TableRow{}
 
 	newIdx := 0
 	for i, rect := range boundingRects {
@@ -72,6 +80,7 @@ func NewTable(img gocv.Mat) Table {
 			continue
 		}
 
+		// Cell is to small, we skip it. Values were found empirically
 		if rect.Dx() < int(float32(img.Cols())*0.04) || rect.Dy() < int(float32(img.Rows())*0.02) {
 			continue
 		}
@@ -80,12 +89,18 @@ func NewTable(img gocv.Mat) Table {
 		row := make([]image.Rectangle, 0, 10)
 		currentMaxHeight := rect.Min.Y + meanHeight/2
 
+		minX, minY, maxX, maxY := 0, 0, 0, 0
 		for _, next := range boundingRects[i:] {
 			if next.Min.Y > currentMaxHeight {
 				break
 			}
 
 			row = append(row, next)
+
+			minX = min(minX, next.Min.X)
+			minY = min(minY, next.Min.Y)
+			maxX = max(maxX, next.Max.X)
+			maxY = max(maxY, next.Max.Y)
 		}
 
 		newIdx = i + len(row)
@@ -94,7 +109,32 @@ func NewTable(img gocv.Mat) Table {
 			return row[i].Min.X < row[j].Min.X
 		})
 
-		rows = append(rows, row)
+		// FIXME: Should we fail if we have a misformed row?
+		// We need the columns num, name, signature
+		// If not, we assume the column is malformed and skip it
+		if len(row) != 3 {
+			continue
+		}
+
+		tableRow := TableRow{
+			// IndexROI: row[0], but it is unused
+			NameROI:      row[1],
+			SignatureROI: row[2],
+			TotalROI:     image.Rect(minX, minY, maxX, maxY),
+			Name:         "",
+			Valid:        false,
+		}
+
+		// The name and signature column have at least a width of 30%
+		if tableRow.NameROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.NameROI.Dy() <= int(0.01*float32(shape[1])) {
+			continue
+		}
+
+		if tableRow.SignatureROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.SignatureROI.Dy() <= int(0.01*float32(shape[1])) {
+			continue
+		}
+
+		rows = append(rows, tableRow)
 	}
 
 	return Table{
