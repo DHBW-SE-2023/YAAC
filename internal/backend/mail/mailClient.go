@@ -19,7 +19,7 @@ import (
 func (b *BackendMail) GetResponse() string {
 	//msg, err := getLatestMessage(input.MailServer, input.Email, input.Password)
 	b.GetMailsToday()
-	return "read lg"
+	return "read log"
 }
 
 // GetMailsToday fetches all unread mails from today
@@ -181,6 +181,7 @@ func (b *BackendMail) setupMail() (*client.Client, *imap.SeqSet, error) {
 		return nil, nil, err
 	}
 
+
 	//login with the user crudentials
 	c, err = b.logInToInbox(c, b.username, b.password)
 	if err != nil {
@@ -296,7 +297,12 @@ func (b *BackendMail) connectToServer(serverAddr string) (*client.Client, error)
 	// Connect to server
 	c, err := client.DialTLS(serverAddr, nil)
 	if err != nil {
-		return nil, err
+		log.Printf("Error: %v. Trying without TLS ...", err)
+		c, err := client.Dial(serverAddr)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			return nil, err
+		}
 	}
 	log.Println("Connected to server at: ", serverAddr)
 	return c, err
@@ -307,6 +313,7 @@ func (b *BackendMail) connectToServer(serverAddr string) (*client.Client, error)
 func (b *BackendMail) logInToInbox(c *client.Client, username string, password string) (*client.Client, error) {
 	// login to the email server
 	if err := c.Login(username, password); err != nil {
+		log.Printf("Error: %v", err)
 		return nil, err
 	}
 	log.Println("Logged in to server")
