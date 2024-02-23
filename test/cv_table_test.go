@@ -85,7 +85,7 @@ func TestStudentNameRecognition(t *testing.T) {
 	defer tesseractClient.Close()
 	tesseractClient.SetLanguage("deu")
 
-	table, err = cv.StudentNames(img, table, tesseractClient)
+	table, err = imgproc.StudentNames(img, table, tesseractClient)
 	if err != nil {
 		t.Fatalf("cv.StudentNames: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestStudentNameRecognition(t *testing.T) {
 }
 
 func TestReviewTable(t *testing.T) {
-	validSignatures := []cv.TableRow{
+	validSignatures := []imgproc.TableRow{
 		{Name: "Baumann, Lysann", Valid: true},
 		{Name: "Beetz, Robin Georg", Valid: true},
 		{Name: "Beuerle, Marco", Valid: true},
@@ -148,8 +148,8 @@ func TestReviewTable(t *testing.T) {
 		t.Fatalf("Could not open image with path %v. The current path is %v", attendanceListPath, wd)
 	}
 
-	img = cv.FindTable(img)
-	table, err := cv.ReviewTable(img)
+	img = imgproc.FindTable(img)
+	table, err := imgproc.ReviewTable(img)
 	if err != nil {
 		t.Fatalf("cv.ReviewTable: %v", err)
 	}

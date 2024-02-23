@@ -8,7 +8,7 @@ import (
 )
 
 func (m *MVVM) StartGoCV(img_path string) {
-	_ = yaac_backend_opencv.New(m)
+	_ = yaac_backend_opencv.NewBackend(m)
 	gocv_window := yaac_frontend_opencv.New(m)
 
 	var msg string
