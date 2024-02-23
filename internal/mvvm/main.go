@@ -10,7 +10,7 @@ import (
 var databaseinst *yaac_backend_database.BackendDatabase
 
 func (m *MVVM) StartApplication() {
-	m.CreateOrConnectDatabase()
+	m.CreateOrConnectDatabase("./data/", "data.db")
 	m.OpenMainWindow()
 }
 
@@ -19,10 +19,10 @@ func (m *MVVM) OpenMainWindow() {
 	frontend.OpenMainWindow()
 }
 
-func (m *MVVM) CreateOrConnectDatabase() {
-	databaseinst = yaac_backend_database.New(m, "./data/", "data.db")
+func (m *MVVM) CreateOrConnectDatabase(path string, dbName string) {
+	databaseinst = yaac_backend_database.New(m, path, dbName)
 
-	if _, err := os.Stat("./data/data.db"); err != nil {
+	if _, err := os.Stat(path + dbName); err != nil {
 		databaseinst.CreateDatabase()
 	} else {
 		log.Println("Found existing database")
