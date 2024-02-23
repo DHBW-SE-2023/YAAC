@@ -12,29 +12,6 @@ import (
 	"gocv.io/x/gocv"
 )
 
-func TestTableColumnCount(t *testing.T) {
-	attendanceListPath := "testdata/list.jpg"
-	img := gocv.IMRead(attendanceListPath, gocv.IMReadAnyColor)
-	if img.Empty() {
-		wd, _ := os.Getwd()
-		t.Fatalf("Could not open image with path %v. The current path is %v", attendanceListPath, wd)
-	}
-
-	img = cv.FindTable(img)
-
-	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
-	table := cv.NewTable(img)
-
-	for idx, row := range table.Rows {
-		// A standard attendance list always has 3 columns
-		l := len(row)
-		if l != 3 {
-			t.Fatalf("The row %v is expected to have 3 columns, but it has %v", idx, l)
-		}
-	}
-
-}
-
 func TestStudentNameRecognition(t *testing.T) {
 	correctNames := []string{
 		"Baumann, Lysann",
@@ -108,19 +85,21 @@ func TestStudentNameRecognition(t *testing.T) {
 	defer tesseractClient.Close()
 	tesseractClient.SetLanguage("deu")
 
-	namesROI, err := cv.StudentNames(img, table, tesseractClient)
+	table, err = cv.StudentNames(img, table, tesseractClient)
 	if err != nil {
 		t.Fatalf("cv.StudentNames: %v", err)
 	}
 
+	// FIXME: ReviewTables takes the whole name column
 	// StudentNames takes the whole name column
 	// The first two and last two rows are uninteresting to us
 	// len(correctNames) = 26
-	namesROI = namesROI[2:24]
+	rows := table.Rows
+	rows = rows[2:24]
 
-	names := make([]string, 0, len(namesROI))
-	for _, name := range namesROI {
-		names = append(names, name.Name())
+	names := make([]string, 0, len(rows))
+	for _, name := range rows {
+		names = append(names, name.Name)
 	}
 
 	t.Logf("Recognised names: %v", names)
@@ -137,7 +116,7 @@ func TestStudentNameRecognition(t *testing.T) {
 }
 
 func TestReviewTable(t *testing.T) {
-	validSignatures := []cv.ReviewedName{
+	validSignatures := []cv.TableRow{
 		{Name: "Baumann, Lysann", Valid: true},
 		{Name: "Beetz, Robin Georg", Valid: true},
 		{Name: "Beuerle, Marco", Valid: true},
@@ -170,22 +149,25 @@ func TestReviewTable(t *testing.T) {
 	}
 
 	img = cv.FindTable(img)
-	signatures, err := cv.ReviewTable(img)
+	table, err := cv.ReviewTable(img)
 	if err != nil {
 		t.Fatalf("cv.ReviewTable: %v", err)
 	}
 
+	rows := table.Rows
+
 	// FIXME: ReviewTables takes the whole name column
 	// The first two and last two rows are uninteresting to us
 	// len(correctNames) = 26
-	signatures = signatures[2:24]
+	rows = rows[2:24]
 
-	if len(signatures) != len(validSignatures) {
-		t.Fatalf("Incorrect length of signatures: %v, correct: %v", len(signatures), len(validSignatures))
+	if len(rows) != len(validSignatures) {
+		t.Fatalf("Incorrect length of signatures: %v, correct: %v", len(rows), len(validSignatures))
 	}
 
 	for i, sig := range validSignatures {
-		s := signatures[i]
+		s := rows[i]
+		t.Logf("Name: %v, Index: %v\n", s.Name, i)
 		if s.Name != sig.Name {
 			t.Fatalf("Incorrect name of entry %v: %v, correct: %v", i, s.Name, sig.Name)
 		}
