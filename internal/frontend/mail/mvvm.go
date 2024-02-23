@@ -6,7 +6,7 @@ import (
 
 type mvvm interface {
 	MailFormUpdated(data yaac_shared.EmailData)
-	StartGoCV(img_path string)
+	ValidateTable(img []byte)
 }
 
 type WindowMail struct {
