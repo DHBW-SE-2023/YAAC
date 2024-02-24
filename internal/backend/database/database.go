@@ -39,6 +39,12 @@ type AttendanceList struct {
 	Attendencies []Attendance `gorm:"foreignKey:List"`
 }
 
+type Setting struct {
+	gorm.Model
+	Setting string
+	Value   any
+}
+
 func (item *BackendDatabase) ConnectDatabase(dbPath string) error {
 	// We save private data, so noone but us may read it
 	err := os.MkdirAll(path.Dir(dbPath), 0700)
@@ -61,53 +67,70 @@ func (item *BackendDatabase) ConnectDatabase(dbPath string) error {
 
 	item.DB = db
 
-	db.AutoMigrate(&Course{}, &Student{}, &AttendanceList{}, &Attendance{})
+	db.AutoMigrate(&Course{}, &Student{}, &AttendanceList{}, &Attendance{}, &Setting{})
 
 	return nil
 }
 
-func (item *BackendDatabase) InsertList(list AttendanceList) AttendanceList {
-	item.DB.Model(&AttendanceList{}).Create(&list)
-	return list
+func (item *BackendDatabase) InsertList(list AttendanceList) (AttendanceList, error) {
+	err := item.DB.Model(&AttendanceList{}).Create(&list).Error
+	return list, err
 }
 
 // `list` needs the field `Id` to be not null.
-func (item *BackendDatabase) UpdateList(list AttendanceList) AttendanceList {
-	item.DB.Save(&list)
-	return list
+func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, error) {
+	err := item.DB.Save(&list).Error
+	return list, err
 }
 
 // [..., end)
-func (item *BackendDatabase) LatestList(course Course, end time.Time) AttendanceList {
+func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list)
-	return list
+	err := item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list).Error
+	return list, err
 }
 
 // [start, end)
 // Returns all lists, even outdated ones
-func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) []AttendanceList {
+func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list)
-	return list
+	err := item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	return list, err
 }
 
 // [start, end)
 // Returns all lists, even outdated ones
-func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) []AttendanceList {
+func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	item.DB.Model(&AttendanceList{}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list)
-	return list
+	err := item.DB.Model(&AttendanceList{}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	return list, err
 }
 
-func (item *BackendDatabase) Courses() []Course {
+func (item *BackendDatabase) Courses() ([]Course, error) {
 	courses := []Course{}
-	item.DB.Model(&Course{}).Find(&courses)
-	return courses
+	err := item.DB.Model(&Course{}).Find(&courses).Error
+	return courses, err
 }
 
-func (item *BackendDatabase) CourseStudents(course Course) []Student {
+func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 	students := []Student{}
-	item.DB.Model(&Course{}).Where(course).Select("Students").Find(&students)
-	return students
+	err := item.DB.Model(&Course{}).Where(course).Select("Students").Find(&students).Error
+	return students, err
+}
+
+func (item *BackendDatabase) Settings() ([]Setting, error) {
+	settings := []Setting{}
+	err := item.DB.Model(&Setting{}).Find(&settings).Error
+	return settings, err
+}
+
+func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, error) {
+	err := item.DB.Model(&Setting{}).Save(&settings).Error
+	return settings, err
+}
+
+func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
+	settings := []Setting{}
+	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
+	return settings, err
 }

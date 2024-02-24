@@ -13,3 +13,18 @@ func (m *MVVM) MailFormUpdated(data yaac_shared.EmailData) {
 	resp := backend.GetResponse(data)
 	mail_window.UpdateResultLabel(resp)
 }
+
+// TODO: Refresh mails, extract mails that we are interessted in
+// extract the image and pass it to the imgproc
+func (m *MVVM) MailUpdateData() {
+	panic("Not implemented")
+}
+
+func (m *MVVM) MailRestartServer() {
+	panic("Not implemented")
+}
+
+func (m *MVVM) MailsRefresh() {
+	m.MailUpdateData()
+	panic("Not implemented")
+}

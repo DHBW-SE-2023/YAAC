@@ -29,3 +29,4 @@ type Attendance = database.Attendance
 type AttendanceList = database.AttendanceList
 type Student = database.Student
 type Course = database.Course
+type Setting = database.Setting
