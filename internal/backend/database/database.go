@@ -333,7 +333,7 @@ func (item *BackendDatabase) GetAllCourses() ([]string, error) {
 	return result, nil
 }
 
-func (item *BackendDatabase) GetAllStudentsPerCourse(courseId string) ([]yaac_shared.Student, error) {
+func (item *BackendDatabase) GetAllStudentsPerCourse(courseId int) ([]yaac_shared.Student, error) {
 	// prepare statement
 	stmt, err := item.database.Prepare("SELECT DISTINCT FName, LName FROM Student WHERE CourseId = ?")
 	if err != nil {

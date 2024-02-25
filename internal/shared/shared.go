@@ -37,6 +37,11 @@ type Attendance struct {
 type AttendanceList struct {
 	Id           int
 	TimeReceived string
-	Course       string
+	CourseId     int
 	List         []byte
+}
+
+type Course struct {
+	Id   int
+	Name string
 }
