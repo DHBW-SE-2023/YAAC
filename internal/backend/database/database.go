@@ -31,8 +31,14 @@ func (item *BackendDatabase) CreateDatabase() {
 	defer log.Println("Database created")
 	defer db.Close()
 
+	// create course table
+	_, err = db.Exec("CREATE TABLE Course (CourseId INTEGER PRIMARY KEY, CName VARCHAR(12));")
+	if err != nil {
+		log.Fatal("Could not create course table on database: ", err)
+	}
+
 	// create Student table
-	_, err = db.Exec("CREATE TABLE Student (StudentId INTEGER PRIMARY KEY, LName VARCHAR(50) NOT NULL, FName VARCHAR(50) NOT NULL, Course VARCHAR(12) NOT NULL, StatusOfMatriculation BOOLEAN NOT NULL Default True);")
+	_, err = db.Exec("CREATE TABLE Student (StudentId INTEGER PRIMARY KEY, LName VARCHAR(50) NOT NULL, FName VARCHAR(50) NOT NULL, CourseId VARCHAR(12) NOT NULL, StatusOfMatriculation BOOLEAN NOT NULL Default True, FOREIGN KEY (CourseId) REFERENCES Course (CourseId) ON DELETE CASCADE);")
 	if err != nil {
 		log.Fatal("Could not create student table on database: ", err)
 	}
@@ -44,7 +50,7 @@ func (item *BackendDatabase) CreateDatabase() {
 	}
 
 	// create AttendanceList table
-	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeReceived TEXT,Course VARCHAR(12) NOT NULL, List BLOB NOT NULL);")
+	_, err = db.Exec("CREATE TABLE AttendanceList (ListId INTEGER PRIMARY KEY, TimeReceived TEXT,CourseId VARCHAR(12) NOT NULL, List BLOB NOT NULL, FOREIGN KEY (CourseId) REFERENCES Course (CourseId) ON DELETE CASCADE);")
 	if err != nil {
 		log.Fatal("Could not create attendance list table on database: ", err)
 	}
@@ -68,12 +74,32 @@ func (item *BackendDatabase) DisconnectDatabase() {
 	}
 }
 
+// InsertCourse inserts a course to the database
+func (item *BackendDatabase) InsertCourse(cName string) error {
+	// use prepared statement for faster execution and to prevent sql injection attacks
+	stmt, err := item.database.Prepare("INSERT INTO Course (CName) VALUES (?);")
+	if err != nil {
+		log.Println("Could not create database prepared statement ", err)
+		return err
+	}
+	defer stmt.Close()
+
+	// execute prepared statement
+	_, err = stmt.Exec(cName)
+	if err != nil {
+		log.Println("Could not add attendance: ", err)
+		return err
+	}
+
+	return nil
+}
+
 // InsertAttendance inserts attendance
 func (item *BackendDatabase) InsertAttendance(studentId int, timeOfAttendance time.Time, attending bool) error {
 	// convert Time to YYYY-MM-DD
 	date := timeOfAttendance.Format("2006-01-02")
 
-	// use prepared statement for faster execution and to prevent sql injection attacks
+	// use prepared statement
 	stmt, err := item.database.Prepare("INSERT INTO Attendance (StudentId, DayOfAttendance, Attending) VALUES (?, ?, ?);")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
@@ -124,7 +150,7 @@ func (item *BackendDatabase) UpdateAttendance(studentId int, timeOfAttendance ti
 }
 
 // InsertStudent inserts student to the database
-func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfMatriculation bool, course string) error {
+func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfMatriculation bool, courseId int) error {
 	// check constraints matching
 	if len(lName) > 50 {
 		log.Println("Maximum length for last name is 50")
@@ -136,13 +162,8 @@ func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfM
 		return errors.New("input does not match constraints")
 	}
 
-	if len(course) > 12 {
-		log.Println("Maximum length for course is 12")
-		return errors.New("input does not match constraints")
-	}
-
 	// use prepared statement for faster execution and to prevent sql injection attacks
-	stmt, err := item.database.Prepare("INSERT INTO Student (LName, FName, Course, StatusOfMatriculation) VALUES (?, ?, ?, ?);")
+	stmt, err := item.database.Prepare("INSERT INTO Student (LName, FName, CourseId, StatusOfMatriculation) VALUES (?, ?, ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement ", err)
 	}
@@ -150,7 +171,7 @@ func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfM
 	defer stmt.Close()
 
 	// execute prepared statement
-	_, err = stmt.Exec(lName, fName, course, statusOfMatriculation)
+	_, err = stmt.Exec(lName, fName, courseId, statusOfMatriculation)
 	if err != nil {
 		log.Println("Could not add student: ", err)
 		return err
@@ -160,22 +181,16 @@ func (item *BackendDatabase) InsertStudent(lName string, fName string, statusOfM
 }
 
 // InsertAttendanceList inserts list with time=now by its relative link to the content root
-func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course string, list []byte) error {
-	// check constraint matching
-	if len(course) > 12 {
-		log.Println("Maximum length for course is 12")
-		return errors.New("input does not match constraints")
-	}
-
+func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, courseId int, list []byte) error {
 	// check for already existing attendance lists for the current day and override if they are older
 	// prepared statement to check if an attendance list fot the same day already exists
-	searchList, err := item.database.Prepare("SELECT TimeReceived FROM AttendanceList WHERE Course = ? AND DATE(TimeReceived) = DATE(?)")
+	searchList, err := item.database.Prepare("SELECT TimeReceived FROM AttendanceList WHERE CourseId = ? AND DATE(TimeReceived) = DATE(?)")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
 	defer searchList.Close()
 
-	result := searchList.QueryRow(course, dateTime)
+	result := searchList.QueryRow(courseId, dateTime)
 
 	var timeReceivedStr string
 
@@ -190,26 +205,26 @@ func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course str
 
 		// check if existing list needs to be overwritten and overwrite if true
 		if timeExisting.Before(dateTime) {
-			deleteList, err := item.database.Prepare("DELETE FROM AttendanceList WHERE TimeReceived = ? AND Course = ?")
+			deleteList, err := item.database.Prepare("DELETE FROM AttendanceList WHERE TimeReceived = ? AND CourseId = ?")
 			if err != nil {
 				log.Fatal("Could not create database prepared statement", err)
 			}
 			defer deleteList.Close()
 
 			// execute delete statement
-			if _, err = deleteList.Exec(timeExisting, course); err != nil {
+			if _, err = deleteList.Exec(timeExisting, courseId); err != nil {
 				log.Println("Could not delete existing attendance list to override")
 				return err
 			}
 
-			err = item.insertAttendanceListHelper(dateTime, course, list)
+			err = item.insertAttendanceListHelper(dateTime, courseId, list)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		// no existing attendance lists found
-		err := item.insertAttendanceListHelper(dateTime, course, list)
+		err := item.insertAttendanceListHelper(dateTime, courseId, list)
 		if err != nil {
 			return err
 		}
@@ -217,16 +232,16 @@ func (item *BackendDatabase) InsertAttendanceList(dateTime time.Time, course str
 	return nil
 }
 
-func (item *BackendDatabase) insertAttendanceListHelper(dateTime time.Time, course string, list []byte) error {
+func (item *BackendDatabase) insertAttendanceListHelper(dateTime time.Time, courseId int, list []byte) error {
 	// prepared statement to insert new attendance list
-	insertList, err := item.database.Prepare("INSERT INTO AttendanceList (TimeReceived, Course, List) VALUES (?, ?, ?);")
+	insertList, err := item.database.Prepare("INSERT INTO AttendanceList (TimeReceived, CourseId, List) VALUES (?, ?, ?);")
 	if err != nil {
 		log.Fatal("Could not create database prepared statement", err)
 	}
 	defer insertList.Close()
 
 	// execute prepared statement
-	_, err = insertList.Exec(dateTime.Format("2006-01-02 15:04:05"), course, list)
+	_, err = insertList.Exec(dateTime.Format("2006-01-02 15:04:05"), courseId, list)
 	if err != nil {
 		log.Println("Could not add attendance list ", err)
 		return err
@@ -235,8 +250,8 @@ func (item *BackendDatabase) insertAttendanceListHelper(dateTime time.Time, cour
 	return nil
 }
 
-func (item *BackendDatabase) InsertCurrentAttendanceList(course string, list []byte) error {
-	if err := item.InsertAttendanceList(time.Now(), course, list); err != nil {
+func (item *BackendDatabase) InsertCurrentAttendanceList(courseId int, list []byte) error {
+	if err := item.InsertAttendanceList(time.Now(), courseId, list); err != nil {
 		log.Println("Could not add attendance list: ", err)
 		return err
 	}
@@ -270,26 +285,21 @@ func (item *BackendDatabase) GetStudentFullNameById(studentId int) (string, erro
 	return studentName, nil
 }
 
-func (item *BackendDatabase) GetLatestListDatePerCourse(course string) (string, error) {
-	if len(course) > 12 {
-		log.Println("Maximum length for course is 12")
-		return "", errors.New("input does not match constraints")
-	}
-
+func (item *BackendDatabase) GetLatestListDatePerCourse(courseId string) (string, error) {
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DATE(TimeReceived) FROM AttendanceList WHERE Course = ? ORDER BY TimeReceived DESC LIMIT 1")
+	stmt, err := item.database.Prepare("SELECT DATE(TimeReceived) FROM AttendanceList WHERE CourseId = ? ORDER BY TimeReceived DESC LIMIT 1")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return "", err
 	}
 
-	result := stmt.QueryRow(course)
+	result := stmt.QueryRow(courseId)
 
 	var date string
 
 	if err := result.Scan(&date); err != nil {
-		log.Println("Could not get date of latest attendance list for course: "+course+" ", err)
-		return "", errors.New("could not get date of latest attendance list for course:" + course)
+		log.Println("Could not get date of latest attendance list for course: "+courseId+" ", err)
+		return "", errors.New("could not get date of latest attendance list for course:" + courseId)
 	}
 
 	return date, nil
@@ -297,7 +307,7 @@ func (item *BackendDatabase) GetLatestListDatePerCourse(course string) (string, 
 
 func (item *BackendDatabase) GetAllCourses() ([]string, error) {
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DISTINCT Course FROM AttendanceList")
+	stmt, err := item.database.Prepare("SELECT DISTINCT CourseId, Cname FROM Course")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return nil, err
@@ -323,20 +333,15 @@ func (item *BackendDatabase) GetAllCourses() ([]string, error) {
 	return result, nil
 }
 
-func (item *BackendDatabase) GetAllStudentsPerCourse(course string) ([]yaac_shared.Student, error) {
-	if len(course) > 12 {
-		log.Println("Maximum length for course is 12")
-		return nil, errors.New("input does not match constraints")
-	}
-
+func (item *BackendDatabase) GetAllStudentsPerCourse(courseId string) ([]yaac_shared.Student, error) {
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DISTINCT FName, LName FROM Student WHERE Course = ?")
+	stmt, err := item.database.Prepare("SELECT DISTINCT FName, LName FROM Student WHERE CourseId = ?")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return nil, err
 	}
 
-	rows, err := stmt.Query(course)
+	rows, err := stmt.Query(courseId)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +391,7 @@ func (item *BackendDatabase) GetAllAttendanceWithStudentName() ([]yaac_shared.At
 
 func (item *BackendDatabase) GetAllAttendanceLists() ([]yaac_shared.AttendanceList, error) {
 	// prepare statement
-	stmt, err := item.database.Prepare("SELECT DISTINCT ListId, TimeReceived, Course, List FROM AttendanceList")
+	stmt, err := item.database.Prepare("SELECT DISTINCT ListId, TimeReceived, CourseId, List FROM AttendanceList")
 	if err != nil {
 		log.Println("Could not create database prepared statement ", err)
 		return nil, err
@@ -401,11 +406,53 @@ func (item *BackendDatabase) GetAllAttendanceLists() ([]yaac_shared.AttendanceLi
 	var result []yaac_shared.AttendanceList
 	for rows.Next() {
 		var row yaac_shared.AttendanceList
-		if err := rows.Scan(&row.Id, &row.TimeReceived, &row.Course, &row.List); err != nil {
+		if err := rows.Scan(&row.Id, &row.TimeReceived, &row.CourseId, &row.List); err != nil {
 			log.Println("Could not get all attendance lists")
 			return nil, errors.New("could not get all attendance lists")
 		}
 		result = append(result, row)
+	}
+
+	return result, nil
+}
+
+func (item *BackendDatabase) GetCourseNameById(courseId int) (string, error) {
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT CName FROM Course WHERE CourseId = ?")
+	if err != nil {
+		log.Println("Could not create database prepared statement ", err)
+		return "", err
+	}
+
+	course := stmt.QueryRow(courseId)
+
+	var result string
+
+	err = course.Scan(&result)
+	if err != nil {
+		log.Println("Could not get course name by id")
+		return "", err
+	}
+
+	return result, nil
+}
+
+func (item *BackendDatabase) GetCourseIdByName(cName string) (int, error) {
+	// prepare statement
+	stmt, err := item.database.Prepare("SELECT DISTINCT CourseId FROM Course WHERE CName = ?")
+	if err != nil {
+		log.Println("Could not create database prepared statement ", err)
+		return 0, err
+	}
+
+	course := stmt.QueryRow(cName)
+
+	var result int
+
+	err = course.Scan(&result)
+	if err != nil {
+		log.Println("Could not get course id by name")
+		return 0, err
 	}
 
 	return result, nil
