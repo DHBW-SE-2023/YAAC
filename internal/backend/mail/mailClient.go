@@ -11,9 +11,16 @@ import (
 	"strings"
 	"time"
 
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 )
+
+// can be deleted
+func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
+	b.GetMailsToday()
+	return ""
+}
 
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
@@ -55,6 +62,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 		if b.checkMailSubject(mailstring) && b.checkDatetime(mailstring) {
 			maildata_temp, err := b.processMail(mailstring)
 			if err == nil {
+				log.Println("Successfully added")
 				maildata = append(maildata, maildata_temp)
 			}
 		}
@@ -246,12 +254,13 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailstring))
 	if err != nil {
+		log.Println("Not able to read mail")
 		return time.Now(), err
 	}
 
 	// Read datetime from Mail Header
 	datestring := message.Header.Get("Date")
-	return time.Parse("Mon, 02 Jan 2006 15:04:05 -0700", datestring)
+	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", datestring)
 }
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
@@ -259,6 +268,7 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 func (b *BackendMail) checkDatetime(mailsting string) bool {
 	maildate, err := b.getDatetime(mailsting)
 	if err != nil {
+		log.Printf("Error parsing date from mail: %v", err)
 		return false
 	}
 	mail_year, mail_month, mail_day := maildate.Local().Date()
