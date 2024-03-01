@@ -9,14 +9,14 @@ type mvvm interface {
 
 type BackendDatabase struct {
 	MVVM mvvm
-	path string
+	Path string
 	DB   *gorm.DB
 }
 
 func NewBackend(mvvm mvvm, path string) *BackendDatabase {
 	item := BackendDatabase{
 		MVVM: mvvm,
-		path: path,
+		Path: path,
 	}
 
 	return &item

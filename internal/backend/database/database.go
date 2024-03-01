@@ -14,39 +14,48 @@ import (
 type Course struct {
 	gorm.Model
 	Name     string
-	Students []Student `gorm:"foreignKey:Course"`
+	Students []Student
 }
 
 type Student struct {
 	gorm.Model
 	FirstName        string
 	LastName         string
-	Course           uint
+	CourseID         uint
 	IsImmatriculated bool
 }
 
 type Attendance struct {
-	gorm.Model
-	Student     uint `gorm:"primaryKey;foreignKey:Id;references:Student"`
-	List        uint `gorm:"primaryKey"`
-	IsAttending bool
+	StudentID        uint `gorm:"primaryKey"`
+	AttendanceListID uint `gorm:"primaryKey"` //`gorm:"primaryKey;foreignKey:Id;references:AttendanceList"`
+	IsAttending      bool
+}
+
+func (Attendance) TableName() string {
+	return "Attendancies"
 }
 
 type AttendanceList struct {
-	gorm.Model
-	Course       uint `gorm:"foreignKey:Id;references:Course"`
+	ID uint `gorm:"primaryKey"`
+	// CreatedAt is a primary key to ensure, that only one list per day can exist
+	CreatedAt    time.Time `gorm:"primaryKey"`
+	UpdatedAt    time.Time
+	CourseID     uint //`gorm:"foreignKey:Id;references:Course"`
 	ReceivedAt   time.Time
-	Attendencies []Attendance `gorm:"foreignKey:List"`
+	Attendancies []Attendance
+	Image        []byte
 }
 
 type Setting struct {
 	gorm.Model
-	Setting string
-	Value   any
+	Setting string `gorm:"index"`
+	Value   string
 }
 
-func (item *BackendDatabase) ConnectDatabase(dbPath string) error {
+func (item *BackendDatabase) ConnectDatabase() error {
 	// We save private data, so noone but us may read it
+	dbPath := item.Path
+
 	err := os.MkdirAll(path.Dir(dbPath), 0700)
 	if err != nil {
 		log.Fatalf("Could not create the database: %v", err)
@@ -67,12 +76,15 @@ func (item *BackendDatabase) ConnectDatabase(dbPath string) error {
 
 	item.DB = db
 
-	db.AutoMigrate(&Course{}, &Student{}, &AttendanceList{}, &Attendance{}, &Setting{})
-
-	return nil
+	return item.DB.AutoMigrate(&Course{}, &Student{}, &AttendanceList{}, &Attendance{}, &Setting{})
 }
 
+// This function allows only one list per day. If a list already exists, it overwrites it.
+// AttendanceList must be filled out fully, except the ID.
 func (item *BackendDatabase) InsertList(list AttendanceList) (AttendanceList, error) {
+	year, month, day := list.ReceivedAt.Date()
+	list.CreatedAt = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	_ = item.DB.Model(&AttendanceList{}).Delete(&AttendanceList{}, item.DB.Where(&AttendanceList{CreatedAt: list.CreatedAt, CourseID: list.CourseID}))
 	err := item.DB.Model(&AttendanceList{}).Create(&list).Error
 	return list, err
 }
@@ -86,7 +98,7 @@ func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, er
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("join Courses c on c.id = course_id").Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
 	return list, err
 }
 
@@ -94,7 +106,7 @@ func (item *BackendDatabase) LatestList(course Course, end time.Time) (Attendanc
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Where(&AttendanceList{Course: course.ID}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("course_id = ?", course.ID).Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
 	return list, err
 }
 
@@ -102,8 +114,13 @@ func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, sta
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
 	return list, err
+}
+
+func (item *BackendDatabase) InsertCourse(course Course) (Course, error) {
+	err := item.DB.Model(&Course{}).Save(&course).Error
+	return course, err
 }
 
 func (item *BackendDatabase) Courses() ([]Course, error) {
@@ -112,10 +129,21 @@ func (item *BackendDatabase) Courses() ([]Course, error) {
 	return courses, err
 }
 
+func (item *BackendDatabase) CourseByName(name string) (Course, error) {
+	course := Course{}
+	err := item.DB.Model(&Course{}).Where(&Course{Name: name}).Take(&course).Error
+	return course, err
+}
+
 func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 	students := []Student{}
 	err := item.DB.Model(&Course{}).Where(course).Select("Students").Find(&students).Error
 	return students, err
+}
+
+func (item *BackendDatabase) InsertStudent(student Student) (Student, error) {
+	err := item.DB.Model(&Student{}).Save(&student).Error
+	return student, err
 }
 
 func (item *BackendDatabase) Settings() ([]Setting, error) {
@@ -133,4 +161,10 @@ func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
 	settings := []Setting{}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err
+}
+
+func (item *BackendDatabase) Students(student Student) ([]Student, error) {
+	students := []Student{}
+	err := item.DB.Model(&Student{}).Where(student).Find(&students).Error
+	return students, err
 }
