@@ -18,9 +18,9 @@ type MailData struct {
 	datetime   time.Time
 }
 
-// try to create a new backend_mail struct
+// Create a new backend_mail struct
 // Paramter: mvvm, serverAddress, username, password
-// returns an error if it is not possible to connect to the server
+// returns an error if it is not possible to connect and login to the server and NO Mailservice
 func New(mvvm mvvm, serverAddr string, username string, password string) (*BackendMail, error) {
 	mailservice := BackendMail{
 		MVVM:       mvvm,
