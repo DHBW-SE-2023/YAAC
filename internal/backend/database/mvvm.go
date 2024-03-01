@@ -1,22 +1,22 @@
 package yaac_backend_database
 
-import "database/sql"
+import (
+	"gorm.io/gorm"
+)
 
 type mvvm interface {
 }
 
 type BackendDatabase struct {
-	MVVM     mvvm
-	path     string
-	dbName   string
-	database *sql.DB
+	MVVM mvvm
+	Path string
+	DB   *gorm.DB
 }
 
-func New(mvvm mvvm, path string, dbName string) *BackendDatabase {
+func NewBackend(mvvm mvvm, path string) *BackendDatabase {
 	item := BackendDatabase{
-		MVVM:   mvvm,
-		path:   path,
-		dbName: dbName,
+		MVVM: mvvm,
+		Path: path,
 	}
 
 	return &item

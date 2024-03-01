@@ -3,7 +3,8 @@ package yaac_shared
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
+
+	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 )
 
 const APP_NAME = "YAAC"
@@ -18,22 +19,14 @@ func GetApp() *fyne.App {
 	return &App
 }
 
-type Table = imgproc.Table
-type TableRow = imgproc.TableRow
-
 type EmailData struct {
 	MailServer string
 	Email      string
 	Password   string
 }
 
-type Student struct {
-	LName string
-	FName string
-}
-
-type Attendance struct {
-	Student         Student
-	Attending       bool
-	DayOfAttendance string
-}
+type Attendance = database.Attendance
+type AttendanceList = database.AttendanceList
+type Student = database.Student
+type Course = database.Course
+type Setting = database.Setting

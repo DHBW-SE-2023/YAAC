@@ -1,10 +1,10 @@
 package yaac_backend_imgproc
 
-import "gocv.io/x/gocv"
+import (
+	"gocv.io/x/gocv"
+)
 
-type mvvm interface {
-}
-
+type mvvm interface{}
 type BackendImgproc struct {
 	MVVM mvvm
 }
