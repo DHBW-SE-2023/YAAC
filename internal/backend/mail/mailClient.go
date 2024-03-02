@@ -16,10 +16,9 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
-// can be deleted
+// not needed, can be deleted
 func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
-	b.GetMailsToday()
-	return ""
+	return "Test Function"
 }
 
 // GetMailsToday fetches all unread mails from today
