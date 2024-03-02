@@ -9,6 +9,8 @@ RUN apt-get update
 RUN apt-get install -y git make mesa-utils libglfw3
 # Get Fyne Dependencies
 RUN apt-get install -y gcc libgl1-mesa-dev xorg-dev
+# Install tesseract deps
+RUN apt-get install -y tesseract-ocr tesseract-ocr-osd tesseract-ocr-eng tesseract-ocr-deu libtesseract4 libtesseract-dev
 # Get OpenGL Deps (LLVMPipe)
 RUN apt-get -y install meson llvm libx11-dev libxrandr-dev libxi-dev
 RUN apt-get clean
