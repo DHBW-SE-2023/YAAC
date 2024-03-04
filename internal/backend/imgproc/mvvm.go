@@ -1,17 +1,21 @@
 package yaac_backend_imgproc
 
 import (
+	"github.com/otiai10/gosseract"
 	"gocv.io/x/gocv"
 )
 
 type mvvm interface{}
 type BackendImgproc struct {
-	MVVM mvvm
+	MVVM            mvvm
+	tesseractClient *gosseract.Client
 }
 
 func NewBackend(mvvm mvvm) *BackendImgproc {
+	tesseractClient := gosseract.NewClient()
 	return &BackendImgproc{
-		MVVM: mvvm,
+		MVVM:            mvvm,
+		tesseractClient: tesseractClient,
 	}
 }
 
@@ -22,7 +26,7 @@ func (mvvm *BackendImgproc) ValidateTable(imgBuf []byte) (Table, error) {
 	}
 
 	img = FindTable(img)
-	table, err := ReviewTable(img)
+	table, err := ReviewTable(img, mvvm.tesseractClient)
 	if err != nil {
 		return Table{}, err
 	}

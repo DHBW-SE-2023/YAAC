@@ -24,7 +24,7 @@ func (m *MVVM) MailRestartServer() {
 	panic("Not implemented")
 }
 
-func (m *MVVM) MailsRefresh() {
+func (m *MVVM) MailsRefresh() []yaac_shared.Email {
 	m.MailUpdateData()
 	panic("Not implemented")
 }

@@ -4,19 +4,21 @@ import (
 	"log"
 
 	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
-	frontend "github.com/DHBW-SE-2023/YAAC/internal/frontend/main"
 )
 
-func (m *MVVM) ValidateTable(img []byte) {
-	b := imgproc.NewBackend(m)
-	f := frontend.New(m)
+var imgprocBackend *imgproc.BackendImgproc = nil
 
-	go func() {
-		table, err := b.ValidateTable(img)
-		if err != nil {
-			log.Fatalf("backend.ValidateTable: %v", err)
-		}
+func (m *MVVM) ImgprocBackendStart() {
+	imgprocBackend = imgproc.NewBackend(m)
+}
 
-		f.ReceiveNewTable(table)
-	}()
+func (m *MVVM) ValidateTable(img []byte) (imgproc.Table, error) {
+
+	table, err := imgprocBackend.ValidateTable(img)
+	if err != nil {
+		log.Fatalf("backend.ValidateTable: %v", err)
+		return imgproc.Table{}, err
+	}
+
+	return table, nil
 }

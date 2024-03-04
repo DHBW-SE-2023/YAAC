@@ -9,10 +9,10 @@ type MVVM interface {
 	MailFormUpdated(data EmailData)
 	MailUpdateData()
 	MailRestartServer()
-	MailsRefresh()
+	MailsRefresh() []Email
 
 	// Imgproc
-	ValidateTable(img []byte)
+	ValidateTable(img []byte) (Table, error)
 
 	// Database
 	InsertList(list AttendanceList) (AttendanceList, error)
@@ -28,4 +28,5 @@ type MVVM interface {
 	SettingsReset() ([]Setting, error)
 	CourseByName(name string) (Course, error)
 	Students(student Student) ([]Student, error)
+	InsertStudent(student Student) (Student, error)
 }
