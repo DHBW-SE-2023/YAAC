@@ -13,6 +13,9 @@ jobs:
     steps:
     - name: 'Checkout code'
       uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+        token: ${{ secrets.TESTING_DATA_PAT }}
 
     - name: 'Get Go'
       uses: actions/setup-go@v4
@@ -39,6 +42,12 @@ jobs:
         packages: gcc libgl1-mesa-dev xorg-dev dbus-x11
         version: 1.0
 
+    - name: 'Install and Cache OCR Tesseract'
+      uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: libtesseract-dev tesseract-ocr-deu tesseract-ocr
+        version: 1.0
+        
     - name: 'Install and configure opencv build'
       run: export PKG_CONFIG_PATH="/usr/lib/pkgconfig" && echo "--Install--" && cd ../build && sudo make preinstall && sudo make install && echo "--Config--" && sudo ldconfig
 

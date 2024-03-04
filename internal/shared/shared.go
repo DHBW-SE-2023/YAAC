@@ -3,6 +3,8 @@ package yaac_shared
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+
+	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 )
 
 const APP_NAME = "YAAC"
@@ -22,3 +24,9 @@ type EmailData struct {
 	Email      string
 	Password   string
 }
+
+type Attendance = database.Attendance
+type AttendanceList = database.AttendanceList
+type Student = database.Student
+type Course = database.Course
+type Setting = database.Setting

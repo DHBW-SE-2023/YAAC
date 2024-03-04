@@ -1,20 +1,22 @@
 package yaac_frontend_main
 
 import (
-	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	"log"
+
+	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
+	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
-type mvvm interface {
-	MailFormUpdated(data yaac_shared.EmailData)
-	StartGoCV(img_path string)
-}
-
 type FrontendMain struct {
-	MVVM mvvm
+	MVVM shared.MVVM
 }
 
-func New(mvvm mvvm) *FrontendMain {
+func New(mvvm shared.MVVM) *FrontendMain {
 	return &FrontendMain{
 		MVVM: mvvm,
 	}
+}
+
+func (*FrontendMain) ReceiveNewTable(table imgproc.Table) {
+	log.Fatal("Not yet implemented")
 }
