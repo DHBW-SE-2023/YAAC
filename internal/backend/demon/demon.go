@@ -67,7 +67,7 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 				continue
 			}
 
-			// TODO: Notify frontend, that a new attendance list was created
+			mvvm.NotifyNewList(list)
 		}
 
 		time.Sleep(duration * time.Second)
