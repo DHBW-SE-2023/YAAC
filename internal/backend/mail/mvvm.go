@@ -1,14 +1,36 @@
 package yaac_backend_mail
 
+import "time"
+
 type mvvm interface {
 }
 
 type BackendMail struct {
-	MVVM mvvm
+	MVVM       mvvm
+	serverAddr string
+	username   string
+	password   string
 }
 
-func New(mvvm mvvm) *BackendMail {
-	return &BackendMail{
-		MVVM: mvvm,
+type MailData struct {
+	image_data []byte
+	course     string
+	datetime   time.Time
+}
+
+// Create a new backend_mail struct
+// Paramter: mvvm, serverAddress, username, password
+// returns an error if it is not possible to connect and login to the server and NO Mailservice
+func New(mvvm mvvm, serverAddr string, username string, password string) (*BackendMail, error) {
+	mailservice := BackendMail{
+		MVVM:       mvvm,
+		serverAddr: serverAddr,
+		username:   username,
+		password:   password,
 	}
+	_, _, err := mailservice.setupMail()
+	if err != nil {
+		return nil, err
+	}
+	return &mailservice, nil
 }
