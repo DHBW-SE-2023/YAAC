@@ -10,12 +10,16 @@ import (
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
-		newMails := mvvm.MailsRefresh()
+		newMails, err := mvvm.GetMailsToday()
+		if err != nil {
+			log.Fatalf("Could not get mails for today: %v", err)
+			continue
+		}
 
 		for _, mail := range newMails {
 			table, err := mvvm.ValidateTable(mail.Image)
 			if err != nil {
-				log.Fatalf("Could not process mail received at %v", mail.ReceivedAt)
+				log.Fatalf("Could not process image from mail received at %v", mail.ReceivedAt)
 				continue
 			}
 

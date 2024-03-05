@@ -6,10 +6,8 @@ import (
 
 type MVVM interface {
 	// Mail
-	MailFormUpdated(data EmailData)
-	MailUpdateData()
-	MailRestartServer()
-	MailsRefresh() []Email
+	UpdateMailCredentials(credentials EmailData) error
+	GetMailsToday() ([]MailData, error)
 
 	// Imgproc
 	ValidateTable(img []byte) (Table, error)

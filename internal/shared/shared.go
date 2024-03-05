@@ -8,6 +8,7 @@ import (
 
 	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
+	mail "github.com/DHBW-SE-2023/YAAC/internal/backend/mail"
 )
 
 const APP_NAME = "YAAC"
@@ -27,6 +28,8 @@ type EmailData struct {
 	Email      string
 	Password   string
 }
+
+type MailData = mail.MailData
 
 type Table = imgproc.Table
 
