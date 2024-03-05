@@ -5,6 +5,9 @@ import (
 )
 
 type MVVM interface {
+	// Frontend
+	NotifyError(err error)
+
 	// Mail
 	UpdateMailCredentials(credentials EmailData) error
 	GetMailsToday() ([]MailData, error)

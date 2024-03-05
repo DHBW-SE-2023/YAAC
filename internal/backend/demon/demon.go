@@ -28,6 +28,7 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 				Image:      mail.Image,
 			}
 
+			// TODO: Get the course from the table header
 			for _, row := range table.Rows {
 				students, err := mvvm.Students(shared.Student{FirstName: row.FirstName, LastName: row.LastName})
 				if err != nil {
