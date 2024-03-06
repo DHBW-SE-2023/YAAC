@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
-	"github.com/otiai10/gosseract"
+	"github.com/otiai10/gosseract/v2"
 	"gocv.io/x/gocv"
 )
 

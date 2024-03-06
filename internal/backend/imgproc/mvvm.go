@@ -1,7 +1,7 @@
 package yaac_backend_imgproc
 
 import (
-	"github.com/otiai10/gosseract"
+	"github.com/otiai10/gosseract/v2"
 	"gocv.io/x/gocv"
 )
 

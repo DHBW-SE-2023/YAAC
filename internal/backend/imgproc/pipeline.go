@@ -7,7 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/otiai10/gosseract"
+	"github.com/otiai10/gosseract/v2"
 	"gocv.io/x/gocv"
 
 	"golang.org/x/exp/slices"
