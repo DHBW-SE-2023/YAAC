@@ -20,5 +20,5 @@ func (m *MVVM) NotifyError(err error) {
 }
 
 func (m *MVVM) NotifyNewList(list yaac_shared.AttendanceList) {
-	panic("Notification service not implemented")
+	frontendMain.ReceiveNewTable(list)
 }

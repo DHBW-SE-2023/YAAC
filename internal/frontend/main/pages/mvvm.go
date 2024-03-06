@@ -1,9 +1,6 @@
 package pages
 
 import (
-	"log"
-
-	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
@@ -18,8 +15,4 @@ func New(mvvm shared.MVVM) *FrontendMain {
 	return &FrontendMain{
 		MVVM: mvvm,
 	}
-}
-
-func (*FrontendMain) ReceiveNewTable(table imgproc.Table) {
-	log.Fatal("Not yet implemented")
 }
