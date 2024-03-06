@@ -2,6 +2,7 @@ package yaac_frontend_mail
 
 import (
 	"fmt"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/validation"
@@ -66,7 +67,12 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 				Email:      email.Text,
 				Password:   password.Text,
 			}
-			f.MVVM.MailFormUpdated(formStruct)
+
+			// FIXME: Error handling here
+			err := f.MVVM.UpdateMailCredentials(formStruct)
+			if err != nil {
+				log.Fatalf("Could not update E-Mail credentials")
+			}
 		},
 	}
 	form.Append("Password", password)

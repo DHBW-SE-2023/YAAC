@@ -8,9 +8,9 @@ import (
 
 var backend *database.BackendDatabase
 
-func (m *MVVM) ConnectDatabase(dbPath string) {
+func (m *MVVM) ConnectDatabase(dbPath string) error {
 	backend = database.NewBackend(m, dbPath)
-	backend.ConnectDatabase()
+	return backend.ConnectDatabase()
 }
 
 // This function allows only one list per day. If a list already exists, it overwrites it.

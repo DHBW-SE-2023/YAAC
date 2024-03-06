@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
-	"github.com/otiai10/gosseract"
+	"github.com/otiai10/gosseract/v2"
 	"gocv.io/x/gocv"
 )
 
@@ -99,7 +99,7 @@ func TestStudentNameRecognition(t *testing.T) {
 
 	names := make([]string, 0, len(rows))
 	for _, name := range rows {
-		names = append(names, name.Name)
+		names = append(names, name.FullName)
 	}
 
 	t.Logf("Recognised names: %v", names)
@@ -117,28 +117,28 @@ func TestStudentNameRecognition(t *testing.T) {
 
 func TestReviewTable(t *testing.T) {
 	validSignatures := []imgproc.TableRow{
-		{Name: "Baumann, Lysann", Valid: true},
-		{Name: "Beetz, Robin Georg", Valid: true},
-		{Name: "Beuerle, Marco", Valid: true},
-		{Name: "Domitrovic, Max", Valid: true},
-		{Name: "Druica, Mathias", Valid: true},
-		{Name: "Egger, Julia", Valid: false},
-		{Name: "Fischer, David", Valid: true},
-		{Name: "Fisher, Jamie", Valid: false},
-		{Name: "Gmeiner, Leander Gabriel Mauritius", Valid: true},
-		{Name: "Handschuh, Jannik", Valid: false},
-		{Name: "Hogan, Finley", Valid: true},
-		{Name: "Kiele, Milan", Valid: true},
-		{Name: "Marschall, Linus", Valid: true},
-		{Name: "Medwedkin, Eduard", Valid: false},
-		{Name: "Naas, Jasper", Valid: true},
-		{Name: "Nusch, Hannes", Valid: false},
-		{Name: "Rottweiler, Philipp", Valid: false},
-		{Name: "Schilling, Tobias", Valid: true},
-		{Name: "Schneider, Anna-Sophie", Valid: false},
-		{Name: "Seidel, Yannick", Valid: false},
-		{Name: "Siegert, Daniel Valentin", Valid: false},
-		{Name: "Zagst, Jonas", Valid: false},
+		{FullName: "Baumann, Lysann", Valid: true},
+		{FullName: "Beetz, Robin Georg", Valid: true},
+		{FullName: "Beuerle, Marco", Valid: true},
+		{FullName: "Domitrovic, Max", Valid: true},
+		{FullName: "Druica, Mathias", Valid: true},
+		{FullName: "Egger, Julia", Valid: false},
+		{FullName: "Fischer, David", Valid: true},
+		{FullName: "Fisher, Jamie", Valid: false},
+		{FullName: "Gmeiner, Leander Gabriel Mauritius", Valid: true},
+		{FullName: "Handschuh, Jannik", Valid: false},
+		{FullName: "Hogan, Finley", Valid: true},
+		{FullName: "Kiele, Milan", Valid: true},
+		{FullName: "Marschall, Linus", Valid: true},
+		{FullName: "Medwedkin, Eduard", Valid: false},
+		{FullName: "Naas, Jasper", Valid: true},
+		{FullName: "Nusch, Hannes", Valid: false},
+		{FullName: "Rottweiler, Philipp", Valid: false},
+		{FullName: "Schilling, Tobias", Valid: true},
+		{FullName: "Schneider, Anna-Sophie", Valid: false},
+		{FullName: "Seidel, Yannick", Valid: false},
+		{FullName: "Siegert, Daniel Valentin", Valid: false},
+		{FullName: "Zagst, Jonas", Valid: false},
 	}
 
 	attendanceListPath := "testdata/list.jpg"
@@ -147,9 +147,11 @@ func TestReviewTable(t *testing.T) {
 		wd, _ := os.Getwd()
 		t.Fatalf("Could not open image with path %v. The current path is %v", attendanceListPath, wd)
 	}
+	tesseractClient := gosseract.NewClient()
+	defer tesseractClient.Close()
 
 	img = imgproc.FindTable(img)
-	table, err := imgproc.ReviewTable(img)
+	table, err := imgproc.ReviewTable(img, tesseractClient)
 	if err != nil {
 		t.Fatalf("cv.ReviewTable: %v", err)
 	}
@@ -167,13 +169,13 @@ func TestReviewTable(t *testing.T) {
 
 	for i, sig := range validSignatures {
 		s := rows[i]
-		t.Logf("Name: %v, Index: %v\n", s.Name, i)
-		if s.Name != sig.Name {
-			t.Fatalf("Incorrect name of entry %v: %v, correct: %v", i, s.Name, sig.Name)
+		t.Logf("Name: %v, Index: %v\n", s.FullName, i)
+		if s.FullName != sig.FullName {
+			t.Fatalf("Incorrect name of entry %v: %v, correct: %v", i, s.FullName, sig.FullName)
 		}
 
 		if s.Valid != sig.Valid {
-			t.Fatalf("Entry %v (%v) incorrectly marked as %v, correct: %v (true means valid)", i, s.Name, s.Valid, sig.Valid)
+			t.Fatalf("Entry %v (%v) incorrectly marked as %v, correct: %v (true means valid)", i, s.FullName, s.Valid, sig.Valid)
 		}
 	}
 }

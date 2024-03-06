@@ -5,8 +5,9 @@ import (
 	"encoding/binary"
 	"image"
 	"math"
+	"strings"
 
-	"github.com/otiai10/gosseract"
+	"github.com/otiai10/gosseract/v2"
 	"gocv.io/x/gocv"
 
 	"golang.org/x/exp/slices"
@@ -79,7 +80,7 @@ func FindTable(img gocv.Mat) gocv.Mat {
 }
 
 // Expects an image which is made up of the table in question.
-func ReviewTable(img gocv.Mat) (Table, error) {
+func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
@@ -116,8 +117,6 @@ func ReviewTable(img gocv.Mat) (Table, error) {
 	gocv.CvtColor(img, &img, gocv.ColorGrayToBGRA)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
 
-	tesseractClient := gosseract.NewClient()
-	defer tesseractClient.Close()
 	tesseractClient.SetLanguage("deu")
 
 	table, err = StudentNames(img, table, tesseractClient)
@@ -162,7 +161,15 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 			return Table{}, err
 		}
 
-		table.Rows[i].Name = name
+		table.Rows[i].FullName = name
+
+		nameParts := strings.Split(name, ",")
+		if len(nameParts) != 2 {
+			continue
+		}
+
+		table.Rows[i].LastName = nameParts[0]
+		table.Rows[i].FirstName = nameParts[1]
 	}
 
 	return table, nil

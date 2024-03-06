@@ -11,15 +11,9 @@ import (
 	"strings"
 	"time"
 
-	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 )
-
-// not needed, can be deleted
-func (b *BackendMail) GetResponse(input yaac_shared.EmailData) string {
-	return "Test Function"
-}
 
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
@@ -35,6 +29,8 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//setup mail client
 	c, seqset, err := b.setupMail()
+	defer c.Logout()
+
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +48,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 		}
 
 		//get mail message as string in order to prcess the mail further
-		mailstring, err := b.getMailasString(msg)
+		mailstring, err := b.getMailAsString(msg)
 		if err != nil {
 			log.Println("Error decoding mail")
 			continue
@@ -66,8 +62,6 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 			}
 		}
 	}
-	//close connection
-	c.Logout()
 
 	return maildata, nil
 }
@@ -85,9 +79,9 @@ func (b *BackendMail) getBoundary(contentType string) (string, error) {
 	return params["boundary"], nil
 }
 
-// getMailasString gets a pointer to a imap.message and returns the mail as string
+// getMailAsString gets a pointer to a imap.message and returns the mail as string
 // returns an error if it is not possible to convert the mail to a string
-func (b *BackendMail) getMailasString(msg *imap.Message) (string, error) {
+func (b *BackendMail) getMailAsString(msg *imap.Message) (string, error) {
 	// Get Mail Literal
 	var section imap.BodySectionName
 	mailLiteral := msg.GetBody(&section)
@@ -209,19 +203,19 @@ func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 	var err error
 
 	//get the base64 encoded image from the mail
-	mailData.image_data, err = b.getBinaryImageFromMailString(mailstring)
+	mailData.Image, err = b.getBinaryImageFromMailString(mailstring)
 	if err != nil {
 		log.Println("Error Image Attachment Extraction")
 		return mailData, err
 	}
 
-	mailData.course, err = b.getCourse(mailstring)
+	mailData.Course, err = b.getCourse(mailstring)
 	if err != nil {
 		log.Println("Error detecting course")
 		return mailData, err
 	}
 
-	mailData.datetime, err = b.getDatetime(mailstring)
+	mailData.ReceivedAt, err = b.getDatetime(mailstring)
 	if err != nil {
 		log.Println("Error detecting course")
 		return mailData, err
