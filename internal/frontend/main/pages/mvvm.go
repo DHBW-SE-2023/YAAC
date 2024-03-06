@@ -1,10 +1,9 @@
-package yaac_frontend_main
+package pages
 
 import (
 	"log"
 
 	imgproc "github.com/DHBW-SE-2023/YAAC/internal/backend/imgproc"
-	pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
@@ -12,9 +11,10 @@ type FrontendMain struct {
 	MVVM shared.MVVM
 }
 
-func New(mvvm shared.MVVM) *FrontendMain {
-	pages.New(mvvm)
+var myMVVM shared.MVVM = nil
 
+func New(mvvm shared.MVVM) *FrontendMain {
+	myMVVM = mvvm
 	return &FrontendMain{
 		MVVM: mvvm,
 	}

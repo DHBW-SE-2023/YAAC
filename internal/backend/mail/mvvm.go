@@ -28,11 +28,12 @@ func New(mvvm mvvm, serverAddr string, username string, password string) (*Backe
 		username:   username,
 		password:   password,
 	}
-	c, _, err := mailservice.setupMail()
-	defer c.Logout()
 
+	c, _, err := mailservice.setupMail()
 	if err != nil {
 		return nil, err
 	}
+
+	c.Logout()
 	return &mailservice, nil
 }
