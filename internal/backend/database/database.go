@@ -137,7 +137,7 @@ func (item *BackendDatabase) CourseByName(name string) (Course, error) {
 
 func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 	students := []Student{}
-	err := item.DB.Model(&Course{}).Where(course).Select("Students").Find(&students).Error
+	err := item.DB.Model(&Course{}).Joins("JOIN students ON courses.id = students.course_id").Where(course).Select("students .*").Find(&students).Error
 	return students, err
 }
 

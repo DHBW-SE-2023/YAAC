@@ -1,12 +1,16 @@
 package pages
 
 import (
+	"fmt"
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	"gorm.io/gorm"
 )
 
 func rgbGradient(x, y, w, h int) color.Color {
@@ -22,8 +26,11 @@ func overviewScreen(_ fyne.Window) fyne.CanvasObject {
 	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	grid := container.NewGridWrap(fyne.NewSize(250, 250))
-	for i := 0; i <= 10; i++ {
-		grid.Add(NewOverviewWidget("TIK22", "Max Alberti"))
+	courses, _ := myMVVM.Courses()
+	for _, element := range courses {
+		// element is the element from someSlice for where we are
+		students, _ := myMVVM.CourseStudents(yaac_shared.Course{Model: gorm.Model{ID: element.ID}})
+		grid.Add(NewOverviewWidget(element.Name, students))
 	}
 	header := container.NewVBox(container.NewGridWrap(fyne.NewSize(400, 200), title), widget.NewSeparator())
 	return container.NewBorder(header, nil, nil, nil, container.NewVScroll(grid))
@@ -37,14 +44,15 @@ type overviewWidget struct {
 	button  *widget.Button
 }
 
-func NewOverviewWidget(title string, attendance string) *overviewWidget {
+func NewOverviewWidget(title string, attendance []yaac_shared.Student) *overviewWidget {
 	imageResource, _ := fyne.LoadResourceFromPath("assets/imageIcon.png")
 	titleLabel := widget.NewLabel(title)
-	contentLabel := widget.NewLabel(attendance)
+	contentFrame := container.NewVBox()
+	for _, student := range attendance {
+		contentFrame.Add(widget.NewLabelWithStyle(fmt.Sprintf("%s %s", student.FirstName, student.LastName), fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: false, Monospace: false}))
+	}
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
 	titleLabel.Alignment = fyne.TextAlignCenter
-	contentLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: false, Monospace: false}
-	contentLabel.Alignment = fyne.TextAlignCenter
 	item := &overviewWidget{
 		frame: &canvas.Rectangle{
 			FillColor:    color.NRGBA{R: 209, G: 209, B: 209, A: 255},
@@ -53,9 +61,9 @@ func NewOverviewWidget(title string, attendance string) *overviewWidget {
 			CornerRadius: 20,
 		},
 		title:   container.NewVBox(titleLabel),
-		content: container.NewVBox(contentLabel),
+		content: container.NewVBox(contentFrame),
 		button: widget.NewButtonWithIcon("", imageResource, func() {
-			println("Show Image!")
+			_ = getImage(title)
 		}),
 	}
 	item.ExtendBaseWidget(item)
@@ -71,4 +79,9 @@ func (item *overviewWidget) CreateRenderer() fyne.WidgetRenderer {
 		container.NewBorder(header, nil, nil, nil, item.content),
 	)
 	return widget.NewSimpleRenderer(c)
+}
+func getImage(title string) []byte {
+	selectedCourse, _ := myMVVM.CourseByName(title)
+	list, _ := myMVVM.LatestList(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now())
+	return list.Image
 }
