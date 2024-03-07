@@ -1,6 +1,7 @@
 package yaac_backend_database
 
 import (
+	"image"
 	"log"
 	"os"
 	"path"
@@ -29,6 +30,9 @@ type Attendance struct {
 	StudentID        uint `gorm:"primaryKey"`
 	AttendanceListID uint `gorm:"primaryKey"` //`gorm:"primaryKey;foreignKey:Id;references:AttendanceList"`
 	IsAttending      bool
+	NameROI          image.Rectangle
+	SignatureROI     image.Rectangle
+	TotalROI         image.Rectangle
 }
 
 func (Attendance) TableName() string {
@@ -43,7 +47,7 @@ type AttendanceList struct {
 	CourseID     uint //`gorm:"foreignKey:Id;references:Course"`
 	ReceivedAt   time.Time
 	Attendancies []Attendance
-	Image        []byte
+	Image        []byte // image as png
 }
 
 type Setting struct {
