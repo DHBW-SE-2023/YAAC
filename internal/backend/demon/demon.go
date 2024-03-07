@@ -54,8 +54,11 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 				student = students[0]
 
 				attendance := shared.Attendance{
-					StudentID:   student.CourseID,
-					IsAttending: row.Valid,
+					StudentID:    student.CourseID,
+					IsAttending:  row.Valid,
+					NameROI:      row.NameROI,
+					SignatureROI: row.SignatureROI,
+					TotalROI:     row.TotalROI,
 				}
 
 				list.Attendancies = append(list.Attendancies, attendance)
