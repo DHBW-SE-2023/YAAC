@@ -100,7 +100,7 @@ func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, er
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("join Courses c on c.id = course_id").Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("JOIN Course c ON c.ID = CourseID").Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list).Error
 	return list, err
 }
 
@@ -108,7 +108,7 @@ func (item *BackendDatabase) LatestList(course Course, end time.Time) (Attendanc
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("course_id = ?", course.ID).Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("CourseID = ?", course.ID).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
 	return list, err
 }
 
@@ -116,7 +116,7 @@ func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, sta
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
 	return list, err
 }
 
@@ -139,7 +139,7 @@ func (item *BackendDatabase) CourseByName(name string) (Course, error) {
 
 func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 	students := []Student{}
-	err := item.DB.Model(&Course{}).Joins("JOIN students ON courses.id = students.course_id").Where(course).Select("students .*").Find(&students).Error
+	err := item.DB.Model(&Course{}).Joins("JOIN Student ON Course.ID = Student.CourseID").Where(&course).Select("Student.*").Find(&students).Error
 	return students, err
 }
 

@@ -214,10 +214,12 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	tikC, _ := conn.CourseByName("TIK22")
+
 	correctLists := []backend.AttendanceList{
 		{
 			ReceivedAt: testTime.UTC(),
-			CourseID:   0, // TIK22
+			CourseID:   tikC.ID,
 			Image:      testByteArray,
 			Attendancies: []backend.Attendance{
 				{
@@ -232,7 +234,7 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 		},
 	}
 
-	lists, err := conn.AllAttendanceListInRangeByCourse(backend.Course{Model: gorm.Model{ID: 0}}, testTime, testTime.Add(1000))
+	lists, err := conn.AllAttendanceListInRangeByCourse(tikC, testTime, testTime.Add(1000))
 	if err != nil {
 		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
 	}
@@ -260,10 +262,13 @@ func TestAllAttendanceListInRange(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	tikC, _ := conn.CourseByName("TIK22")
+	titC, _ := conn.CourseByName("TIT22")
+
 	correctLists := []backend.AttendanceList{
 		{
 			ReceivedAt: testTime.UTC(),
-			CourseID:   0, // TIK22
+			CourseID:   tikC.ID,
 			Image:      testByteArray,
 			Attendancies: []backend.Attendance{
 				{
@@ -278,7 +283,7 @@ func TestAllAttendanceListInRange(t *testing.T) {
 		},
 		{
 			ReceivedAt: testTime,
-			CourseID:   1, // TIT22
+			CourseID:   titC.ID,
 			Image:      testByteArray,
 			Attendancies: []backend.Attendance{
 				{
