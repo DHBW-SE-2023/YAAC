@@ -49,6 +49,10 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 
 	// TODO: Get the course from the table header
 	for _, row := range table.Rows {
+		if row.FullName == "" || row.FirstName == "" || row.LastName == "" {
+			continue
+		}
+
 		students, err := mvvm.Students(shared.Student{FirstName: row.FirstName, LastName: row.LastName})
 		if err != nil {
 			continue

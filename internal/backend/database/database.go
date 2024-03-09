@@ -21,8 +21,8 @@ type Course struct {
 
 type Student struct {
 	gorm.Model
-	FirstName        string
-	LastName         string
+	FirstName        string `gorm:"check:FirstName!=''"`
+	LastName         string `gorm:"check:LastName!=''"`
 	CourseID         uint
 	IsImmatriculated bool
 }
