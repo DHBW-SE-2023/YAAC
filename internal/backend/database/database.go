@@ -1,7 +1,6 @@
 package yaac_backend_database
 
 import (
-	"image"
 	"log"
 	"os"
 	"path"
@@ -31,9 +30,9 @@ type Attendance struct {
 	StudentID        uint `gorm:"primaryKey"`
 	AttendanceListID uint `gorm:"primaryKey"` //`gorm:"primaryKey;foreignKey:Id;references:AttendanceList"`
 	IsAttending      bool
-	NameROI          image.Rectangle
-	SignatureROI     image.Rectangle
-	TotalROI         image.Rectangle
+	NameROI          Rectangle
+	SignatureROI     Rectangle
+	TotalROI         Rectangle
 }
 
 type AttendanceList struct {

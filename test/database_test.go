@@ -408,8 +408,6 @@ func TestCourseStudents(t *testing.T) {
 
 	students, err := conn.CourseStudents(c)
 
-	t.Logf("%+v\n", students)
-
 	if err != nil {
 		t.Fatalf("CourseStudents: %v", err)
 	}
