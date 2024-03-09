@@ -8,8 +8,9 @@ import (
 )
 
 type Table struct {
-	Image gocv.Mat
-	Rows  []TableRow
+	Course string
+	Image  gocv.Mat
+	Rows   []TableRow
 }
 
 type TableRow struct {
