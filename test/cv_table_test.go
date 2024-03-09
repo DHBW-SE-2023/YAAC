@@ -90,22 +90,21 @@ func TestStudentNameRecognition(t *testing.T) {
 		t.Fatalf("cv.StudentNames: %v", err)
 	}
 
-	// FIXME: ReviewTables takes the whole name column
-	// StudentNames takes the whole name column
-	// The first two and last two rows are uninteresting to us
-	// len(correctNames) = 26
 	rows := table.Rows
-	rows = rows[2:24]
 
 	names := make([]string, 0, len(rows))
-	for _, name := range rows {
-		names = append(names, name.FullName)
+	for _, row := range rows {
+		if row.FirstName == "" || row.LastName == "" || row.FullName == "" {
+			continue
+		}
+
+		names = append(names, row.FullName)
 	}
 
-	t.Logf("Recognised names: %v", names)
+	// t.Logf("Recognised names: %v", names)
 
 	if len(correctNames) != len(names) {
-		t.Fatalf("Name list has incorrect length. Length %v, Correct length: %v", len(correctNames), len(names))
+		t.Fatalf("Name list has incorrect length. Length %v, Correct length: %v", len(names), len(correctNames))
 	}
 
 	for i, name := range names {
@@ -158,18 +157,13 @@ func TestReviewTable(t *testing.T) {
 
 	rows := table.Rows
 
-	// FIXME: ReviewTables takes the whole name column
-	// The first two and last two rows are uninteresting to us
-	// len(correctNames) = 26
-	rows = rows[2:24]
-
 	if len(rows) != len(validSignatures) {
 		t.Fatalf("Incorrect length of signatures: %v, correct: %v", len(rows), len(validSignatures))
 	}
 
 	for i, sig := range validSignatures {
 		s := rows[i]
-		t.Logf("Name: %v, Index: %v\n", s.FullName, i)
+		// t.Logf("Name: %v, Index: %v\n", s.FullName, i)
 		if s.FullName != sig.FullName {
 			t.Fatalf("Incorrect name of entry %v: %v, correct: %v", i, s.FullName, sig.FullName)
 		}

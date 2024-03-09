@@ -126,6 +126,16 @@ func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error)
 		return Table{}, err
 	}
 
+	newRows := make([]TableRow, 0, len(table.Rows))
+	for _, r := range table.Rows {
+		if r.FullName == "" || r.FirstName == "" || r.LastName == "" {
+			continue
+		}
+
+		newRows = append(newRows, r)
+	}
+	table.Rows = newRows
+
 	dyBot := 2
 	dyTop := 2
 	dxLeft := 2
@@ -248,7 +258,7 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 		merged = append(merged, mr)
 	}
 
-	slices.Compact[[]image.Rectangle, image.Rectangle](merged)
+	slices.Compact(merged)
 
 	return merged
 }
@@ -258,10 +268,12 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 // The course always only consists of upper case letters and numbers
 // while the department name is written normaly.
 func extractCourseFromTitle(title string) (string, error) {
-	re := regexp.MustCompile("[a-zA-Z]* ([A-Z]+[0-9]+)$")
+	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)$")
 	results := re.FindStringSubmatch(title)
 
-	if len(results) != 1 {
+	// First result should be the entire string,
+	// second result is the capture gropu
+	if len(results) != 2 {
 		return "", errors.New("could not identify course label")
 	}
 
