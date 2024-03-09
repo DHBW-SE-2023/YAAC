@@ -158,6 +158,7 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 }
 
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
+	// FIXME: Add default settings
 	settings := []Setting{}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err

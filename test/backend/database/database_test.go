@@ -197,11 +197,11 @@ func TestStudents(t *testing.T) {
 }
 
 func listsEqual(a backend.AttendanceList, b backend.AttendanceList) bool {
-	return a.ReceivedAt == b.ReceivedAt || a.CourseID == b.CourseID || len(a.Attendancies) == len(b.Attendancies)
+	return a.ReceivedAt == b.ReceivedAt && a.CourseID == b.CourseID && len(a.Attendancies) == len(b.Attendancies)
 }
 
 func attendanciesEqual(a backend.Attendance, b backend.Attendance) bool {
-	return a.IsAttending == b.IsAttending || a.StudentID == b.StudentID
+	return a.IsAttending == b.IsAttending && a.StudentID == b.StudentID
 }
 
 func TestAllAttendanceListInRangeByCourse(t *testing.T) {
@@ -415,5 +415,46 @@ func TestCourseStudents(t *testing.T) {
 }
 
 func studentsEqual(a, b backend.Student) bool {
-	return a.FirstName != b.FirstName || a.LastName != b.LastName || a.IsImmatriculated != b.IsImmatriculated || a.CourseID != b.CourseID
+	return a.FirstName == b.FirstName && a.LastName == b.LastName && a.IsImmatriculated == b.IsImmatriculated && a.CourseID == b.CourseID
+}
+
+func settingsEqual(a, b backend.Setting) bool {
+	return a.Setting == b.Setting && a.Value == b.Value
+}
+
+func TestSettings(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	correctSettings := []backend.Setting{
+		{
+			Setting: "test1",
+			Value:   "123",
+		},
+		{
+			Setting: "test2",
+			Value:   "456",
+		},
+	}
+
+	_, err := conn.SettingsUpdate(correctSettings)
+	if err != nil {
+		t.Fatalf("SettingsUpdate: %v", err)
+	}
+
+	settings, err := conn.Settings()
+	if err != nil {
+		t.Fatalf("Settings: %v", err)
+	}
+
+	if len(settings) != len(correctSettings) {
+		t.Fatalf("Wrong number of settings: %v, correct: %v", len(settings), len(correctSettings))
+	}
+
+	for i, s := range settings {
+		c := correctSettings[i]
+		if !settingsEqual(s, c) {
+			t.Fatalf("Mismatched properties: index %v", i)
+		}
+	}
 }
