@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 type Course struct {
@@ -29,10 +30,6 @@ type Attendance struct {
 	StudentID        uint `gorm:"primaryKey"`
 	AttendanceListID uint `gorm:"primaryKey"` //`gorm:"primaryKey;foreignKey:Id;references:AttendanceList"`
 	IsAttending      bool
-}
-
-func (Attendance) TableName() string {
-	return "Attendancies"
 }
 
 type AttendanceList struct {
@@ -68,7 +65,12 @@ func (item *BackendDatabase) ConnectDatabase() error {
 		fd.Close()
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+			NoLowerCase:   true,
+		},
+	})
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 		return err
