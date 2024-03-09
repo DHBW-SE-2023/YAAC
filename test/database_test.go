@@ -37,18 +37,21 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 			}
 		}
 
+		tikC, _ := conn.CourseByName("TIK22")
+		titC, _ := conn.CourseByName("TIT22")
+
 		students := []backend.Student{
 			{
 				FirstName:        "Max",
 				LastName:         "Mustermann",
 				IsImmatriculated: true,
-				CourseID:         0, // TIK22
+				CourseID:         tikC.ID,
 			},
 			{
 				FirstName:        "Maximilian",
 				LastName:         "Mustermann",
 				IsImmatriculated: true,
-				CourseID:         1, // TIT22
+				CourseID:         titC.ID,
 			},
 		}
 
@@ -62,7 +65,7 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 		attendanceLists := []backend.AttendanceList{
 			{
 				ReceivedAt: testTime,
-				CourseID:   0, // TIK22
+				CourseID:   tikC.ID, // TIK22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -77,7 +80,7 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 			},
 			{ // This list should automatically update the previous one.
 				ReceivedAt: testTime,
-				CourseID:   0, // TIK22
+				CourseID:   tikC.ID, // TIK22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -92,7 +95,7 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 			},
 			{
 				ReceivedAt: testTime,
-				CourseID:   1, // TIT22
+				CourseID:   titC.ID, // TIT22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -169,18 +172,21 @@ func TestStudents(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	tikC, _ := conn.CourseByName("TIK22")
+	titC, _ := conn.CourseByName("TIT22")
+
 	students := []backend.Student{
 		{
 			FirstName:        "Max",
 			LastName:         "Mustermann",
 			IsImmatriculated: true,
-			CourseID:         0, // TIK22
+			CourseID:         tikC.ID,
 		},
 		{
 			FirstName:        "Maximilian",
 			LastName:         "Mustermann",
 			IsImmatriculated: true,
-			CourseID:         1, // TIT22
+			CourseID:         titC.ID,
 		},
 	}
 	s, _ := conn.Students(backend.Student{LastName: "Mustermann"})
@@ -384,18 +390,20 @@ func TestCourseStudents(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	c, _ := conn.CourseByName("TIK22")
+
 	correctStudents := []backend.Student{
 		{
 			FirstName:        "Max",
 			LastName:         "Mustermann",
 			IsImmatriculated: true,
-			CourseID:         0, // TIK22
+			CourseID:         c.ID,
 		},
 	}
 
-	c, _ := conn.CourseByName("TIK22")
-
 	students, err := conn.CourseStudents(c)
+
+	t.Logf("%+v\n", students)
 
 	if err != nil {
 		t.Fatalf("CourseStudents: %v", err)
@@ -409,6 +417,7 @@ func TestCourseStudents(t *testing.T) {
 		c := correctStudents[i]
 
 		if !studentsEqual(s, c) {
+			t.Logf("%+v\n %+v\n", s, c)
 			t.Fatalf("Mismatched properties: index %v", i)
 		}
 	}
