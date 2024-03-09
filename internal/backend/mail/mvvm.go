@@ -13,9 +13,9 @@ type BackendMail struct {
 }
 
 type MailData struct {
-	image_data []byte
-	course     string
-	datetime   time.Time
+	Image      []byte
+	Course     string
+	ReceivedAt time.Time
 }
 
 // Create a new backend_mail struct
@@ -28,9 +28,12 @@ func New(mvvm mvvm, serverAddr string, username string, password string) (*Backe
 		username:   username,
 		password:   password,
 	}
-	_, _, err := mailservice.setupMail()
+
+	c, _, err := mailservice.setupMail()
 	if err != nil {
 		return nil, err
 	}
+
+	c.Logout()
 	return &mailservice, nil
 }

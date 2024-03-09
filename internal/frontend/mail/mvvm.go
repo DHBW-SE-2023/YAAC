@@ -4,16 +4,11 @@ import (
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
-type mvvm interface {
-	MailFormUpdated(data yaac_shared.EmailData)
-	ValidateTable(img []byte)
-}
-
 type WindowMail struct {
-	MVVM mvvm
+	MVVM yaac_shared.MVVM
 }
 
-func New(mvvm mvvm) *WindowMail {
+func New(mvvm yaac_shared.MVVM) *WindowMail {
 	return &WindowMail{
 		MVVM: mvvm,
 	}
