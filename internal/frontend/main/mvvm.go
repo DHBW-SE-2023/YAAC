@@ -11,7 +11,6 @@ type FrontendMain struct {
 
 func New(mvvm shared.MVVM) *FrontendMain {
 	pages.New(mvvm)
-
 	return &FrontendMain{
 		MVVM: mvvm,
 	}

@@ -37,16 +37,21 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 			}
 		}
 
+		tikC, _ := conn.CourseByName("TIK22")
+		titC, _ := conn.CourseByName("TIT22")
+
 		students := []backend.Student{
 			{
 				FirstName:        "Max",
 				LastName:         "Mustermann",
 				IsImmatriculated: true,
+				CourseID:         tikC.ID,
 			},
 			{
 				FirstName:        "Maximilian",
 				LastName:         "Mustermann",
 				IsImmatriculated: true,
+				CourseID:         titC.ID,
 			},
 		}
 
@@ -60,7 +65,7 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 		attendanceLists := []backend.AttendanceList{
 			{
 				ReceivedAt: testTime,
-				CourseID:   0, // TIK22
+				CourseID:   tikC.ID, // TIK22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -73,9 +78,9 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 					},
 				},
 			},
-			{
+			{ // This list should automatically update the previous one.
 				ReceivedAt: testTime,
-				CourseID:   0, // TIK22
+				CourseID:   tikC.ID, // TIK22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -90,7 +95,7 @@ func setupDatabase() (*backend.BackendDatabase, error) {
 			},
 			{
 				ReceivedAt: testTime,
-				CourseID:   1, // TIT22
+				CourseID:   titC.ID, // TIT22
 				Image:      testByteArray,
 				Attendancies: []backend.Attendance{
 					{
@@ -167,16 +172,21 @@ func TestStudents(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	tikC, _ := conn.CourseByName("TIK22")
+	titC, _ := conn.CourseByName("TIT22")
+
 	students := []backend.Student{
 		{
 			FirstName:        "Max",
 			LastName:         "Mustermann",
 			IsImmatriculated: true,
+			CourseID:         tikC.ID,
 		},
 		{
 			FirstName:        "Maximilian",
 			LastName:         "Mustermann",
 			IsImmatriculated: true,
+			CourseID:         titC.ID,
 		},
 	}
 	s, _ := conn.Students(backend.Student{LastName: "Mustermann"})
@@ -192,14 +202,24 @@ func TestStudents(t *testing.T) {
 	}
 }
 
+func listsEqual(a backend.AttendanceList, b backend.AttendanceList) bool {
+	return a.ReceivedAt == b.ReceivedAt && a.CourseID == b.CourseID && len(a.Attendancies) == len(b.Attendancies)
+}
+
+func attendanciesEqual(a backend.Attendance, b backend.Attendance) bool {
+	return a.IsAttending == b.IsAttending && a.StudentID == b.StudentID
+}
+
 func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)
 
+	tikC, _ := conn.CourseByName("TIK22")
+
 	correctLists := []backend.AttendanceList{
 		{
 			ReceivedAt: testTime.UTC(),
-			CourseID:   0, // TIK22
+			CourseID:   tikC.ID,
 			Image:      testByteArray,
 			Attendancies: []backend.Attendance{
 				{
@@ -214,7 +234,7 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 		},
 	}
 
-	lists, err := conn.AllAttendanceListInRangeByCourse(backend.Course{Model: gorm.Model{ID: 0}}, testTime, testTime.Add(1000))
+	lists, err := conn.AllAttendanceListInRangeByCourse(tikC, testTime, testTime.Add(1000))
 	if err != nil {
 		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
 	}
@@ -225,13 +245,77 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 
 	for i, l := range lists {
 		c := correctLists[i]
-		if c.ReceivedAt != l.ReceivedAt || c.CourseID != l.CourseID || len(c.Attendancies) != len(l.Attendancies) {
+		if !listsEqual(l, c) {
 			t.Fatalf("Mismatched properties")
 		}
 
 		for j, a := range l.Attendancies {
 			b := c.Attendancies[j]
-			if a.IsAttending != b.IsAttending || a.StudentID != b.StudentID {
+			if !attendanciesEqual(a, b) {
+				t.Fatalf("Mismatched attendancies properties")
+			}
+		}
+	}
+}
+
+func TestAllAttendanceListInRange(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	tikC, _ := conn.CourseByName("TIK22")
+	titC, _ := conn.CourseByName("TIT22")
+
+	correctLists := []backend.AttendanceList{
+		{
+			ReceivedAt: testTime.UTC(),
+			CourseID:   tikC.ID,
+			Image:      testByteArray,
+			Attendancies: []backend.Attendance{
+				{
+					StudentID:   0, // Max Mustermann
+					IsAttending: true,
+				},
+				{
+					StudentID:   1, // Maximilian Mustermann
+					IsAttending: false,
+				},
+			},
+		},
+		{
+			ReceivedAt: testTime,
+			CourseID:   titC.ID,
+			Image:      testByteArray,
+			Attendancies: []backend.Attendance{
+				{
+					StudentID:   0, // Max Mustermann
+					IsAttending: true,
+				},
+				{
+					StudentID:   1, // Maximilian Mustermann
+					IsAttending: false,
+				},
+			},
+		},
+	}
+
+	lists, err := conn.AllAttendanceListInRange(testTime, testTime.Add(1000))
+	if err != nil {
+		t.Fatalf("AllAttendanceListInRange: %v", err)
+	}
+
+	if len(correctLists) != len(lists) {
+		t.Fatalf("Incorrect length: %v, correct: %v", len(lists), len(correctLists))
+	}
+
+	for i, l := range lists {
+		c := correctLists[i]
+		if !listsEqual(l, c) {
+			t.Fatalf("Mismatched properties")
+		}
+
+		for j, a := range l.Attendancies {
+			b := c.Attendancies[j]
+			if !attendanciesEqual(a, b) {
 				t.Fatalf("Mismatched attendancies properties")
 			}
 		}
@@ -263,5 +347,126 @@ func TestLatestList(t *testing.T) {
 	latestList, _ := conn.LatestList(c, time.Now())
 	if len(correctList.Attendancies) != len(latestList.Attendancies) || correctList.ReceivedAt != latestList.ReceivedAt || correctList.CourseID != latestList.CourseID {
 		t.Fatalf("Mismatched properties")
+	}
+}
+
+func TestUpdateList(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	c, _ := conn.CourseByName("TIK22")
+	lists, err := conn.AllAttendanceListInRangeByCourse(c, testTime, testTime.Add(1000))
+
+	if err != nil {
+		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
+	}
+
+	if len(lists) != 1 {
+		t.Fatalf("Wrong number of lists: %v, correct: 1", len(lists))
+	}
+
+	originalList := lists[0]
+	newCourse, _ := conn.CourseByName("TIM22")
+
+	newList := originalList
+	newList.CourseID = newCourse.ID
+
+	conn.UpdateList(newList)
+
+	c, _ = conn.CourseByName("TIM22")
+	lists, err = conn.AllAttendanceListInRangeByCourse(c, testTime, testTime.Add(1000))
+
+	if err != nil {
+		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
+	}
+
+	if len(lists) != 1 {
+		t.Fatalf("Wrong number of lists: %v, correct: 1", len(lists))
+	}
+
+	l := lists[0]
+
+	if l.CourseID != newCourse.ID {
+		t.Fatalf("CourseID property not updated: %v, correct: %v", l.CourseID, newCourse.ID)
+	}
+}
+
+func TestCourseStudents(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	c, _ := conn.CourseByName("TIK22")
+
+	correctStudents := []backend.Student{
+		{
+			FirstName:        "Max",
+			LastName:         "Mustermann",
+			IsImmatriculated: true,
+			CourseID:         c.ID,
+		},
+	}
+
+	students, err := conn.CourseStudents(c)
+
+	if err != nil {
+		t.Fatalf("CourseStudents: %v", err)
+	}
+
+	if len(correctStudents) != len(students) {
+		t.Fatalf("Wrong number of students: %v, correct: %v", len(students), len(correctStudents))
+	}
+
+	for i, s := range students {
+		c := correctStudents[i]
+
+		if !studentsEqual(s, c) {
+			t.Logf("%+v\n %+v\n", s, c)
+			t.Fatalf("Mismatched properties: index %v", i)
+		}
+	}
+}
+
+func studentsEqual(a, b backend.Student) bool {
+	return a.FirstName == b.FirstName && a.LastName == b.LastName && a.IsImmatriculated == b.IsImmatriculated && a.CourseID == b.CourseID
+}
+
+func settingsEqual(a, b backend.Setting) bool {
+	return a.Setting == b.Setting && a.Value == b.Value
+}
+
+func TestSettings(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	correctSettings := []backend.Setting{
+		{
+			Setting: "test1",
+			Value:   "123",
+		},
+		{
+			Setting: "test2",
+			Value:   "456",
+		},
+	}
+
+	_, err := conn.SettingsUpdate(correctSettings)
+	if err != nil {
+		t.Fatalf("SettingsUpdate: %v", err)
+	}
+
+	settings, err := conn.Settings()
+	if err != nil {
+		t.Fatalf("Settings: %v", err)
+	}
+
+	if len(settings) != len(correctSettings) {
+		t.Fatalf("Wrong number of settings: %v, correct: %v", len(settings), len(correctSettings))
+	}
+
+	for i, s := range settings {
+		c := correctSettings[i]
+		if !settingsEqual(s, c) {
+			t.Fatalf("Mismatched properties: index %v", i)
+		}
 	}
 }

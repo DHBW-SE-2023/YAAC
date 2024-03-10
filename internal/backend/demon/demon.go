@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
@@ -79,9 +80,9 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		attendance := shared.Attendance{
 			StudentID:    student.CourseID,
 			IsAttending:  row.Valid,
-			NameROI:      row.NameROI,
-			SignatureROI: row.SignatureROI,
-			TotalROI:     row.TotalROI,
+			NameROI:      database.Rectangle(row.NameROI),
+			SignatureROI: database.Rectangle(row.SignatureROI),
+			TotalROI:     database.Rectangle(row.TotalROI),
 		}
 
 		list.Attendancies = append(list.Attendancies, attendance)
