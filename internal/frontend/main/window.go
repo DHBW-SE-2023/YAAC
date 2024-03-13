@@ -22,6 +22,16 @@ type GlobalVars struct {
 	Window fyne.Window
 }
 
+func updateTree(tree *widget.Tree, loadPrevious bool) {
+	if !loadPrevious {
+		previousPref := gv.App.Preferences().StringWithFallback("previousPage", "home")
+		tree.Select(previousPref)
+	} else {
+		currentPref := gv.App.Preferences().StringWithFallback("preferedStartPage", "home")
+		tree.Select(currentPref)
+	}
+}
+
 func (f *FrontendMain) OpenMainWindow() {
 	gv = GlobalVars{}
 	gv.App = *yaac_shared.GetApp()
@@ -48,8 +58,7 @@ func (f *FrontendMain) OpenMainWindow() {
 	})
 	// Important setting to enable custom backgrounds without borders
 	gv.Window.SetPadded(false)
-
-	// handle main window
+	gv.Window.Show()
 	gv.Window.SetContent(makeWindow(f))
 	gv.Window.Resize(fyne.NewSize(1280, 720))
 	gv.Window.Show()
@@ -69,8 +78,8 @@ func makeWindow(f *FrontendMain) fyne.CanvasObject {
 
 	page := container.NewBorder(
 		nil, nil, nil, nil, content)
-
-	return container.NewBorder(nil, nil, makeNav(setPage, true), nil, page)
+	nav := makeNav(setPage, true)
+	return container.NewBorder(nil, nil, nav, nil, page)
 }
 
 func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject {
@@ -101,7 +110,6 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 			}
 		},
 	}
-
 	if loadPrevious {
 		currentPref := gv.App.Preferences().StringWithFallback(preferedStartPage, "home")
 		tree.Select(currentPref)
@@ -111,6 +119,5 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
-
 	return container.NewMax(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
 }

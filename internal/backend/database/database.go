@@ -68,7 +68,9 @@ func (item *BackendDatabase) ConnectDatabase() error {
 		fd.Close()
 	}
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		FullSaveAssociations: true,
+	})
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 		return err
@@ -89,16 +91,23 @@ func (item *BackendDatabase) InsertList(list AttendanceList) (AttendanceList, er
 	return list, err
 }
 
-// `list` needs the field `Id` to be not null.
+// `list` needs the field `Id` to be	 not null.
 func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, error) {
 	err := item.DB.Save(&list).Error
 	return list, err
 }
 
+// // [..., end)
+// func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
+// 	list := AttendanceList{}
+// 	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("join Courses c on c.id = course_id").Where(course).Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
+// 	return list, err
+// }
+
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("join Courses c on c.id = course_id").Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("course_id=?", course.ID).Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
 	return list, err
 }
 

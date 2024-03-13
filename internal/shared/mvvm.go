@@ -6,7 +6,7 @@ import (
 
 type MVVM interface {
 	// Frontend
-	NotifyError(err error)
+	NotifyError(source string, err error)
 	NotifyNewList(list AttendanceList)
 
 	// Mail

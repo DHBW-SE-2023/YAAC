@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -30,6 +31,10 @@ func landingScreen(_ fyne.Window) fyne.CanvasObject {
 		testInsertAttendanceList()
 	})
 
+	button2 := widget.NewButton("Bulk Insert Students TIK", func() {
+		testInsertStudent()
+	})
+
 	return container.NewCenter(container.NewVBox(
 		widget.NewLabelWithStyle("Willkommen zurück XD", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		logo,
@@ -40,6 +45,7 @@ func landingScreen(_ fyne.Window) fyne.CanvasObject {
 		),
 		widget.NewLabel(""), // balance the header on the tutorial screen we leave blank on this content
 		button,
+		button2,
 	))
 }
 
@@ -54,8 +60,15 @@ func testInsertAttendanceList() {
 	}
 	attendanceList := yaac_shared.AttendanceList{
 		ReceivedAt: testTime,
-		CourseID:   2,
+		CourseID:   1,
 		Image:      imageBytes,
 	}
 	myMVVM.InsertList(attendanceList)
+}
+
+func testInsertStudent() {
+	students := []string{"Robin Beats", "Phillip Rotweiler", "Finley Hogan", "Julia Egger", "Yannick Seidel", "David Fischer", "Linus Marshall", "Hannes Nusch", "Edward Medwedkin", "Marco Beuerle", "Lysann Baumann", "Milan Kiele", "Tobias y"}
+	for _, element := range students {
+		myMVVM.InsertStudent(yaac_shared.Student{FirstName: strings.Split(element, " ")[0], LastName: strings.Split(element, " ")[1], IsImmatriculated: true, CourseID: 1})
+	}
 }

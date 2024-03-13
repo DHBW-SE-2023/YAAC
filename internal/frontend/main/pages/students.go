@@ -42,7 +42,7 @@ func studentScreen(_ fyne.Window) fyne.CanvasObject {
 		table.RemoveAll()
 		refreshStudentAttendancyList(table, student.course.Text, s)
 	})
-
+	studentDropdown.Disable()
 	courseDropdown := widget.NewSelect([]string{
 		"TIK22",
 		"TIT22",
@@ -52,7 +52,9 @@ func studentScreen(_ fyne.Window) fyne.CanvasObject {
 		student.course.SetText(s)
 		selection.SetText(updateSelection(student))
 		refreshStudentDropdown(studentDropdown, s)
+		studentDropdown.Enable()
 	})
+	courseDropdown.Selected = "Kursauswahl"
 
 	dropdownArea := container.NewHBox(courseDropdown, studentDropdown)
 	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
@@ -90,10 +92,11 @@ func refreshStudentAttendancyList(table *fyne.Container, course string, student 
 
 type attendanceRow struct {
 	widget.BaseWidget
-	frame   *canvas.Rectangle
-	date    *widget.Label
-	state   *widget.Label
-	content *fyne.Container
+	frame    *canvas.Rectangle
+	date     *widget.Label
+	state    *widget.Label
+	content  *fyne.Container
+	OnTapped func()
 }
 
 func NewAttendanceRow(dateText string, stateText string) *attendanceRow {
@@ -107,11 +110,15 @@ func NewAttendanceRow(dateText string, stateText string) *attendanceRow {
 		date:    widget.NewLabel(dateText),
 		state:   widget.NewLabel(stateText),
 		content: container.NewGridWithColumns(2),
+		OnTapped: func() {
+			yaac_shared.App.SendNotification(fyne.NewNotification("Weiterleitung", fmt.Sprintf("%s %s", dateText, stateText)))
+		},
 	}
 	item.ExtendBaseWidget(item)
-
+	detectAttendancyState(item)
 	return item
 }
+func (item *attendanceRow) Tapped(ev *fyne.PointEvent) { item.OnTapped() }
 
 func (item *attendanceRow) CreateRenderer() fyne.WidgetRenderer {
 	item.frame.Resize(fyne.NewSize(250, 250))
@@ -122,4 +129,12 @@ func (item *attendanceRow) CreateRenderer() fyne.WidgetRenderer {
 		item.content,
 	)
 	return widget.NewSimpleRenderer(c)
+}
+
+func detectAttendancyState(item *attendanceRow) {
+	if item.state.Text != "Anwesend" {
+		item.frame.FillColor = color.RGBA{227, 0, 27, 255}
+		item.frame.StrokeColor = color.RGBA{227, 0, 27, 255}
+		item.frame.StrokeWidth = 2.0
+	}
 }
