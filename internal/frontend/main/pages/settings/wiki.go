@@ -1,45 +1,53 @@
 package settings
 
 import (
+	"fmt"
 	"image/color"
-	"time"
+	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
+var page int = 1
+var pages, _ = os.ReadDir("assets/doku")
+
 func wikiScreen() fyne.CanvasObject {
-	gradient := canvas.NewHorizontalGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0, 0xff})
-	go func() {
-		for {
-			time.Sleep(time.Second)
-
-			gradient.Angle += 45
-			if gradient.Angle >= 360 {
-				gradient.Angle -= 360
-			}
-			canvas.Refresh(gradient)
+	title := canvas.NewText(" Nutzerdokumentation", color.Black)
+	title.TextSize = 28
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Alignment = fyne.TextAlignCenter
+	titleFrame := container.NewCenter(container.NewGridWrap(fyne.NewSize(800, 200), title))
+	doku := canvas.NewImageFromFile(fmt.Sprintf("assets/doku/%d.png", page))
+	doku.FillMode = canvas.ImageFillContain
+	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), doku)
+	nextButton := widget.NewButton("Weiter", func() {
+		imageFrame.RemoveAll()
+		page += 1
+		print(len(pages))
+		if page == len(pages) {
+			page = 1
 		}
-	}()
+		loadImage(fmt.Sprintf("assets/doku/%d.png", page), imageFrame)
+	})
+	backButton := widget.NewButton("Zurück", func() {
+		imageFrame.RemoveAll()
+		page -= 1
+		if page == 0 {
+			page = len(pages)
+		}
+		loadImage(fmt.Sprintf("assets/doku/%d.png", page), imageFrame)
+	})
+	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
+	content := container.NewMax(container.NewVBox(titleFrame, container.NewCenter(imageFrame), buttonArea))
+	return container.NewVScroll(content)
+}
 
-	return container.NewGridWrap(fyne.NewSize(90, 90),
-		canvas.NewImageFromResource(data.FyneLogo),
-		&canvas.Rectangle{FillColor: color.NRGBA{0x80, 0, 0, 0xff},
-			StrokeColor: color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth: 1},
-		&canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 255, G: 200, B: 0, A: 180},
-			StrokeColor:  color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth:  4.0,
-			CornerRadius: 20},
-		&canvas.Line{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff}, StrokeWidth: 5},
-		&canvas.Circle{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff},
-			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
-			StrokeWidth: 2},
-		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		gradient,
-		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
-	)
+func loadImage(imagePath string, imageFrame *fyne.Container) {
+	image := canvas.NewImageFromFile(imagePath)
+	image.FillMode = canvas.ImageFillContain
+	imageFrame.Add(image)
 }

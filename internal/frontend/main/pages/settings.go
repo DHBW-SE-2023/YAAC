@@ -12,7 +12,7 @@ import (
 
 func settingsScreen(_ fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("Einstellungen", color.Black)
-	title.TextSize = 20
+	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.Alignment = fyne.TextAlignCenter
 	settingNav := canvas.NewRectangle(color.NRGBA{R: 230, G: 233, B: 235, A: 255})

@@ -14,7 +14,6 @@ type Setting struct {
 var (
 	// Tutorials defines the metadata for each tutorial
 	SettingPages = map[string]Setting{
-		"general":   {"Allgemein", generalScreen, true},
 		"email":     {"Email", emailScreen, true},
 		"wiki":      {"WIKI", wikiScreen, true},
 		"impressum": {"Impressum", impressumScreen, true},
@@ -22,6 +21,6 @@ var (
 
 	// TutorialIndex  defines how our tutorials should be laid out in the index tree
 	SettingPagesIndex = map[string][]string{
-		"": {"general", "email", "wiki", "impressum"},
+		"": {"email", "wiki", "impressum"},
 	}
 )

@@ -7,26 +7,61 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
 func emailScreen() fyne.CanvasObject {
 	title := canvas.NewText(" Email", color.Black)
-	title.TextSize = 20
+	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	header := container.NewGridWrap(fyne.NewSize(800, 200), title)
+	title.Alignment = fyne.TextAlignCenter
+	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(800, 200), title))
 
-	labelMailConnection := widget.NewLabel("Mail Server Status")
-	labelMailConnection.TextStyle = fyne.TextStyle{Bold: true}
-	labelMailConnectionStatus := widget.NewLabel("Aktiv")
-	mailConnectionStatus := container.NewVBox(labelMailConnection, container.NewGridWrap(fyne.NewSize(400, 40), labelMailConnectionStatus))
-	labelMailConnectionString := widget.NewLabel("Mail Server Verbindung")
-	labelMailConnectionString.TextStyle = fyne.TextStyle{Bold: true}
-	entryMailConnectionString := widget.NewEntry()
-	mailConnection := container.NewVBox(labelMailConnectionString, container.NewGridWrap(fyne.NewSize(400, 40), entryMailConnectionString))
+	form := generateForm()
+	content := container.NewCenter(container.NewVBox(container.NewGridWrap(fyne.NewSize(600, 40), form)))
+	return container.NewVBox(header, content)
+}
 
-	buttonFrame := canvas.NewRectangle(color.NRGBA{R: 255, G: 255, B: 255, A: 255})
-	pullMailButton := widget.NewButton("Aktualisiere Daten", func() { println("Fresh Pull") })
-	resetMailButton := widget.NewButton("Mail Sever Neustart", func() { println("Restart") })
-	buttons := container.NewGridWrap(fyne.NewSize(250, 50), container.NewMax(buttonFrame, pullMailButton), container.NewMax(buttonFrame, resetMailButton))
-	return container.NewVBox(header, mailConnectionStatus, mailConnection, buttons)
+func generateForm() *widget.Form {
+	serverStatus := widget.NewLabel("Läuft Sascha")
+	server := widget.NewEntry()
+	username := widget.NewEntry()
+	password := widget.NewPasswordEntry()
+	restartButton := widget.NewButton("Zurücksetzen", func() {
+		println("")
+	})
+	submitButton := widget.NewButton("Bestätigen", nil)
+	buttonArea := container.NewAdaptiveGrid(2, submitButton, restartButton)
+	form := &widget.Form{
+		Items: []*widget.FormItem{ // we can specify items in the constructor
+			{Text: "Status", Widget: serverStatus},
+			{Text: "E-Mail Server", Widget: server},
+			{Text: "E-Mail User", Widget: username},
+			{Text: "E-Mail Password", Widget: password},
+			{Widget: buttonArea}},
+	}
+	submitButton.OnTapped = func() {
+		serverConnection := server.Text
+		serverUser := username.Text
+		password := password.Text
+		setSetting("mailConnection", serverConnection)
+		setSetting("mailUser", serverUser)
+		setSetting("mailPassword", password)
+	}
+	return form
+}
+
+func setSetting(key string, value string) {
+	var settings []yaac_shared.Setting
+	setting := yaac_shared.Setting{
+		Setting: key,
+		Value:   value,
+	}
+	settings = append(settings, setting)
+	_, err := myMVVM.SettingsUpdate(settings)
+	if err != nil {
+		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler beim Aktualisieren", err.Error()))
+	} else {
+		yaac_shared.App.SendNotification(fyne.NewNotification("Erfolgreiche Aktualisierung", "Ihre Mail Daten wurden erfolgreich aktualisiert"))
+	}
 }
