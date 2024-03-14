@@ -47,8 +47,7 @@ type AttendanceList struct {
 }
 
 type Setting struct {
-	gorm.Model
-	Setting string `gorm:"index"`
+	Setting string `gorm:"primaryKey"`
 	Value   string
 }
 
