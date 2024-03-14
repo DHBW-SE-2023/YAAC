@@ -8,12 +8,15 @@ import (
 )
 
 type Table struct {
-	Image gocv.Mat
-	Rows  []TableRow
+	Course string
+	Image  gocv.Mat
+	Rows   []TableRow
 }
 
 type TableRow struct {
-	Name         string
+	FirstName    string
+	LastName     string
+	FullName     string
 	Valid        bool
 	NameROI      image.Rectangle
 	SignatureROI image.Rectangle
@@ -121,8 +124,6 @@ func NewTable(img gocv.Mat) Table {
 			NameROI:      row[1],
 			SignatureROI: row[2],
 			TotalROI:     image.Rect(minX, minY, maxX, maxY),
-			Name:         "",
-			Valid:        false,
 		}
 
 		// The name and signature column have at least a width of 30%

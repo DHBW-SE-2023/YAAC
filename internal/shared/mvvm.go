@@ -5,14 +5,16 @@ import (
 )
 
 type MVVM interface {
+	// Frontend
+	NotifyError(err error)
+	NotifyNewList(list AttendanceList)
+
 	// Mail
-	MailFormUpdated(data EmailData)
-	MailUpdateData()
-	MailRestartServer()
-	MailsRefresh()
+	UpdateMailCredentials(credentials EmailData) error
+	GetMailsToday() ([]MailData, error)
 
 	// Imgproc
-	ValidateTable(img []byte)
+	ValidateTable(img []byte) (Table, error)
 
 	// Database
 	InsertList(list AttendanceList) (AttendanceList, error)
@@ -28,4 +30,5 @@ type MVVM interface {
 	SettingsReset() ([]Setting, error)
 	CourseByName(name string) (Course, error)
 	Students(student Student) ([]Student, error)
+	InsertStudent(student Student) (Student, error)
 }
