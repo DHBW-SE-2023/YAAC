@@ -3,7 +3,7 @@ module github.com/DHBW-SE-2023/YAAC
 go 1.21.3
 
 require (
-	fyne.io/fyne/v2 v2.4.1
+	fyne.io/fyne/v2 v2.4.4
 	github.com/emersion/go-imap v1.2.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/otiai10/gosseract/v2 v2.4.1
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
+	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/fredbi/uri v1.0.0 // indirect
@@ -25,7 +25,7 @@ require (
 	github.com/go-gl/gl v0.0.0-20211210172815-726fda9656d6 // indirect
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20221017161538-93cebf72946b // indirect
 	github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8 // indirect
-	github.com/go-text/typesetting v0.0.0-20230616162802-9c17dd34aa4a // indirect
+	github.com/go-text/typesetting v0.1.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
