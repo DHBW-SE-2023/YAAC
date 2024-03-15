@@ -66,6 +66,16 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	return maildata, nil
 }
 
+// Checks the mail connection to the server and the user crudentials. Returns true if the connection and authentication is fine otherwise false
+func (b *BackendMail) CheckMailConnection() bool {
+	c, _, err := b.setupMail()
+	if err != nil {
+		return false
+	}
+	c.Logout()
+	return true
+}
+
 // getBoundary needs the contentType part of the mail and returns the value of boundary
 func (b *BackendMail) getBoundary(contentType string) (string, error) {
 	_, params, err := mime.ParseMediaType(contentType)
