@@ -26,10 +26,13 @@ func (mvvm *BackendImgproc) ValidateTable(imgBuf []byte) (Table, error) {
 	}
 
 	img = FindTable(img)
+	topDownImg := img.Clone()
 	table, err := ReviewTable(img, mvvm.tesseractClient)
 	if err != nil {
 		return Table{}, err
 	}
+
+	table.Image = topDownImg
 
 	return table, nil
 }
