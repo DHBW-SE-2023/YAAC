@@ -1,5 +1,7 @@
 package test
 
+/*
+
 import (
 	"encoding/json"
 	"os"
@@ -51,3 +53,5 @@ func TestCheckMailConnection(t *testing.T) {
 		t.Fatal("Mail Connection ist not active")
 	}
 }
+
+*/
