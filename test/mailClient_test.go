@@ -16,7 +16,7 @@ type Credentials struct {
 }
 
 func getTestLoginData() (string, string, string, error) {
-	file, err := os.Open("./testdata/mailLoginData.json")
+	file, err := os.Open("testdata/mailLoginData.json")
 	if err != nil {
 		return "", "", "", err
 	}
