@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"image/color"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -15,86 +14,75 @@ import (
 	"gorm.io/gorm"
 )
 
-var courseTable *fyne.Container
+var courseTable fyne.Container
 
-type courses struct {
-	name *widget.Label
-	date *widget.Label
-}
-
-func coursesScreen(w fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText(" Kursansicht", color.Black)
-	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = 28
-	title.TextStyle = fyne.TextStyle{Bold: true}
-	course := &courses{
-		name: widget.NewLabel(""),
-		date: widget.NewLabel(""),
+func CoursesScreen(w fyne.Window) fyne.CanvasObject {
+	course := &SelectionTracker{
+		courseName: widget.NewLabel(""),
+		secondary:  widget.NewLabel(""),
 	}
-
 	var dates []string
-
-	tableHeader := container.NewGridWithColumns(2)
-	tableHeader.Add(widget.NewLabel("Name"))
-	tableHeader.Add(widget.NewLabel("Status"))
-	courseTable = container.NewVBox()
-
 	selection := widget.NewLabel("")
 
+	title := ReturnHeader("Kursansicht")
+	tableHeader, courseTable := ReturnAttendanceTable("Name", "Status")
+	dateDropdown := ReturnDateDropdown(dates)
+	courseDropdown := ReturnCourseDropdown(course, selection, dateDropdown, "course")
+	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown)
+
+	dateDropdown.OnChanged = func(s string) {
+		course.secondary.SetText(s)
+		selection.SetText(RefreshSelection(course))
+		courseTable.RemoveAll()
+		RefreshCourseAttendancy(courseTable, course.courseName.Text, s)
+		editDropdown.Enable()
+	}
+
+	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
+	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, layout.NewSpacer(), layout.NewSpacer(), editDropdown)
+	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
+	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, container.NewVScroll(courseTable)))
+	return studentView
+}
+
+/*
+ReturnDateDropdown returns the configured dateDropdown passing the dates list
+*/
+func ReturnDateDropdown(dates []string) *widget.SelectEntry {
 	dateDropdown := widget.NewSelectEntry(dates)
 	dateDropdown.PlaceHolder = "Type or select date"
 	dateDropdown.Disable()
-	courseDropdown := widget.NewSelect([]string{
-		"TIK22",
-		"TIT22",
-		"TIS22",
-		"TIM22",
-	}, func(s string) {
-		course.name.SetText(s)
-		selection.SetText(refreshSelection(course))
-		refreshDateDropdown(dateDropdown, s)
-		dateDropdown.SetText("")
-		dateDropdown.Enable()
+	return dateDropdown
+}
 
-	})
-	courseDropdown.Selected = "Kursauswahl"
-
+/*
+ReturnEditDropdown returns the configured editDropdown passing the fyne.Window(for redirection),courseDropdown,dateDropdown
+since they will be necessary for change handling.
+*/
+func ReturnEditDropdown(w fyne.Window, courseDropdown *widget.Select, dateDropdown *widget.SelectEntry) *widget.Select {
 	editDropdown := widget.NewSelect([]string{
 		"Liste bearbeiten",
 		"Liste anzeigen",
 		"Liste hochladen",
 	}, func(s string) {
 		if s == "Liste bearbeiten" {
-			LastView = w.Content()
-			verifyList(w, courseDropdown.Selected, dateDropdown.Text)
+			lastView = w.Content()
+			VerifyList(w, courseDropdown.Selected, dateDropdown.Text)
 		} else if s == "Liste anzeigen" {
-			showImage(w, courseDropdown.Selected, dateDropdown.Text)
+			ShowImage(w, courseDropdown.Selected, dateDropdown.Text)
 		} else {
-			openImagUpload(w, courseDropdown.Selected, dateDropdown.Text)
+			OpenImageUpload(w, courseDropdown.Selected, dateDropdown.Text)
 		}
 	})
 	editDropdown.Selected = "Listenkonfiguration"
 	editDropdown.Disable()
-	dateDropdown.OnChanged = func(s string) {
-		course.date.SetText(s)
-		selection.SetText(refreshSelection(course))
-		courseTable.RemoveAll()
-		refreshCourseAttendancy(courseTable, course.name.Text, s)
-		editDropdown.Enable()
-	}
-
-	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, layout.NewSpacer(), layout.NewSpacer(), editDropdown)
-	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
-	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
-	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, container.NewVScroll(courseTable)))
-	return studentView
+	return editDropdown
 }
 
-func refreshSelection(course *courses) string {
-	return fmt.Sprintf("%s - %s", course.name.Text, course.date.Text)
-}
-
-func refreshDateDropdown(dateDropdown *widget.SelectEntry, course string) {
+/*
+RefreshDateDropdown is responsible for refreshing the date dropdown as soon as course has been selected
+*/
+func RefreshDateDropdown(dateDropdown *widget.SelectEntry, course string) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	lists, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
 	var dates []string
@@ -104,7 +92,10 @@ func refreshDateDropdown(dateDropdown *widget.SelectEntry, course string) {
 	dateDropdown.SetOptions(dates)
 }
 
-func refreshCourseAttendancy(table *fyne.Container, course string, date string) {
+/*
+RefreshCourseAttendancy is responsible for refreshing the course attendancy list as soon as a date and a course has been selected
+*/
+func RefreshCourseAttendancy(table *fyne.Container, course string, date string) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	lists, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -180), time.Now())
 	for _, list := range lists {
@@ -117,20 +108,19 @@ func refreshCourseAttendancy(table *fyne.Container, course string, date string) 
 	}
 }
 
-func MapBooleans(b bool) string {
-	if bool(b) {
-		return "Anwesend"
-	}
-	return "Abwesend"
-}
-
-func verifyList(w fyne.Window, course string, date string) {
+/*
+VerifyList will redirect the user to the Verification Page passing the currently selected course and date
+*/
+func VerifyList(w fyne.Window, course string, date string) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	parsedTime, _ := time.Parse("2006-01-02", date)
-	w.SetContent(verificationScreen(w, getImage(course, parsedTime.Add(24*time.Hour)), int(selectedCourse.ID), parsedTime))
+	w.SetContent(VerificationScreen(w, GetImageByDate(course, parsedTime.Add(24*time.Hour)), int(selectedCourse.ID), parsedTime))
 }
 
-func showImage(w fyne.Window, course string, date string) {
+/*
+ShowImage will display the currently selected list in a seperate window passing course and date.
+*/
+func ShowImage(w fyne.Window, course string, date string) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	parsedTime, _ := time.Parse("2006-01-02", date)
 	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, parsedTime, parsedTime.Add(24*time.Hour))

@@ -10,128 +10,147 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	"gocv.io/x/gocv"
 	"gorm.io/gorm"
 )
 
-type verificationWidget struct {
-	widget.BaseWidget
-	frame     *canvas.Rectangle
-	attending *widget.Check
-	content   *fyne.Container
-}
+func VerificationScreen(w fyne.Window, img []byte, course int, optional ...time.Time) fyne.CanvasObject {
+	header := ReturnVerificationHeader()
+	description := canvas.NewText("Überprüfen sie die dargestellt Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
+	description.TextSize = 16
+	description.TextStyle = fyne.TextStyle{Bold: true}
+	image := RotateImage(img)
 
-func NewVerificationWidget(student string, attendance bool, students []string, attendances []bool) *verificationWidget {
-	item := &verificationWidget{
-		frame: &canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 209, G: 209, B: 209, A: 255},
-			StrokeColor:  color.NRGBA{R: 209, G: 209, B: 209, A: 255},
-			StrokeWidth:  4.0,
-			CornerRadius: 10,
-		},
-		attending: widget.NewCheck(student, func(value bool) {
-			for index, name := range students {
-				if name == student {
-					attendances[index] = value
-				}
-			}
-		}),
-		content: container.NewGridWithColumns(2),
+	widgetList := container.NewVBox()
+	if len(optional) > 0 {
+		widgetList = LoadVerificationWidgets(course, optional[0])
+	} else {
+		widgetList = LoadVerificationWidgets(course, time.Now())
 	}
-	item.ExtendBaseWidget(item)
-	item.attending.Checked = attendance
-	item.attending.OnChanged = func(b bool) { item.attending.Checked = b }
 
-	return item
+	confirmButton := ReturnConfirmButton(w, widgetList, optional, course)
+	exitButton := ReturnExitButton(w)
+
+	verificationList := container.NewVBox(description, widgetList, container.NewCenter(container.NewGridWithRows(1, confirmButton, exitButton)))
+	contentBox := container.NewAdaptiveGrid(2, image, container.NewPadded(container.NewPadded(container.NewVScroll(verificationList))))
+	return container.NewBorder(header, nil, nil, nil, contentBox)
 }
 
-func (item *verificationWidget) CreateRenderer() fyne.WidgetRenderer {
-	item.content.Add(item.attending)
-	c := container.NewPadded(
-		item.frame,
-		item.content,
-	)
-	c.Resize(fyne.NewSize(200, 200))
-	return widget.NewSimpleRenderer(c)
-}
-
-func verificationScreen(w fyne.Window, img []byte, course int, optional ...time.Time) fyne.CanvasObject {
-	//Define Header
+/*
+ReturnVerificationHeader returns the configured VerificationHeader including navBar extern layout
+*/
+func ReturnVerificationHeader() *fyne.Container {
 	headerFrame := canvas.NewRectangle(color.White)
 	logo := canvas.NewImageFromFile("assets/DHBW.png")
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
-	title := canvas.NewText("Anwesenheitsprüfung", color.Black)
-	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = 28
-	title.TextStyle = fyne.TextStyle{Bold: true}
+	title := ReturnHeader("Anwesenheitsprüfung")
 	header := container.NewGridWrap(fyne.NewSize(200, 200), logo, title)
+	return container.NewMax(headerFrame, header)
+}
 
-	description := canvas.NewText("Überprüfen sie die dargestellt Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
-	description.TextSize = 16
-	description.TextStyle = fyne.TextStyle{Bold: true}
-
-	widgetList := container.NewVBox()
-	if len(optional) > 0 {
-		widgetList = loadData(course, optional[0])
-	} else {
-		widgetList = loadData(course, time.Now())
-	}
-	image := RotateImage(img)
-
+/*
+ReturnConfirmButton returns the configured VerificationHeader passing the window,widgetList, optional params []time.Time and courseID.
+These values will be used to update the attendancees when the button gets clicked
+*/
+func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []time.Time, course int) *widget.Button {
 	confirmButton := widget.NewButton("Bestätigen", func() {
 		var attendances []bool
 		for _, obj := range widgetList.Objects {
-			if widget, ok := obj.(*verificationWidget); ok {
+			if widget, ok := obj.(*VerificationWidget); ok {
 				attendances = append(attendances, widget.attending.Checked)
 			}
 		}
 		if len(optional) > 0 {
-			updateList(attendances, course, optional[0])
+			UpdateList(attendances, course, optional[0])
 		} else {
-			updateList(attendances, course, time.Now())
+			UpdateList(attendances, course, time.Now())
 		}
-		if LastView != nil {
-			w.SetContent(LastView)
-			if len(optional) > 0 {
-				courses, _ := myMVVM.Courses()
-				var selectedCourse string
-				for _, element := range courses {
-					if element.ID == uint(course) {
-						selectedCourse = element.Name
-					}
+		ReturnToPreviousPage(w, course, optional)
+	})
+	return confirmButton
+}
+
+/*
+UpdateList updates all new attendancies by initializing a AttedanceList Object as soon as the confirmButton gets clicked.
+*/
+func UpdateList(attendances []bool, course int, date time.Time) {
+	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: uint(course)}}, date.AddDate(0, 0, -31), date.Add(24*time.Hour))
+	attendanceList := ReturnUpdatedAttendancies(attendances, list)
+
+	_, err := myMVVM.UpdateList(yaac_shared.AttendanceList{
+		ID:           list[0].ID,
+		CreatedAt:    list[0].CreatedAt,
+		CourseID:     uint(course),
+		Attendancies: attendanceList,
+		Image:        list[0].Image,
+		ReceivedAt:   list[0].ReceivedAt,
+	})
+
+	if err != nil {
+		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listenaktualisierung", err.Error()))
+		return
+	} else {
+		yaac_shared.App.SendNotification(fyne.NewNotification("Ihre Liste wurde erfolgreich aktualisiert", ""))
+	}
+}
+
+/*
+ReturnUpdatedAttendancies provides UpdateList all updatedAttendancies by using the VerificationWidgets Checkbox values and construting
+an Attendance object for each.
+*/
+func ReturnUpdatedAttendancies(attendances []bool, list []yaac_shared.AttendanceList) []yaac_shared.Attendance {
+	var attendanceList []yaac_shared.Attendance
+	for i := 0; i < len(list[0].Attendancies); i++ {
+		att := yaac_shared.Attendance{
+			StudentID:        list[0].Attendancies[i].StudentID,
+			IsAttending:      attendances[i],
+			AttendanceListID: list[0].ID,
+		}
+		attendanceList = append(attendanceList, att)
+	}
+	return attendanceList
+}
+
+/*
+ReturnToPreviousPage executes a command to return to the previousPage passing the window, courseId and optional params []time.Time.
+Depending on the fact if optional params are passed or not the command decides where to navigate to.
+*/
+func ReturnToPreviousPage(w fyne.Window, course int, optional []time.Time) {
+	if lastView != nil {
+		w.SetContent(lastView)
+		if len(optional) > 0 {
+			courses, _ := myMVVM.Courses()
+			var selectedCourse string
+			for _, element := range courses {
+				if element.ID == uint(course) {
+					selectedCourse = element.Name
 				}
-				courseTable.RemoveAll()
-				refreshCourseAttendancy(courseTable, selectedCourse, optional[0].Format("2006-01-02"))
-			} else {
-				loadOverviewWidgets(w, overviewGrid)
 			}
+			courseTable.RemoveAll()
+			RefreshCourseAttendancy(&courseTable, selectedCourse, optional[0].Format("2006-01-02"))
+		} else {
+			LoadOverviewWidgets(w, overviewGrid)
 		}
-	})
+	}
+}
 
+/*
+ReturnExit returns the configured exitButton to exit the current Page and return to lastView.
+*/
+func ReturnExitButton(w fyne.Window) *widget.Button {
 	exitButton := widget.NewButton("Zurück zur Startseite", func() {
-		if LastView != nil {
-			w.SetContent(LastView)
+		if lastView != nil {
+			w.SetContent(lastView)
 		}
 	})
-	verificationList := container.NewVBox(description, widgetList, container.NewCenter(container.NewGridWithRows(1, confirmButton, exitButton)))
-	contentBox := container.NewAdaptiveGrid(2,
-		image,
-		container.NewPadded(container.NewPadded(container.NewVScroll(verificationList))),
-	)
-	return container.NewBorder(container.NewMax(headerFrame, header), nil, nil, nil, contentBox)
+	return exitButton
 }
 
-func RotateImage(img []byte) *canvas.Image {
-	rotated := gocv.NewMat()
-	imgMat, _ := gocv.IMDecode(img, gocv.IMReadAnyColor)
-	gocv.Rotate(imgMat, &rotated, gocv.Rotate90Clockwise)
-	imgNew, _ := imgMat.ToImage()
-	image := canvas.NewImageFromImage(imgNew)
-	return image
-}
-
-func getAttendancies(course int, date time.Time) ([]string, []bool) {
+/*
+GetAttendancies returns all attendancies using the courseID and date for the selected List. Returning the studentNames and isAttending
+values in two seperate lists for LoadVerificationWidgets to use.
+*/
+func GetAttendancies(course int, date time.Time) ([]string, []bool) {
 	attendancies, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: uint(course)}}, date.AddDate(0, 0, -31), date.Add(24*time.Hour))
 	var students []string
 	var attendance []bool
@@ -143,38 +162,14 @@ func getAttendancies(course int, date time.Time) ([]string, []bool) {
 	return students, attendance
 }
 
-func loadData(course int, date time.Time) *fyne.Container {
-	students, attendance := getAttendancies(course, date)
+/*
+LoadVerificationWidgets loads all attendancies as VerificationWidgets into a container.
+*/
+func LoadVerificationWidgets(course int, date time.Time) *fyne.Container {
+	students, attendance := GetAttendancies(course, date)
 	studentList := container.NewVBox()
 	for i := 0; i < len(students); i++ {
 		studentList.Add(NewVerificationWidget(students[i], attendance[i], students, attendance))
 	}
 	return studentList
-}
-
-func updateList(attendances []bool, course int, date time.Time) {
-	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: uint(course)}}, date.AddDate(0, 0, -31), date.Add(24*time.Hour))
-	var attendanceList []yaac_shared.Attendance
-	for i := 0; i < len(list[0].Attendancies); i++ {
-		att := yaac_shared.Attendance{
-			StudentID:        list[0].Attendancies[i].StudentID,
-			IsAttending:      attendances[i],
-			AttendanceListID: list[0].ID,
-		}
-		attendanceList = append(attendanceList, att)
-	}
-	_, err := myMVVM.UpdateList(yaac_shared.AttendanceList{
-		ID:           list[0].ID,
-		CreatedAt:    list[0].CreatedAt,
-		CourseID:     uint(course),
-		Attendancies: attendanceList,
-		Image:        list[0].Image,
-		ReceivedAt:   list[0].ReceivedAt,
-	})
-	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listenaktualisierung", err.Error()))
-		return
-	} else {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Ihre Liste wurde erfolgreich aktualisiert", ""))
-	}
 }

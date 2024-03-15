@@ -10,7 +10,7 @@ import (
 	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
 )
 
-func settingsScreen(_ fyne.Window) fyne.CanvasObject {
+func SettingsScreen(_ fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("Einstellungen", color.Black)
 	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}

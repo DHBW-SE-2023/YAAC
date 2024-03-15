@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-func landingScreen(_ fyne.Window) fyne.CanvasObject {
+func LandingScreen(_ fyne.Window) fyne.CanvasObject {
 	yaacLogo := canvas.NewImageFromFile("assets/Icon.png")
 	yaacLogo.FillMode = canvas.ImageFillContain
 	yaacLogo.SetMinSize(fyne.NewSize(350, 350))
