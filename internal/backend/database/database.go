@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 type Course struct {
@@ -19,8 +20,8 @@ type Course struct {
 
 type Student struct {
 	gorm.Model
-	FirstName        string
-	LastName         string
+	FirstName        string `gorm:"check:FirstName!=''"`
+	LastName         string `gorm:"check:LastName!=''"`
 	CourseID         uint
 	IsImmatriculated bool
 }
@@ -29,10 +30,9 @@ type Attendance struct {
 	StudentID        uint `gorm:"primaryKey"`
 	AttendanceListID uint `gorm:"primaryKey"` //`gorm:"primaryKey;foreignKey:Id;references:AttendanceList"`
 	IsAttending      bool
-}
-
-func (Attendance) TableName() string {
-	return "Attendancies"
+	NameROI          Rectangle
+	SignatureROI     Rectangle
+	TotalROI         Rectangle
 }
 
 type AttendanceList struct {
@@ -43,12 +43,11 @@ type AttendanceList struct {
 	CourseID     uint //`gorm:"foreignKey:Id;references:Course"`
 	ReceivedAt   time.Time
 	Attendancies []Attendance
-	Image        []byte
+	Image        []byte // image as png
 }
 
 type Setting struct {
-	gorm.Model
-	Setting string `gorm:"index"`
+	Setting string `gorm:"primaryKey"`
 	Value   string
 }
 
@@ -69,7 +68,10 @@ func (item *BackendDatabase) ConnectDatabase() error {
 	}
 
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
-		FullSaveAssociations: true,
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+			NoLowerCase:   true,
+		},
 	})
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
@@ -107,7 +109,7 @@ func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, er
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("course_id=?", course.ID).Where("received_at < ?", end).Order("received_at DESC").Take(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("JOIN Course c ON c.ID = CourseID").Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list).Error
 	return list, err
 }
 
@@ -115,7 +117,7 @@ func (item *BackendDatabase) LatestList(course Course, end time.Time) (Attendanc
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("course_id = ?", course.ID).Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("CourseID = ?", course.ID).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
 	return list, err
 }
 
@@ -123,7 +125,7 @@ func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, sta
 // Returns all lists, even outdated ones
 func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("received_at BETWEEN ? AND ?", start, end).Order("received_at DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
 	return list, err
 }
 
@@ -146,7 +148,7 @@ func (item *BackendDatabase) CourseByName(name string) (Course, error) {
 
 func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 	students := []Student{}
-	err := item.DB.Model(&Course{}).Joins("JOIN students ON courses.id = students.course_id").Where(course).Select("students .*").Find(&students).Error
+	err := item.DB.Model(&Course{}).Joins("JOIN Student ON Course.ID = Student.CourseID").Where(&course).Select("Student.*").Find(&students).Error
 	return students, err
 }
 
@@ -167,6 +169,7 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 }
 
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
+	// FIXME: Add default settings
 	settings := []Setting{}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err

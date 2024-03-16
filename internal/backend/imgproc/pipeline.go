@@ -3,8 +3,10 @@ package yaac_backend_imgproc
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"image"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/otiai10/gosseract/v2"
@@ -124,6 +126,16 @@ func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error)
 		return Table{}, err
 	}
 
+	newRows := make([]TableRow, 0, len(table.Rows))
+	for _, r := range table.Rows {
+		if r.FullName == "" || r.FirstName == "" || r.LastName == "" {
+			continue
+		}
+
+		newRows = append(newRows, r)
+	}
+	table.Rows = newRows
+
 	dyBot := 2
 	dyTop := 2
 	dxLeft := 2
@@ -170,6 +182,18 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 
 		table.Rows[i].LastName = nameParts[0]
 		table.Rows[i].FirstName = nameParts[1]
+	}
+
+	if len(table.Rows) > 0 {
+		c, err := extractCourseFromTitle(table.Rows[0].FullName)
+		if err != nil {
+			return Table{}, err
+		}
+
+		table.Course = c
+
+		// Skip the first row, as we have processed it here already
+		table.Rows = table.Rows[1:]
 	}
 
 	return table, nil
@@ -234,7 +258,24 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 		merged = append(merged, mr)
 	}
 
-	slices.Compact[[]image.Rectangle, image.Rectangle](merged)
+	slices.Compact(merged)
 
 	return merged
+}
+
+// Extract the course from the title
+// The title generally looks like this "<Department> <Course>"
+// The course always only consists of upper case letters and numbers
+// while the department name is written normaly.
+func extractCourseFromTitle(title string) (string, error) {
+	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)$")
+	results := re.FindStringSubmatch(title)
+
+	// First result should be the entire string,
+	// second result is the capture gropu
+	if len(results) != 2 {
+		return "", errors.New("could not identify course label")
+	}
+
+	return results[0], nil
 }

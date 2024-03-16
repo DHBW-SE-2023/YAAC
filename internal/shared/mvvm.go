@@ -12,6 +12,7 @@ type MVVM interface {
 	// Mail
 	UpdateMailCredentials(credentials EmailData) error
 	GetMailsToday() ([]MailData, error)
+	CheckMailConnection() bool
 
 	// Imgproc
 	ValidateTable(img []byte) (Table, error)

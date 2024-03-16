@@ -25,3 +25,7 @@ func (m *MVVM) GetMailsToday() ([]yaac_backend_mail.MailData, error) {
 func (m *MVVM) UpdateMailCredentials(credentials yaac_shared.EmailData) error {
 	return m.NewMailBacked(credentials)
 }
+
+func (m *MVVM) CheckMailConnection() bool {
+	return mailBackend.CheckMailConnection()
+}
