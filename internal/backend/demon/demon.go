@@ -43,7 +43,13 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		return shared.AttendanceList{}, err
 	}
 
+	course, err := mvvm.CourseByName(table.Course)
+	if err != nil {
+		return shared.AttendanceList{}, err
+	}
+
 	list := shared.AttendanceList{
+		CourseID:   course.ID,
 		ReceivedAt: mail.ReceivedAt,
 		Image:      mail.Image,
 	}
@@ -54,9 +60,9 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 			continue
 		}
 
-		students, err := mvvm.Students(shared.Student{FirstName: row.FirstName, LastName: row.LastName})
+		students, err := mvvm.Students(shared.Student{CourseID: list.CourseID, FirstName: row.FirstName, LastName: row.LastName})
 		if err != nil {
-			continue
+			return shared.AttendanceList{}, err
 		}
 
 		var student shared.Student
