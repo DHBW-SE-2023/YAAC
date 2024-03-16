@@ -1,4 +1,4 @@
-package settings
+package yaac_frontend_settings
 
 import (
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"

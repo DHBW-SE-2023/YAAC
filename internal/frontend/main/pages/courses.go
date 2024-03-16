@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fmt"
@@ -14,8 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var courseTable fyne.Container
-
 func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	course := &SelectionTracker{
 		courseName: widget.NewLabel(""),
@@ -28,7 +26,7 @@ func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	tableHeader, courseTable := ReturnAttendanceTable("Name", "Status")
 	dateDropdown := ReturnDateDropdown(dates)
 	courseDropdown := ReturnCourseDropdown(course, selection, dateDropdown, "course")
-	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown)
+	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown, courseTable)
 
 	dateDropdown.OnChanged = func(s string) {
 		course.secondary.SetText(s)
@@ -56,10 +54,10 @@ func ReturnDateDropdown(dates []string) *widget.SelectEntry {
 }
 
 /*
-ReturnEditDropdown returns the configured editDropdown passing the fyne.Window(for redirection),courseDropdown,dateDropdown
+ReturnEditDropdown returns the configured editDropdown passing the fyne.Window(for redirection),courseDropdown,dateDropdown, courseTable
 since they will be necessary for change handling.
 */
-func ReturnEditDropdown(w fyne.Window, courseDropdown *widget.Select, dateDropdown *widget.SelectEntry) *widget.Select {
+func ReturnEditDropdown(w fyne.Window, courseDropdown *widget.Select, dateDropdown *widget.SelectEntry, courseTable *fyne.Container) *widget.Select {
 	editDropdown := widget.NewSelect([]string{
 		"Liste bearbeiten",
 		"Liste anzeigen",
@@ -67,12 +65,14 @@ func ReturnEditDropdown(w fyne.Window, courseDropdown *widget.Select, dateDropdo
 	}, func(s string) {
 		if s == "Liste bearbeiten" {
 			lastView = w.Content()
-			VerifyList(w, courseDropdown.Selected, dateDropdown.Text)
+			VerifyList(w, courseDropdown.Selected, dateDropdown.Text, courseTable)
 		} else if s == "Liste anzeigen" {
 			ShowImage(w, courseDropdown.Selected, dateDropdown.Text)
+			courseTable.RemoveAll()
 		} else {
 			OpenImageUpload(w, courseDropdown.Selected, dateDropdown.Text)
 		}
+		courseTable.RemoveAll()
 	})
 	editDropdown.Selected = "Listenkonfiguration"
 	editDropdown.Disable()
@@ -109,12 +109,12 @@ func RefreshCourseAttendancy(table *fyne.Container, course string, date string) 
 }
 
 /*
-VerifyList will redirect the user to the Verification Page passing the currently selected course and date
+VerifyList will redirect the user to the Verification Page passing the currently selected course,date, courseTable
 */
-func VerifyList(w fyne.Window, course string, date string) {
+func VerifyList(w fyne.Window, course string, date string, courseTable *fyne.Container) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	parsedTime, _ := time.Parse("2006-01-02", date)
-	w.SetContent(VerificationScreen(w, GetImageByDate(course, parsedTime.Add(24*time.Hour)), int(selectedCourse.ID), parsedTime))
+	w.SetContent(VerificationScreen(w, GetImageByDate(course, parsedTime.Add(24*time.Hour)), int(selectedCourse.ID), courseTable, parsedTime))
 }
 
 /*

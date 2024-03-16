@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func VerificationScreen(w fyne.Window, img []byte, course int, optional ...time.Time) fyne.CanvasObject {
+func VerificationScreen(w fyne.Window, img []byte, course int, courseTable *fyne.Container, optional ...time.Time) fyne.CanvasObject {
 	header := ReturnVerificationHeader()
 	description := canvas.NewText("Überprüfen sie die dargestellt Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
 	description.TextSize = 16
@@ -27,7 +27,7 @@ func VerificationScreen(w fyne.Window, img []byte, course int, optional ...time.
 		widgetList = LoadVerificationWidgets(course, time.Now())
 	}
 
-	confirmButton := ReturnConfirmButton(w, widgetList, optional, course)
+	confirmButton := ReturnConfirmButton(w, widgetList, optional, course, courseTable)
 	exitButton := ReturnExitButton(w)
 
 	verificationList := container.NewVBox(description, widgetList, container.NewCenter(container.NewGridWithRows(1, confirmButton, exitButton)))
@@ -49,10 +49,10 @@ func ReturnVerificationHeader() *fyne.Container {
 }
 
 /*
-ReturnConfirmButton returns the configured VerificationHeader passing the window,widgetList, optional params []time.Time and courseID.
+ReturnConfirmButton returns the configured VerificationHeader passing the window,widgetList, optional params []time.Time,courseID and courseTable.
 These values will be used to update the attendancees when the button gets clicked
 */
-func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []time.Time, course int) *widget.Button {
+func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []time.Time, course int, courseTable *fyne.Container) *widget.Button {
 	confirmButton := widget.NewButton("Bestätigen", func() {
 		var attendances []bool
 		for _, obj := range widgetList.Objects {
@@ -65,7 +65,7 @@ func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []t
 		} else {
 			UpdateList(attendances, course, time.Now())
 		}
-		ReturnToPreviousPage(w, course, optional)
+		ReturnToPreviousPage(w, course, optional, courseTable)
 	})
 	return confirmButton
 }
@@ -76,7 +76,6 @@ UpdateList updates all new attendancies by initializing a AttedanceList Object a
 func UpdateList(attendances []bool, course int, date time.Time) {
 	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: uint(course)}}, date.AddDate(0, 0, -31), date.Add(24*time.Hour))
 	attendanceList := ReturnUpdatedAttendancies(attendances, list)
-
 	_, err := myMVVM.UpdateList(yaac_shared.AttendanceList{
 		ID:           list[0].ID,
 		CreatedAt:    list[0].CreatedAt,
@@ -112,10 +111,10 @@ func ReturnUpdatedAttendancies(attendances []bool, list []yaac_shared.Attendance
 }
 
 /*
-ReturnToPreviousPage executes a command to return to the previousPage passing the window, courseId and optional params []time.Time.
-Depending on the fact if optional params are passed or not the command decides where to navigate to.
+ReturnToPreviousPage executes a command to return to the previousPage passing the window, courseId,optional params []time.Time
+and courseTable. Depending on the fact if optional params are passed or not the command decides where to navigate to.
 */
-func ReturnToPreviousPage(w fyne.Window, course int, optional []time.Time) {
+func ReturnToPreviousPage(w fyne.Window, course int, optional []time.Time, courseTable *fyne.Container) {
 	if lastView != nil {
 		w.SetContent(lastView)
 		if len(optional) > 0 {
@@ -127,7 +126,7 @@ func ReturnToPreviousPage(w fyne.Window, course int, optional []time.Time) {
 				}
 			}
 			courseTable.RemoveAll()
-			RefreshCourseAttendancy(&courseTable, selectedCourse, optional[0].Format("2006-01-02"))
+			RefreshCourseAttendancy(courseTable, selectedCourse, optional[0].Format("2006-01-02"))
 		} else {
 			LoadOverviewWidgets(w, overviewGrid)
 		}

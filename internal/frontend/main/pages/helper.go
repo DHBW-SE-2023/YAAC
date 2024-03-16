@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fmt"

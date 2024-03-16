@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"fyne.io/fyne/v2"
-	pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
-	settings "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
+	yaac_frontend_pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
+	yaac_frontend_settings "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
@@ -15,8 +15,8 @@ type FrontendMain struct {
 }
 
 func New(mvvm shared.MVVM) *FrontendMain {
-	pages.New(mvvm)
-	settings.New(mvvm)
+	yaac_frontend_pages.New(mvvm)
+	yaac_frontend_settings.New(mvvm)
 	return &FrontendMain{
 		MVVM: mvvm,
 	}

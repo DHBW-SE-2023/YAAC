@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending [
 		title:   container.NewVBox(titleLabel),
 		content: contentFrame,
 		button: widget.NewButtonWithIcon("", imageResource, func() {
-			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId)
+			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, fyne.NewContainer())
 			lastView = w.Content()
 			w.SetContent(v)
 		}),

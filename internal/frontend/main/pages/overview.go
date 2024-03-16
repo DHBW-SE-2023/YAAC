@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 //TODO: Verification needed when not all attendances = true
 import (

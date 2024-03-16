@@ -1,4 +1,4 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
