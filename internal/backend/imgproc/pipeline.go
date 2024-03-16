@@ -15,6 +15,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+// Find the attendance list in an image
+// It expects a white paper on white background
+// with the attendance list being black
+// It performs a reverse perspective transform to
+// show the table from an orthogonal view.
+// This modified image is returned from the function.
 func FindTable(img gocv.Mat) gocv.Mat {
 	origImg := img.Clone()
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
@@ -81,7 +87,9 @@ func FindTable(img gocv.Mat) gocv.Mat {
 	return img
 }
 
-// Expects an image which is made up of the table in question.
+// Parse table shown in the image returned by `FindTable`.
+// If it fails, e.g. if some information is missing, it returns an error
+// It also takes in a Gosseract client to allow for reusing the Gosseract client.
 func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error) {
 	// We now have the warped image, where the table is front and center
 	// Now lets convert it to binary
@@ -150,6 +158,10 @@ func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error)
 	return table, nil
 }
 
+// Find the student names in `img` according to the rows in `table`.
+// This function is called by `ReviewTable` and passes the Gosseract client
+// it receives into this function.
+// It returns a modified version of `table` with the names for the students filled in.
 func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, error) {
 	dyBot := 2
 	dyTop := 4
@@ -199,6 +211,10 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 	return table, nil
 }
 
+// Check whether the signature in `img` is valid.
+// This is done by checking that there is only one signature.
+//
+// It returns true if the signature is valid, false otherwise.
 func ValidSignature(img gocv.Mat) bool {
 	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
 

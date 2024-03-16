@@ -19,6 +19,9 @@ func NewBackend(mvvm mvvm) *BackendImgproc {
 	}
 }
 
+// Take in an image as a byte array in a valid format
+// and parse it into a table which has information about the students and
+// the validity of the signature.
 func (mvvm *BackendImgproc) ValidateTable(imgBuf []byte) (Table, error) {
 	img, err := gocv.IMDecode(imgBuf, gocv.IMReadAnyColor)
 	if err != nil {
