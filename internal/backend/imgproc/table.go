@@ -24,6 +24,7 @@ type TableRow struct {
 }
 
 // Expects a grayscale image
+// Parses `img` to return a new table
 func NewTable(img gocv.Mat) Table {
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
