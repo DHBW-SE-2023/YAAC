@@ -15,8 +15,8 @@ func (m *MVVM) OpenMainWindow() {
 	frontendMain.OpenMainWindow()
 }
 
-func (m *MVVM) NotifyError(err error) {
-	panic("Notification service not implemented")
+func (m *MVVM) NotifyError(source string, err error) {
+	frontendMain.ReceiveError(source, err)
 }
 
 func (m *MVVM) NotifyNewList(list yaac_shared.AttendanceList) {

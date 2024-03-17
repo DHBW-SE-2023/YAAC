@@ -94,14 +94,14 @@ func (item *BackendDatabase) InsertList(list AttendanceList) (AttendanceList, er
 	return list, err
 }
 
-// `list` needs the field `Id` to be not null.
+// `list` needs the field `Id` to be	 not null.
 func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, error) {
 	err := item.DB.Save(&list).Error
 	return list, err
 }
 
+
 // Get the latest list before a certain date for a course
-//
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}

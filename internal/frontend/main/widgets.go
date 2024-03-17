@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
+	pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 )
 
 // Sidebar
