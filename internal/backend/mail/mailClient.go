@@ -262,8 +262,17 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	}
 
 	// Read datetime from Mail Header
+	// These two formats are mostly used in mails
 	datestring := message.Header.Get("Date")
-	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", datestring)
+	datetime, err := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", datestring)
+	if err != nil {
+		datetime, err = time.Parse("Mon, 2 Jan 2006 15:04:05 -0700 (MST)", datestring)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			return time.Now(), err
+		}
+	}
+	return datetime, nil
 }
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
