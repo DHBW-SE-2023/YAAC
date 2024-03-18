@@ -156,6 +156,7 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 
 			//Check if the part contains a jpeg image
 			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
+				log.Printf("xx:%v:xx", body)
 				binaryData, err := base64.StdEncoding.DecodeString(string(body))
 				return binaryData, err
 			}
@@ -215,6 +216,7 @@ func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 	//get the base64 encoded image from the mail
 	mailData.Image, err = b.getBinaryImageFromMailString(mailstring)
 	if err != nil {
+		log.Printf("Error: %v", err)
 		log.Println("Error Image Attachment Extraction")
 		return mailData, err
 	}
@@ -263,7 +265,7 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 
 	// Read datetime from Mail Header
 	datestring := message.Header.Get("Date")
-	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", datestring)
+	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", strings.TrimSuffix(datestring, " (CET)"))
 }
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
