@@ -43,21 +43,19 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 		//no new unread mail
 		if msg == nil {
-			log.Println("All unread mails fetched")
 			break
 		}
 
 		//get mail message as string in order to prcess the mail further
 		mailstring, err := b.getMailAsString(msg)
 		if err != nil {
-			log.Println("Error decoding mail")
 			continue
 		}
 
 		if b.checkMailSubject(mailstring) && b.checkDatetime(mailstring) {
 			maildata_temp, err := b.processMail(mailstring)
 			if err == nil {
-				log.Println("Successfully added")
+				log.Println("Successfully added imgage binary to maildata")
 				maildata = append(maildata, maildata_temp)
 			}
 		}
@@ -226,34 +224,12 @@ func (b *BackendMail) processMail(mailstring string) (MailData, error) {
 		return mailData, err
 	}
 
-	mailData.Course, err = b.getCourse(mailstring)
-	if err != nil {
-		return mailData, err
-	}
-
 	mailData.ReceivedAt, err = b.getDatetime(mailstring)
 	if err != nil {
 		return mailData, err
 	}
 
 	return mailData, err
-}
-
-// getCourse extractes Course from mail subject and returns the course as string
-// returns an error if it is not possilble to read the mail or if there is no course found in the subject
-func (b *BackendMail) getCourse(mailstring string) (string, error) {
-	subject, err := b.getSubject(mailstring)
-	if err != nil {
-		return "", err
-	}
-	words := strings.Fields(subject)
-	for _, word := range words {
-		if strings.Contains(word, "TI") {
-			return word, nil
-		}
-	}
-	err = errors.New("no course found in subject")
-	return "", err
 }
 
 // getDatetime extraces the date and time of the mail and returns it as time struct
