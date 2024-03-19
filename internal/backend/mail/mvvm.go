@@ -15,6 +15,7 @@ type BackendMail struct {
 type MailData struct {
 	Image      []byte
 	ReceivedAt time.Time
+	ID         uint32
 }
 
 // Create a new backend_mail struct
@@ -28,7 +29,7 @@ func New(mvvm mvvm, serverAddr string, username string, password string) (*Backe
 		password:   password,
 	}
 
-	c, _, err := mailservice.setupMail()
+	c, _, err := mailservice.setupMail(true)
 	if err != nil {
 		return nil, err
 	}
