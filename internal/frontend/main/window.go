@@ -10,7 +10,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 const preferedStartPage = "home"
@@ -31,8 +30,7 @@ func (f *FrontendMain) OpenMainWindow() {
 	gv.Window = gv.App.NewWindow(yaac_shared.APP_NAME)
 
 	// set icon
-	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	gv.Window.SetIcon(r)
+	gv.Window.SetIcon(yaac_shared.ResourceIconPng)
 
 	// setup systray
 	if desk, ok := gv.App.(desktop.App); ok {
@@ -41,7 +39,7 @@ func (f *FrontendMain) OpenMainWindow() {
 				gv.Window.Show()
 			}))
 		desk.SetSystemTrayMenu(m)
-		desk.SetSystemTrayIcon(r)
+		desk.SetSystemTrayIcon(yaac_shared.ResourceIconPng)
 	}
 	gv.Window.SetCloseIntercept(func() {
 		gv.Window.Hide()
@@ -107,7 +105,7 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 		tree.Select(currentPref)
 	}
 
-	logo := canvas.NewImageFromFile("assets/DHBW.png")
+	logo := canvas.NewImageFromResource(yaac_shared.ResourceIconPng)
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))

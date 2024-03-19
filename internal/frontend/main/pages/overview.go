@@ -45,7 +45,6 @@ type overviewWidget struct {
 }
 
 func NewOverviewWidget(title string, attendance []yaac_shared.Student) *overviewWidget {
-	imageResource, _ := fyne.LoadResourceFromPath("assets/imageIcon.png")
 	titleLabel := widget.NewLabel(title)
 	contentFrame := container.NewVBox()
 	for _, student := range attendance {
@@ -62,7 +61,7 @@ func NewOverviewWidget(title string, attendance []yaac_shared.Student) *overview
 		},
 		title:   container.NewVBox(titleLabel),
 		content: container.NewVBox(contentFrame),
-		button: widget.NewButtonWithIcon("", imageResource, func() {
+		button: widget.NewButtonWithIcon("", yaac_shared.ResourceIconPng, func() {
 			_ = getImage(title)
 		}),
 	}

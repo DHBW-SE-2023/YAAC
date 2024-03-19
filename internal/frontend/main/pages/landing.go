@@ -23,7 +23,7 @@ func parseURL(urlStr string) *url.URL {
 }
 
 func landingScreen(_ fyne.Window) fyne.CanvasObject {
-	logo := canvas.NewImageFromFile("assets/Icon.png")
+	logo := canvas.NewImageFromResource(yaac_shared.ResourceIconPng)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(256, 256))
 	button := widget.NewButton("Insert List", func() {
