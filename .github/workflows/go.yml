@@ -1,0 +1,15 @@
+name: "CustomCheck"
+on: []
+#on: ["push", "pull_request"]
+# Can't fix
+jobs:
+  ci:
+    name: "Run Checks"
+    strategy:
+      fail-fast: false
+    runs-on: "ubuntu-latest"
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - uses: dominikh/staticcheck-action@v1.3.0
