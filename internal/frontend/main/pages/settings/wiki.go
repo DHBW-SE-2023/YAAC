@@ -1,45 +1,45 @@
 package yaac_frontend_settings
 
 import (
-	"fmt"
-	"io/fs"
-	"os"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
+
+var page int = 1
+var pages int = 8
 
 func wikiScreen() fyne.CanvasObject {
 	title := ReturnHeader("Nutzerdokumentation")
-	var page int = 1
-	var pages, _ = os.ReadDir("assets/doku")
 
-	doku := canvas.NewImageFromFile(fmt.Sprintf("assets/doku/%d.png", page))
-	doku.FillMode = canvas.ImageFillContain
-	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), doku)
+	// This is neccecary because the frame wont accept an uninitialized image
+	image := canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+	image.FillMode = canvas.ImageFillContain
+	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), image)
 
-	nextButton := ReturnNextButton(imageFrame, page, pages)
-	backButton := ReturnBackButton(imageFrame, page, pages)
+	nextButton := createReturnNextButton(imageFrame)
+	backButton := createReturnBackButton(imageFrame)
 
 	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
-	content := container.NewMax(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+	content := container.NewStack(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+
 	return container.NewVScroll(content)
 }
 
 /*
 ReturnNextButton returns the fully configured nextButton which is responsible for switch to the next page
 */
-func ReturnNextButton(imageFrame *fyne.Container, page int, pages []fs.DirEntry) *widget.Button {
+func createReturnNextButton(imageFrame *fyne.Container) *widget.Button {
 	nextButton := widget.NewButton("Weiter", func() {
 		imageFrame.RemoveAll()
 		page += 1
-		if page == len(pages) {
+		if page >= pages+1 {
 			page = 1
 		}
-		LoadImage(fmt.Sprintf("assets/doku/%d.png", page), imageFrame)
+		loadCurrentPageImage(imageFrame)
 	})
 	return nextButton
 }
@@ -47,23 +47,45 @@ func ReturnNextButton(imageFrame *fyne.Container, page int, pages []fs.DirEntry)
 /*
 ReturnBackButton returns the fully configured backButton which is responsible for switch to the last page
 */
-func ReturnBackButton(imageFrame *fyne.Container, page int, pages []fs.DirEntry) *widget.Button {
+
+func createReturnBackButton(imageFrame *fyne.Container) *widget.Button {
 	backButton := widget.NewButton("Zurück", func() {
 		imageFrame.RemoveAll()
 		page -= 1
-		if page == 0 {
-			page = len(pages)
+		if page <= 0 {
+			page = pages
 		}
-		LoadImage(fmt.Sprintf("assets/doku/%d.png", page), imageFrame)
+		loadCurrentPageImage(imageFrame)
 	})
 	return backButton
 }
 
 /*
-LoadImage refreshes the currently displayed image in the respective imageFrame on backButton|nextButton Clicked Events
+Load the image matching the current page into the frame
 */
-func LoadImage(imagePath string, imageFrame *fyne.Container) {
-	image := canvas.NewImageFromFile(imagePath)
+func loadCurrentPageImage(imageFrame *fyne.Container) {
+	var image *canvas.Image
+
+	// Ingenious solution
+	switch page {
+	case 1:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+	case 2:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku2Png)
+	case 3:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku3Png)
+	case 4:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku4Png)
+	case 5:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku5Png)
+	case 6:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku6Png)
+	case 7:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku7Png)
+	case 8:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku8Png)
+	}
+
 	image.FillMode = canvas.ImageFillContain
 	imageFrame.Add(image)
 }

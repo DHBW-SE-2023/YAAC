@@ -33,8 +33,7 @@ func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 ReturnVerifyImageContainer returns the buttonImageContaier containing the image for insertList Button.
 */
 func ReturnVerifyImageContainer() *fyne.Container {
-	insertListIcon, _ := fyne.LoadResourceFromPath("assets/imageUpload2.png")
-	image := canvas.NewImageFromResource(insertListIcon)
+	image := canvas.NewImageFromResource(yaac_shared.ResourceImageUpload2Png)
 	image.FillMode = canvas.ImageFillOriginal
 	buttonImageContainer := container.NewCenter(image)
 	return buttonImageContainer

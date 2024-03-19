@@ -6,10 +6,11 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
 func LandingScreen(_ fyne.Window) fyne.CanvasObject {
-	yaacLogo := canvas.NewImageFromFile("assets/Icon.png")
+	yaacLogo := canvas.NewImageFromResource(yaac_shared.ResourceIconPng)
 	yaacLogo.FillMode = canvas.ImageFillContain
 	yaacLogo.SetMinSize(fyne.NewSize(350, 350))
 	title := canvas.NewText("YAAC", color.Black)
