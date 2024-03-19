@@ -15,7 +15,7 @@ type MVVM interface {
 	CheckMailConnection() bool
 
 	// Imgproc
-	ValidateTable(img []byte) (Table, error)
+	NewTable(img []byte) (*Table, error)
 
 	// Database
 	InsertList(list AttendanceList) (AttendanceList, error)

@@ -12,12 +12,12 @@ func (m *MVVM) ImgprocBackendStart() {
 	imgprocBackend = imgproc.NewBackend(m)
 }
 
-func (m *MVVM) ValidateTable(img []byte) (imgproc.Table, error) {
+func (m *MVVM) NewTable(img []byte) (*imgproc.Table, error) {
 
-	table, err := imgprocBackend.ValidateTable(img)
+	table, err := imgprocBackend.NewTable(img)
 	if err != nil {
 		log.Fatalf("backend.ValidateTable: %v", err)
-		return imgproc.Table{}, err
+		return nil, err
 	}
 
 	return table, nil
