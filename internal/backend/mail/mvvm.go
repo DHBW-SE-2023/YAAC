@@ -29,7 +29,7 @@ func New(mvvm mvvm, serverAddr string, username string, password string) (*Backe
 		password:   password,
 	}
 
-	c, _, err := mailservice.setupMail(true)
+	c, err := mailservice.setupMail(true)
 	if err != nil {
 		return nil, err
 	}

@@ -25,7 +25,12 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	var maildata []MailData
 
 	//setup mail client
-	c, ids, err := b.setupMail(true)
+	c, err := b.setupMail(true)
+	if err != nil {
+		return nil, err
+	}
+
+	c, ids, err := b.getIDsOfUnreadMails(c)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +40,12 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	for _, id := range ids {
 
-		messages := make(chan *imap.Message, 1)
 		header := make(chan *imap.Message, 1)
-
-		log.Printf("ID: %v\n", id)
 
 		seqset := new(imap.SeqSet)
 		seqset.AddNum(id)
 
-		// Nachrichten-Header abrufen
+		// fetch mail Header
 		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, header); err != nil {
 			log.Printf("Error: %v", err)
 			continue
@@ -51,20 +53,28 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 		head := <-header
 
-		log.Printf("Subject: %v\n", head.Envelope.Subject)
-		log.Printf("DAte: %v\n", head.Envelope.Date)
-
-		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
-			log.Printf("Error: %v", err)
-			continue
+		// Break for loop when mails are older than today
+		if !b.checkDatetime(head.Envelope.Date) {
+			break
 		}
 
-		msg := <-messages
+		//only process mails with the fitting subject
+		if b.checkMailSubject(head.Envelope.Subject) {
 
-		binary_image, err := b.getBinaryImageFromMail(msg)
-		if err == nil {
-			maildata = append(maildata, MailData{Image: binary_image, ReceivedAt: head.Envelope.Date, ID: id})
-			log.Println("Successfully added")
+			messages := make(chan *imap.Message, 1)
+
+			if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
+				log.Printf("Error: %v", err)
+				continue
+			}
+
+			msg := <-messages
+
+			binary_image, err := b.getBinaryImageFromMail(msg)
+			if err == nil {
+				maildata = append(maildata, MailData{Image: binary_image, ReceivedAt: head.Envelope.Date, ID: id})
+				log.Println("Successfully added")
+			}
 		}
 	}
 	return maildata, nil
@@ -72,7 +82,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 // Checks the mail connection to the server and the login credentials. Returns true if the connection and authentication is fine otherwise false
 func (b *BackendMail) CheckMailConnection() bool {
-	c, _, err := b.setupMail(true)
+	c, err := b.setupMail(true)
 	if err != nil {
 		return false
 	}
@@ -182,30 +192,25 @@ func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) 
 	return nil, err
 }
 
-// setupMail sets up the completly mail setup and returns the client and the ids of the unread mails
+// setupMail sets up the completly mail setup and returns the client
 // returns an error if something went wrong
-func (b *BackendMail) setupMail(onlyReadable bool) (*client.Client, []uint32, error) {
+func (b *BackendMail) setupMail(onlyReadable bool) (*client.Client, error) {
 	//connect to the mail server
 	c, err := b.connectToServer(b.serverAddr)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	//login with the user credentials
 	c, err = b.logInToInbox(c, b.username, b.password, onlyReadable)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	//focus only on unread mails
-	c, ids, err := b.getIDsOfMails(c)
-	if err != nil {
-		return nil, nil, err
-	}
-	return c, ids, nil
+	return c, nil
 }
 
-func (b *BackendMail) getIDsOfMails(c *client.Client) (*client.Client, []uint32, error) {
+func (b *BackendMail) getIDsOfUnreadMails(c *client.Client) (*client.Client, []uint32, error) {
 	// Search for unread messages
 	criteria := imap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{imap.SeenFlag}
@@ -223,33 +228,6 @@ func (b *BackendMail) getIDsOfMails(c *client.Client) (*client.Client, []uint32,
 
 	return c, sortedUIDs, nil
 }
-
-/*
-func (b *BackendMail) processMail(mail *imap.Message) (MailData, error) {
-
-	var mailData = MailData{}
-
-	var err error
-
-	mailstring, err := b.getMailAsString(mail)
-	if err != nil {
-		return mailData, err
-	}
-
-	//get the base64 encoded image from the mail
-	mailData.Image, err = b.getBinaryImageFromMailString(mailstring)
-	if err != nil {
-		return mailData, err
-	}
-
-	mailData.ReceivedAt, err = b.getDatetime(mailstring)
-	if err != nil {
-		return mailData, err
-	}
-
-	return mailData, err
-}
-*/
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
 // returns true if the mail is from today otherwise false
@@ -303,34 +281,7 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 	return c, nil
 }
 
-// getOnlyUnreadMails needs the client and only selects unread mails
-// returns the new client, the imap Seqset, that is need for fetching these unread mails and an error
-func (b *BackendMail) getOnlyUnreadMails(c *client.Client) (*client.Client, *imap.SeqSet, error) {
-	// Get only unseen Messages
-	criteria := imap.NewSearchCriteria()
-	criteria.WithoutFlags = []string{imap.SeenFlag}
-	ids, err := c.Search(criteria)
-	if err != nil {
-		log.Printf("Error: %v", err)
-		return nil, nil, err
-	}
-	// Create a sequenz for the found mails
-	seqset := new(imap.SeqSet)
-	seqset.AddNum(ids...)
-	return c, seqset, nil
-}
-
-/*
-// fetchMails needs the client, seqset and a imap message channel
-// It fetches the mails and send them to the channel
-func (b *BackendMail) fetchMails(c *client.Client, seqset *imap.SeqSet, messages chan *imap.Message) {
-	if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
-		log.Printf("Info: No unread mails: %v", err)
-	}
-}
-*/
-
-// Marks the mail with the given ID as read
+// Marks the mails with the given IDs as read
 // returns an error if there is an error with that
 func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
 	//connect to server
