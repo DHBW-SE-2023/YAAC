@@ -38,7 +38,7 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 }
 
 func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.AttendanceList, error) {
-	table, err := mvvm.ValidateTable(mail.Image)
+	table, err := mvvm.NewTable(mail.Image)
 	if err != nil {
 		return shared.AttendanceList{}, err
 	}
