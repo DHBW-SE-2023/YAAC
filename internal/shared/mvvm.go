@@ -10,7 +10,7 @@ type MVVM interface {
 	NotifyNewList(list AttendanceList)
 
 	// Mail
-	UpdateMailCredentials(credentials EmailData) error
+	UpdateMailCredentials(credentials MailLoginData) error
 	GetMailsToday() ([]MailData, error)
 	CheckMailConnection() bool
 
