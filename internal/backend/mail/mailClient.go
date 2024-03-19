@@ -44,12 +44,13 @@ func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
 	// array for the maildata
 	var maildata []MailData
 
-	for _, id := range ids {
+	// go reverse trouh the array to get the latest mails first
+	for i := len(ids) - 1; i >= 0; i-- {
 
 		header := make(chan *imap.Message, 1)
 
 		seqset := new(imap.SeqSet)
-		seqset.AddNum(id)
+		seqset.AddNum(ids[i])
 
 		// fetch mail Header
 		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, header); err != nil {
@@ -78,8 +79,8 @@ func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
 
 			binary_image, err := b.getBinaryImageFromMail(msg)
 			if err == nil {
-				maildata = append(maildata, MailData{Image: binary_image, ReceivedAt: head.Envelope.Date, ID: id})
-				log.Println("Successfully added")
+				maildata = append(maildata, MailData{Image: binary_image, ReceivedAt: head.Envelope.Date, ID: ids[i]})
+				log.Println("Successfully added maildata")
 			}
 		}
 	}
@@ -227,13 +228,7 @@ func (b *BackendMail) getIDsOfUnreadMails(c *client.Client) (*client.Client, []u
 		return nil, nil, err
 	}
 
-	// sort them in reverse order to get the latest message first
-	var sortedUIDs []uint32
-	for _, uid := range ids {
-		sortedUIDs = append([]uint32{uint32(uid)}, sortedUIDs...)
-	}
-
-	return c, sortedUIDs, nil
+	return c, ids, nil
 }
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.
