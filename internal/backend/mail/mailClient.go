@@ -332,7 +332,7 @@ func (b *BackendMail) fetchMails(c *client.Client, seqset *imap.SeqSet, messages
 
 // Marks the mail with the given ID as read
 // returns an error if there is an error with that
-func (b *BackendMail) MarkMailsAsRead(id uint32) error {
+func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
 	//connect to server
 	c, err := b.connectToServer(b.serverAddr)
 	if err != nil {
@@ -345,14 +345,17 @@ func (b *BackendMail) MarkMailsAsRead(id uint32) error {
 		return err
 	}
 
-	seqset := new(imap.SeqSet)
-	seqset.AddNum(id)
+	//mark all mails with the given ids as read
+	for _, id := range ids {
 
-	err = c.Store(seqset, "+FLAGS.SILENT", []interface{}{imap.SeenFlag}, nil)
-	if err != nil {
-		log.Printf("Error: %v", err)
-		return err
+		seqset := new(imap.SeqSet)
+		seqset.AddNum(id)
+
+		err = c.Store(seqset, "+FLAGS.SILENT", []interface{}{imap.SeenFlag}, nil)
+		if err != nil {
+			log.Printf("Error: %v", err)
+			return err
+		}
 	}
-
 	return nil
 }
