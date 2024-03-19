@@ -23,7 +23,7 @@ func GetApp() *fyne.App {
 	return &App
 }
 
-type EmailData struct {
+type MailLoginData struct {
 	MailServer string
 	Email      string
 	Password   string

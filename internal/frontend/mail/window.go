@@ -60,7 +60,7 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 		},
 		OnSubmit: func() {
 
-			formStruct := yaac_shared.EmailData{
+			formStruct := yaac_shared.MailLoginData{
 				MailServer: mailServer.Text,
 				Email:      email.Text,
 				Password:   password.Text,

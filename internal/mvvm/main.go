@@ -34,7 +34,7 @@ func (m *MVVM) StartApplication() {
 	// ms["UserEmail"] = "myemail@email.server"
 	// ms["UserEmailPassword"] = "123"
 
-	// err = m.NewMailBacked(yaac_shared.EmailData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
+	// err = m.NewMailBacked(yaac_shared.MailLoginData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
 	// if err != nil {
 	// 	log.Fatalf("Could not connect to email server")
 	// }

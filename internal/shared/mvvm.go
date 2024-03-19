@@ -6,12 +6,13 @@ import (
 
 type MVVM interface {
 	// Frontend
-	NotifyError(err error)
+	NotifyError(source string, err error)
 	NotifyNewList(list AttendanceList)
 
 	// Mail
-	UpdateMailCredentials(credentials EmailData) error
+	UpdateMailCredentials(credentials MailLoginData) error
 	GetMailsToday() ([]MailData, error)
+	CheckMailConnection() bool
 
 	// Imgproc
 	ValidateTable(img []byte) (Table, error)
