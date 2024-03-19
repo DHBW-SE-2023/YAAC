@@ -188,7 +188,10 @@ func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) 
 			//Check if the part contains a jpeg image
 			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
 				binaryData, err := base64.StdEncoding.DecodeString(string(body))
-				log.Printf("Error: %v", err)
+				if err != nil {
+					log.Printf("Error: %v", err)
+					return nil, err
+				}
 				return binaryData, err
 			}
 		}
