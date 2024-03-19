@@ -24,7 +24,6 @@ type OverviewWidget struct {
 }
 
 func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending []string, totalStudents int) *OverviewWidget {
-	imageResource, _ := fyne.LoadResourceFromPath("assets/imageIcon.png")
 	titleLabel := widget.NewLabel(title)
 	contentFrame := container.NewVBox()
 	if len(nonAttending) == 0 {
@@ -45,8 +44,8 @@ func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending [
 		},
 		title:   container.NewVBox(titleLabel),
 		content: contentFrame,
-		button: widget.NewButtonWithIcon("", imageResource, func() {
-			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, fyne.NewContainer())
+		button: widget.NewButtonWithIcon("", yaac_shared.ResourceImageIconPng, func() {
+			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, container.NewWithoutLayout())
 			lastView = w.Content()
 			w.SetContent(v)
 		}),

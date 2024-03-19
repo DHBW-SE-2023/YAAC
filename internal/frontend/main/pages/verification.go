@@ -40,12 +40,12 @@ ReturnVerificationHeader returns the configured VerificationHeader including nav
 */
 func ReturnVerificationHeader() *fyne.Container {
 	headerFrame := canvas.NewRectangle(color.White)
-	logo := canvas.NewImageFromFile("assets/DHBW.png")
+	logo := canvas.NewImageFromResource(yaac_shared.ResourceDHBWPng)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
 	title := ReturnHeader("Anwesenheitsprüfung")
 	header := container.NewGridWrap(fyne.NewSize(200, 200), logo, title)
-	return container.NewMax(headerFrame, header)
+	return container.NewStack(headerFrame, header)
 }
 
 /*
