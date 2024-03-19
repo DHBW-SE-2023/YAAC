@@ -21,15 +21,13 @@ import (
 // Returns an array with the maildata from the mails
 func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
-	// array for the maildata
-	var maildata []MailData
-
 	//setup mail client
 	c, err := b.setupMail(true)
 	if err != nil {
 		return nil, err
 	}
 
+	// get IDs of the unread mails
 	c, ids, err := b.getIDsOfUnreadMails(c)
 	if err != nil {
 		return nil, err
@@ -37,6 +35,14 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	// logout before function returns
 	defer c.Logout()
+
+	return b.processMails(c, ids), nil
+}
+
+// Processes all mails with the given ids and returns struct with mail data
+func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
+	// array for the maildata
+	var maildata []MailData
 
 	for _, id := range ids {
 
@@ -77,7 +83,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 			}
 		}
 	}
-	return maildata, nil
+	return maildata
 }
 
 // Checks the mail connection to the server and the login credentials. Returns true if the connection and authentication is fine otherwise false
@@ -210,6 +216,7 @@ func (b *BackendMail) setupMail(onlyReadable bool) (*client.Client, error) {
 	return c, nil
 }
 
+// getIDsOfUnreadMails needs the client and returns an array of ids of unread mail
 func (b *BackendMail) getIDsOfUnreadMails(c *client.Client) (*client.Client, []uint32, error) {
 	// Search for unread messages
 	criteria := imap.NewSearchCriteria()
