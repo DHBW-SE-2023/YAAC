@@ -5,7 +5,7 @@ import (
 )
 
 type mvvm interface {
-	MailFormUpdated(data yaac_shared.EmailData)
+	MailFormUpdated(data yaac_shared.MailLoginData)
 	StartGoCV(img_path string)
 }
 

@@ -230,7 +230,6 @@ func (b *BackendMail) getIDsOfUnreadMails(c *client.Client) (*client.Client, []u
 		log.Printf("Error: %v", err)
 		return nil, nil, err
 	}
-
 	return c, ids, nil
 }
 
