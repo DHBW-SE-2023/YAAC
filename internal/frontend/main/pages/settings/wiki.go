@@ -25,6 +25,7 @@ func wikiScreen() fyne.CanvasObject {
 
 	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
 	content := container.NewStack(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+
 	return container.NewVScroll(content)
 }
 
@@ -46,6 +47,7 @@ func createReturnNextButton(imageFrame *fyne.Container) *widget.Button {
 /*
 ReturnBackButton returns the fully configured backButton which is responsible for switch to the last page
 */
+
 func createReturnBackButton(imageFrame *fyne.Container) *widget.Button {
 	backButton := widget.NewButton("Zurück", func() {
 		imageFrame.RemoveAll()
