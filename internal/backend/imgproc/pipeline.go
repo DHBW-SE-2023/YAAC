@@ -7,6 +7,7 @@ import (
 	"image"
 	"math"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/otiai10/gosseract/v2"
@@ -87,36 +88,12 @@ func FindTable(img gocv.Mat) gocv.Mat {
 	return img
 }
 
-// Parse table shown in the image returned by `FindTable`.
+// Review table shown in the image returned by `FindTable`.
+// The image has to be prepared by `PrepareImage`.
 // If it fails, e.g. if some information is missing, it returns an error
 // It also takes in a Gosseract client to allow for reusing the Gosseract client.
-func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error) {
-	// We now have the warped image, where the table is front and center
-	// Now lets convert it to binary
-	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
-	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
-	gocv.FastNlMeansDenoisingWithParams(img, &img, 10.0, 7, 21)
-	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
-
-	k := [3][3]int8{
-		{0, -1, 0},
-		{-1, 5, -1},
-		{0, -1, 0},
-	}
-
-	// memcpy(binaryK, sizeof(k), k)
-	binaryK := bytes.NewBuffer([]byte{})
-	binary.Write(binaryK, binary.NativeEndian, k)
-
-	sharpeningKernel, err := gocv.NewMatFromBytes(3, 3, gocv.MatTypeCV8S, binaryK.Bytes())
-	if err != nil {
-		return Table{}, err
-	}
-
-	gocv.Filter2D(img, &img, -1, sharpeningKernel, image.Pt(-1, -1), 0, gocv.BorderDefault)
-
-	table := NewTable(img)
-	img = table.Image.Clone()
+func (table *Table) Review(tesseractClient *gosseract.Client) error {
+	img := table.Image.Clone()
 
 	kernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
 	gocv.MorphologyEx(img, &img, gocv.MorphClose, kernel)
@@ -129,9 +106,9 @@ func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error)
 
 	tesseractClient.SetLanguage("deu")
 
-	table, err = StudentNames(img, table, tesseractClient)
+	err := table.studentNames(img, tesseractClient)
 	if err != nil {
-		return Table{}, err
+		return err
 	}
 
 	newRows := make([]TableRow, 0, len(table.Rows))
@@ -155,14 +132,14 @@ func ReviewTable(img gocv.Mat, tesseractClient *gosseract.Client) (Table, error)
 		table.Rows[i].Valid = valid
 	}
 
-	return table, nil
+	return nil
 }
 
 // Find the student names in `img` according to the rows in `table`.
 // This function is called by `ReviewTable` and passes the Gosseract client
 // it receives into this function.
 // It returns a modified version of `table` with the names for the students filled in.
-func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, error) {
+func (table *Table) studentNames(img gocv.Mat, client *gosseract.Client) error {
 	dyBot := 2
 	dyTop := 4
 	dxLeft := 2
@@ -176,13 +153,13 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 		// We choose PNG, because it is lossless and it doesn't have block artifacts
 		roiPng, err := gocv.IMEncode(gocv.PNGFileExt, nameROIImg)
 		if err != nil {
-			return Table{}, err
+			return err
 		}
 
 		client.SetImageFromBytes(roiPng.GetBytes())
 		name, err := client.Text()
 		if err != nil {
-			return Table{}, err
+			return err
 		}
 
 		table.Rows[i].FullName = name
@@ -199,7 +176,7 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 	if len(table.Rows) > 0 {
 		c, err := extractCourseFromTitle(table.Rows[0].FullName)
 		if err != nil {
-			return Table{}, err
+			return err
 		}
 
 		table.Course = c
@@ -208,14 +185,14 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 		table.Rows = table.Rows[1:]
 	}
 
-	return table, nil
+	return nil
 }
 
 // Check whether the signature in `img` is valid.
 // This is done by checking that there is only one signature.
 //
 // It returns true if the signature is valid, false otherwise.
-func ValidSignature(img gocv.Mat) bool {
+func ValidSignature(img PreparedImage) bool {
 	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
 
 	// Inplace mutation not allowed for gocv.Canny
@@ -294,4 +271,148 @@ func extractCourseFromTitle(title string) (string, error) {
 	}
 
 	return results[0], nil
+}
+
+func ParseTable(img PreparedImage) *Table {
+	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
+	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
+	gocv.FastNlMeansDenoisingWithParams(img, &img, 11.0, 31, 9)
+
+	gocv.BitwiseNot(img, &img)
+
+	invImg := img.Clone()
+
+	shape := img.Size()
+
+	horizontalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[0]/50, 1))
+	verticalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, shape[1]/35))
+	vhKernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
+
+	iters := 8
+	binaryHorizontal := gocv.NewMat()
+	gocv.MorphologyExWithParams(img, &binaryHorizontal, gocv.MorphOpen, horizontalKernel, iters, gocv.BorderConstant)
+
+	binaryVertical := gocv.NewMat()
+	gocv.MorphologyExWithParams(img, &binaryVertical, gocv.MorphOpen, verticalKernel, iters, gocv.BorderConstant)
+
+	vhLines := gocv.NewMat()
+	gocv.AddWeighted(binaryVertical, 0.5, binaryHorizontal, 0.5, 0.0, &vhLines)
+
+	gocv.BitwiseNot(vhLines, &vhLines)
+
+	vhIters := 2
+	gocv.ErodeWithParams(vhLines, &vhLines, vhKernel, image.Pt(-1, -1), vhIters, int(gocv.BorderConstant))
+
+	gocv.Threshold(vhLines, &vhLines, 128.0, 255.0, gocv.ThresholdOtsu)
+
+	contours := gocv.FindContours(vhLines, gocv.RetrievalTree, gocv.ChainApproxSimple).ToPoints()
+
+	boundingRects := make([]image.Rectangle, len(contours))
+	meanHeight := 0
+
+	for _, contour := range contours {
+		rect := gocv.BoundingRect(gocv.NewPointVectorFromPoints(contour))
+		boundingRects = append(boundingRects, rect)
+		meanHeight = meanHeight + rect.Dy()
+	}
+
+	meanHeight = meanHeight / len(contours)
+
+	sort.Slice(boundingRects, func(i, j int) bool {
+		return boundingRects[i].Max.Y < boundingRects[j].Max.Y
+	})
+
+	rows := []TableRow{}
+
+	newIdx := 0
+	for i, rect := range boundingRects {
+		if i < newIdx {
+			continue
+		}
+
+		// Cell is to small, we skip it. Values were found empirically
+		if rect.Dx() < int(float32(img.Cols())*0.04) || rect.Dy() < int(float32(img.Rows())*0.02) {
+			continue
+		}
+
+		// We'll probably never have more than 10 rects detected in one line
+		row := make([]image.Rectangle, 0, 10)
+		currentMaxHeight := rect.Min.Y + meanHeight/2
+
+		minX, minY, maxX, maxY := 0, 0, 0, 0
+		for _, next := range boundingRects[i:] {
+			if next.Min.Y > currentMaxHeight {
+				break
+			}
+
+			row = append(row, next)
+
+			minX = min(minX, next.Min.X)
+			minY = min(minY, next.Min.Y)
+			maxX = max(maxX, next.Max.X)
+			maxY = max(maxY, next.Max.Y)
+		}
+
+		newIdx = i + len(row)
+
+		sort.Slice(row, func(i, j int) bool {
+			return row[i].Min.X < row[j].Min.X
+		})
+
+		// FIXME: Should we fail if we have a misformed row?
+		// We need the columns num, name, signature
+		// If not, we assume the column is malformed and skip it
+		if len(row) != 3 {
+			continue
+		}
+
+		tableRow := TableRow{
+			// IndexROI: row[0], but it is unused
+			NameROI:      row[1],
+			SignatureROI: row[2],
+			TotalROI:     image.Rect(minX, minY, maxX, maxY),
+		}
+
+		// The name and signature column have at least a width of 30%
+		if tableRow.NameROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.NameROI.Dy() <= int(0.01*float32(shape[1])) {
+			continue
+		}
+
+		if tableRow.SignatureROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.SignatureROI.Dy() <= int(0.01*float32(shape[1])) {
+			continue
+		}
+
+		rows = append(rows, tableRow)
+	}
+
+	return &Table{
+		Image: invImg,
+		Rows:  rows,
+	}
+}
+
+func PrepareImage(img gocv.Mat) (PreparedImage, error) {
+	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
+	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
+	gocv.FastNlMeansDenoisingWithParams(img, &img, 10.0, 7, 21)
+	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
+
+	k := [3][3]int8{
+		{0, -1, 0},
+		{-1, 5, -1},
+		{0, -1, 0},
+	}
+
+	// memcpy(binaryK, sizeof(k), k)
+	binaryK := bytes.NewBuffer([]byte{})
+	binary.Write(binaryK, binary.NativeEndian, k)
+
+	sharpeningKernel, err := gocv.NewMatFromBytes(3, 3, gocv.MatTypeCV8S, binaryK.Bytes())
+	if err != nil {
+		return gocv.NewMat(), err
+	}
+
+	gocv.Filter2D(img, &img, -1, sharpeningKernel, image.Pt(-1, -1), 0, gocv.BorderDefault)
+
+	return img, nil
 }
