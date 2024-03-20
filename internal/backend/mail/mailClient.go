@@ -15,6 +15,8 @@ import (
 	"github.com/emersion/go-imap/client"
 )
 
+const DEFAULT_ERR = "Error: %v"
+
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
 // It extracts the attached image as binary data.
@@ -95,14 +97,14 @@ func (b *BackendMail) getMailAsString(msg *imap.Message) (string, error) {
 	mailLiteral := msg.GetBody(&section)
 	if mailLiteral == nil {
 		err := errors.New("no litteral in mail body found")
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return "", err
 	}
 
 	// Get Mail as String
 	mailString, err := imap.ParseString(mailLiteral)
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return "", err
 	}
 
@@ -117,7 +119,7 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailString))
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
 
@@ -146,28 +148,28 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 
 			// Other Error
 			if err != nil {
-				log.Printf("Error: %v", err)
+				log.Printf(DEFAULT_ERR, err)
 				return nil, err
 			}
 
 			// Read one part
 			body, err := io.ReadAll(part)
 			if err != nil {
-				log.Printf("Error: %v", err)
+				log.Printf(DEFAULT_ERR, err)
 				return nil, err
 			}
 
 			//Check if the part contains a jpeg image
 			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
 				binaryData, err := base64.StdEncoding.DecodeString(string(body))
-				log.Printf("Error: %v", err)
+				log.Printf(DEFAULT_ERR, err)
 				return binaryData, err
 			}
 		}
 	}
 	// Return Error if no image found
 	err = errors.New("found no attached image in mail")
-	log.Printf("Error: %v", err)
+	log.Printf(DEFAULT_ERR, err)
 	return nil, err
 }
 
@@ -176,7 +178,7 @@ func (b *BackendMail) getSubject(mailString string) (string, error) {
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailString))
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return "", err
 	}
 
@@ -238,7 +240,7 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	// Read Mail
 	message, err := mail.ReadMessage(strings.NewReader(mailstring))
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return time.Now(), err
 	}
 
@@ -249,7 +251,7 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 	if err != nil {
 		datetime, err = time.Parse("Mon, 2 Jan 2006 15:04:05 -0700 (MST)", datestring)
 		if err != nil {
-			log.Printf("Error: %v", err)
+			log.Printf(DEFAULT_ERR, err)
 			return time.Now(), err
 		}
 	}
@@ -296,7 +298,7 @@ func (b *BackendMail) connectToServer(serverAddr string) (*client.Client, error)
 		log.Print("Trying connect to mail server without TLS ...")
 		c, err = client.Dial(serverAddr)
 		if err != nil {
-			log.Printf("Error: %v", err)
+			log.Printf(DEFAULT_ERR, err)
 			return nil, err
 		}
 	}
@@ -308,14 +310,14 @@ func (b *BackendMail) connectToServer(serverAddr string) (*client.Client, error)
 func (b *BackendMail) logInToInbox(c *client.Client, username string, password string) (*client.Client, error) {
 	// login to the email server
 	if err := c.Login(username, password); err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
 
 	// Select to default INBOX
 	_, err := c.Select("INBOX", false)
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
 	return c, nil
@@ -329,7 +331,7 @@ func (b *BackendMail) getOnlyUnreadMails(c *client.Client) (*client.Client, *ima
 	criteria.WithoutFlags = []string{imap.SeenFlag}
 	ids, err := c.Search(criteria)
 	if err != nil {
-		log.Printf("Error: %v", err)
+		log.Printf(DEFAULT_ERR, err)
 		return nil, nil, err
 	}
 	// Create a sequenz for the found mails
