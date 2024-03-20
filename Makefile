@@ -29,3 +29,8 @@ build-docker:
 
 run-docker:
 	docker run -it --rm -e DISPLAY=$$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix yaac-image
+
+graph:
+	graphpkg -stdout github.com/DHBW-SE-2023/YAAC > graph_all.svg
+	graphpkg -stdout -match 'YAAC' github.com/DHBW-SE-2023/YAAC > graph_yaac.svg
+	graphpkg -stdout -match 'YAAC|fyne|go-imap|sqlite|gosseract|gocv|gorm' github.com/DHBW-SE-2023/YAAC > graph_direct.svg
