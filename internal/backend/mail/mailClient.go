@@ -20,7 +20,9 @@ const DEFAULT_ERR = "Error: %v"
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
 // It extracts the attached image as binary data.
-// Returns an array with the maildata from the mails
+//
+// Returns an array with the maildata from the mails.
+// It marks the returned mails as read.
 func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//setup mail client
