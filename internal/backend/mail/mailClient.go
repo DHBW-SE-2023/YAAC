@@ -56,7 +56,7 @@ func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
 
 		// fetch mail Header
 		if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchEnvelope}, header); err != nil {
-			log.Printf("Error: %v", err)
+			log.Printf(DEFAULT_ERR, err)
 			continue
 		}
 
@@ -73,7 +73,7 @@ func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
 			messages := make(chan *imap.Message, 1)
 
 			if err := c.Fetch(seqset, []imap.FetchItem{imap.FetchItem("BODY.PEEK[]")}, messages); err != nil {
-				log.Printf("Error: %v", err)
+				log.Printf(DEFAULT_ERR, err)
 				continue
 			}
 
@@ -311,7 +311,7 @@ func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
 
 		err = c.Store(seqset, "+FLAGS.SILENT", []interface{}{imap.SeenFlag}, nil)
 		if err != nil {
-			log.Printf("Error: %v", err)
+			log.Printf(DEFAULT_ERR, err)
 			return err
 		}
 	}
