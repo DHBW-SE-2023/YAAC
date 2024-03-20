@@ -23,6 +23,9 @@ type TableRow struct {
 	TotalROI     image.Rectangle
 }
 
+// An image that has been prepared with to PrepareImage
+type PreparedImage = gocv.Mat
+
 // Parses `img` to return a new table
 func NewTable(img gocv.Mat, client *gosseract.Client) (*Table, error) {
 	img = FindTable(img)

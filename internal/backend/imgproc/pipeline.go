@@ -192,7 +192,7 @@ func (table *Table) studentNames(img gocv.Mat, client *gosseract.Client) error {
 // This is done by checking that there is only one signature.
 //
 // It returns true if the signature is valid, false otherwise.
-func ValidSignature(img gocv.Mat) bool {
+func ValidSignature(img PreparedImage) bool {
 	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
 
 	// Inplace mutation not allowed for gocv.Canny
@@ -273,7 +273,7 @@ func extractCourseFromTitle(title string) (string, error) {
 	return results[0], nil
 }
 
-func ParseTable(img gocv.Mat) *Table {
+func ParseTable(img PreparedImage) *Table {
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
 	gocv.FastNlMeansDenoisingWithParams(img, &img, 11.0, 31, 9)
@@ -391,7 +391,7 @@ func ParseTable(img gocv.Mat) *Table {
 	}
 }
 
-func PrepareImage(img gocv.Mat) (gocv.Mat, error) {
+func PrepareImage(img gocv.Mat) (PreparedImage, error) {
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.FastNlMeansDenoisingWithParams(img, &img, 10.0, 7, 21)
