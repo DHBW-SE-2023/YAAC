@@ -108,5 +108,5 @@ func makeNav(setPage func(page yaac_frontend_pages.Page), loadPrevious bool) fyn
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
-	return container.NewMax(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
+	return container.NewStack(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
 }

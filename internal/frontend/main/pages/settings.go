@@ -28,7 +28,7 @@ func SettingsScreen(_ fyne.Window) fyne.CanvasObject {
 	navBar := container.NewGridWrap((fyne.NewSize(300, 200)), title, tree)
 	navFrame := container.NewHBox(container.NewStack(settingNav, navBar))
 	contentFrame := canvas.NewRectangle(color.NRGBA{R: 125, G: 136, B: 142, A: 255})
-	page := container.NewBorder(nil, nil, navFrame, nil, container.NewMax(contentFrame, content))
+	page := container.NewBorder(nil, nil, navFrame, nil, container.NewStack(contentFrame, content))
 	return page
 }
 
