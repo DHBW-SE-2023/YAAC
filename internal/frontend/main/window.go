@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
-	pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_frontend_pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
@@ -48,17 +47,17 @@ func (f *FrontendMain) OpenMainWindow() {
 	// Important setting to enable custom backgrounds without borders
 	gv.Window.SetPadded(false)
 	gv.Window.Show()
-	gv.Window.SetContent(makeWindow(f))
+	gv.Window.SetContent(makeWindow())
 	gv.Window.Resize(fyne.NewSize(1280, 720))
 	gv.Window.Show()
 
 	gv.App.Run()
 }
 
-func makeWindow(f *FrontendMain) fyne.CanvasObject {
+func makeWindow() fyne.CanvasObject {
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
-	setPage := func(p pages.Page) {
+	setPage := func(p yaac_frontend_pages.Page) {
 		title.SetText(p.Title)
 
 		content.Objects = []fyne.CanvasObject{p.View(gv.Window)}
