@@ -37,10 +37,9 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 		return nil, err
 	}
 
-	// logout before function returns
-	defer c.Logout()
-
 	mails := b.processMails(c, ids)
+
+	c.Logout()
 
 	// Mark all mails that we process as read
 	b.MarkMailsAsRead(mails)
@@ -324,18 +323,13 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 // Marks the mails with the given IDs as read
 // returns an error if there is an error with that
 func (b *BackendMail) MarkMailsAsRead(mails []MailData) error {
-	//connect to server
-	c, err := b.connectToServer(b.serverAddr)
+	c, err := b.setupMail(false)
 	if err != nil {
 		log.Printf(DEFAULT_ERR, err)
 		return err
 	}
 
-	//login with the user credentials
-	c, err = b.logInToInbox(c, b.username, b.password, false)
-	if err != nil {
-		return err
-	}
+	defer c.Logout()
 
 	//mark all mails with the given ids as read
 	for _, mail := range mails {
