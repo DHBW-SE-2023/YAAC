@@ -12,6 +12,7 @@ type MailClient interface {
 	UpdateMailCredentials(credentials MailLoginData) error
 	GetMailsToday() ([]MailData, error)
 	CheckMailConnection() bool
+	MarkMailsAsRead(mails []MailData) error
 }
 
 type DatabaseClient interface {

@@ -316,7 +316,7 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 
 // Marks the mails with the given IDs as read
 // returns an error if there is an error with that
-func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
+func (b *BackendMail) MarkMailsAsRead(mails []MailData) error {
 	//connect to server
 	c, err := b.connectToServer(b.serverAddr)
 	if err != nil {
@@ -331,10 +331,10 @@ func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
 	}
 
 	//mark all mails with the given ids as read
-	for _, id := range ids {
+	for _, mail := range mails {
 
 		seqset := new(imap.SeqSet)
-		seqset.AddNum(id)
+		seqset.AddNum(mail.ID)
 
 		err = c.Store(seqset, "+FLAGS.SILENT", []interface{}{imap.SeenFlag}, nil)
 		if err != nil {
