@@ -5,6 +5,8 @@ import (
 	"gocv.io/x/gocv"
 )
 
+// We don't need any functions from shared, therefore we
+// use an empty interface
 type mvvm interface{}
 type BackendImgproc struct {
 	MVVM            mvvm
