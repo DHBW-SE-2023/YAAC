@@ -20,7 +20,7 @@ func VerificationScreen(w fyne.Window, img []byte, course int, courseTable *fyne
 	description.TextStyle = fyne.TextStyle{Bold: true}
 	image := RotateImage(img)
 
-	widgetList := container.NewVBox()
+	var widgetList *fyne.Container
 	if len(optional) > 0 {
 		widgetList = LoadVerificationWidgets(course, optional[0])
 	} else {
