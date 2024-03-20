@@ -134,13 +134,11 @@ func (b *BackendMail) getMailAsString(msg *imap.Message) (string, error) {
 	return mailString, err
 }
 
-// getBinaryImageFromMailString needs the mail as a string
-// returns the binary image file that is attached in the mail
-// returns an error if there is a problem extracting the image or if there is no image
-func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) {
-
+// Extract mail message from imap message
+func (b *BackendMail) getMailMessage(msg *imap.Message) (*mail.Message, error) {
 	mailString, err := b.getMailAsString(msg)
 	if err != nil {
+		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
 
@@ -150,58 +148,87 @@ func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) 
 		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
+	return message, nil
+}
 
-	// Read content type from Mail Header
-	contentType := message.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "multipart/") {
+// Pare a mail messages body using the provided boundary
+func (b *BackendMail) parseMailContent(message *mail.Message, boundary string) ([]byte, error) {
+	// Divide Mail into body parts
+	mr := multipart.NewReader(message.Body, boundary)
 
-		// Read Body Boundary from Mail Header
-		boundary, err := b.getBoundary(contentType)
+	for {
+
+		// Read next part
+		part, err := mr.NextPart()
+
+		// End of file
+		if err == io.EOF {
+			break
+		}
+
+		// Other Error
 		if err != nil {
+			log.Printf(DEFAULT_ERR, err)
 			return nil, err
 		}
 
-		// Divide Mail into body parts
-		mr := multipart.NewReader(message.Body, boundary)
+		// Read one part
+		body, err := io.ReadAll(part)
+		if err != nil {
+			log.Printf(DEFAULT_ERR, err)
+			return nil, err
+		}
 
-		for {
-
-			// Read next part
-			part, err := mr.NextPart()
-
-			// End of file
-			if err == io.EOF {
-				break
-			}
-
-			// Other Error
+		//Check if the part contains a jpeg image
+		if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
+			binaryData, err := base64.StdEncoding.DecodeString(string(body))
 			if err != nil {
 				log.Printf(DEFAULT_ERR, err)
 				return nil, err
 			}
-
-			// Read one part
-			body, err := io.ReadAll(part)
-			if err != nil {
-				log.Printf(DEFAULT_ERR, err)
-				return nil, err
-			}
-
-			//Check if the part contains a jpeg image
-			if strings.HasPrefix(part.Header.Get("Content-Type"), "image/jpeg") {
-				binaryData, err := base64.StdEncoding.DecodeString(string(body))
-				if err != nil {
-					log.Printf(DEFAULT_ERR, err)
-					return nil, err
-				}
-				return binaryData, err
-			}
+			return binaryData, err
 		}
 	}
 	// Return Error if no image found
-	err = errors.New("found no attached image in mail")
+	err := errors.New("found no attached image in mail")
 	log.Printf(DEFAULT_ERR, err)
 	return nil, err
+}
+
+// getBinaryImageFromMailString needs the mail as a string
+// returns the binary image file that is attached in the mail
+// returns an error if there is a problem extracting the image or if there is no image
+func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) {
+
+	message, err := b.getMailMessage(msg)
+	if err != nil {
+		log.Printf(DEFAULT_ERR, err)
+		return nil, err
+	}
+
+	// Read content type from Mail Header
+	contentType := message.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "multipart/") {
+		// Return Error if invalid contet type
+		err = errors.New("found no attached image in mail")
+		log.Printf(DEFAULT_ERR, err)
+		return nil, err
+	}
+
+	// Read Body Boundary from Mail Header
+	boundary, err := b.getBoundary(contentType)
+	if err != nil {
+		log.Printf(DEFAULT_ERR, err)
+		return nil, err
+	}
+
+	// Parse body for image
+	binaryData, err := b.parseMailContent(message, boundary)
+	if err != nil {
+		log.Printf(DEFAULT_ERR, err)
+		return nil, err
+	}
+	return binaryData, nil
 }
 
 // setupMail sets up the completly mail setup and returns the client
