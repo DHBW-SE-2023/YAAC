@@ -1,20 +1,5 @@
 package yaac_mvvm
 
-import (
-	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-)
-
-// FIXME: The existance of this function should not be necessary
-func settingsToMap(settings []yaac_shared.Setting) map[string]string {
-	ms := make(map[string]string)
-
-	for _, s := range settings {
-		ms[s.Setting] = s.Value
-	}
-
-	return ms
-}
-
 func (m *MVVM) StartApplication() {
 	err := m.ConnectDatabase("data/data.db")
 	if err != nil {
