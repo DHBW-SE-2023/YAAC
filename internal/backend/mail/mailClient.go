@@ -36,7 +36,12 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	// logout before function returns
 	defer c.Logout()
 
-	return b.processMails(c, ids), nil
+	mails := b.processMails(c, ids)
+
+	// Mark all mails that we process as read
+	b.MarkMailsAsRead(mails)
+
+	return mails, nil
 }
 
 // Processes all mails with the given ids and returns struct with mail data

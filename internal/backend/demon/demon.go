@@ -17,9 +17,6 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 			continue
 		}
 
-		// Mark all mails as read, even if there is an error processing them.
-		mvvm.MarkMailsAsRead(newMails)
-
 		for _, mail := range newMails {
 			list, err := TableToAttendanceList(mvvm, mail)
 			if err != nil {
