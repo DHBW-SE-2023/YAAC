@@ -54,23 +54,23 @@ ReturnCourseDropdown returns the configured courseDropdown passing the Selection
 and source(course|student) since they will be necessary for change handling for use in course and student view.
 */
 func ReturnCourseDropdown(selectionTracker *SelectionTracker, selection *widget.Label, dependingDropdown *widget.SelectEntry, source string) *widget.Select {
-	courseDropdown := widget.NewSelect([]string{
-		"TIK22",
-		"TIT22",
-		"TIS22",
-		"TIM22",
-	}, func(s string) {
-		fmt.Println(s)
-		selectionTracker.courseName.SetText(s)
-		selection.SetText(RefreshSelection(selectionTracker))
-		if source == "course" {
-			RefreshDateDropdown(dependingDropdown, s)
-		} else {
-			RefreshStudentDropdown(dependingDropdown, s)
-		}
-		dependingDropdown.SetText("")
-		dependingDropdown.Enable()
-	})
+	courses, _ := myMVVM.Courses()
+	var courseNames []string
+	for _, element := range courses {
+		courseNames = append(courseNames, element.Name)
+	}
+	courseDropdown := widget.NewSelect(courseNames,
+		func(s string) {
+			selectionTracker.courseName.SetText(s)
+			selection.SetText(RefreshSelection(selectionTracker))
+			if source == "course" {
+				RefreshDateDropdown(dependingDropdown, s)
+			} else {
+				RefreshStudentDropdown(dependingDropdown, s)
+			}
+			dependingDropdown.SetText("")
+			dependingDropdown.Enable()
+		})
 	courseDropdown.Selected = "Kursauswahl"
 	return courseDropdown
 }
@@ -102,7 +102,12 @@ func ReturnNonAttending(attendance []yaac_shared.Attendance) []string {
 	for _, element := range attendance {
 		if !element.IsAttending {
 			students, _ := myMVVM.Students(yaac_shared.Student{Model: gorm.Model{ID: element.StudentID}})
-			returnNonAttending = append(returnNonAttending, fmt.Sprintf("%s %s", students[0].FirstName, students[0].LastName))
+			if len(students) > 0 {
+				returnNonAttending = append(returnNonAttending, fmt.Sprintf("%s %s", students[0].FirstName, students[0].LastName))
+			} else {
+				continue
+			}
+
 		}
 	}
 	return returnNonAttending
@@ -153,9 +158,9 @@ func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 		}
 		img := LoadImage(reader)
 		if len(optional) != 0 {
-			InsertList(img, course, optional[0])
+			InsertList(w, img, course, optional[0])
 		} else {
-			InsertList(img, course)
+			InsertList(w, img, course)
 		}
 	}, w)
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpg", ".jpeg"}))
@@ -173,7 +178,7 @@ func LoadImage(f fyne.URIReadCloser) []byte {
 /*
 InsertList will finally construct a yaac_shared.AttendanceList object from the previously gathered functions and push it on the database.
 */
-func InsertList(img []byte, course string, optional ...string) {
+func InsertList(w fyne.Window, img []byte, course string, optional ...string) {
 	var testTime time.Time
 	if len(optional) != 0 {
 		testTime, _ = time.Parse("2006-01-02", optional[0])
@@ -197,6 +202,7 @@ func InsertList(img []byte, course string, optional ...string) {
 		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listen Uplaod", err.Error()))
 	} else {
 		yaac_shared.App.SendNotification(fyne.NewNotification("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!")))
+		LoadOverviewWidgets(w, overviewGrid)
 	}
 }
 

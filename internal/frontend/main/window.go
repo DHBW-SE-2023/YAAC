@@ -67,13 +67,11 @@ func makeWindow(f *FrontendMain) fyne.CanvasObject {
 		content.Refresh()
 	}
 
-	page := container.NewBorder(
-		nil, nil, nil, nil, content)
-	nav := makeNav(setPage, true)
-	return container.NewBorder(nil, nil, nav, nil, page)
+	page := makeNavPage(setPage, true, content)
+	return page
 }
 
-func makeNav(setPage func(page yaac_frontend_pages.Page), loadPrevious bool) fyne.CanvasObject {
+func makeNavPage(setPage func(page yaac_frontend_pages.Page), loadPrevious bool, content *fyne.Container) fyne.CanvasObject {
 	tree := &widget.Tree{
 		ChildUIDs: func(uid string) []string {
 			return yaac_frontend_pages.PagesIndex[uid]
@@ -110,5 +108,5 @@ func makeNav(setPage func(page yaac_frontend_pages.Page), loadPrevious bool) fyn
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
-	return container.NewMax(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
+	return container.NewBorder(nil, nil, container.NewStack(navFrame, container.NewBorder(logo, nil, nil, nil, tree)), nil, content)
 }

@@ -1,7 +1,9 @@
 package yaac_frontend_pages
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -27,15 +29,7 @@ func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	dateDropdown := ReturnDateDropdown(dates)
 	courseDropdown := ReturnCourseDropdown(course, selection, dateDropdown, "course")
 	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown, courseTable)
-
-	dateDropdown.OnChanged = func(s string) {
-		course.secondary.SetText(s)
-		selection.SetText(RefreshSelection(course))
-		courseTable.RemoveAll()
-		RefreshCourseAttendancy(courseTable, course.courseName.Text, s)
-		editDropdown.Enable()
-	}
-
+	ConfigureDateDropdownVerification(dateDropdown, course, selection, courseTable, editDropdown)
 	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
 	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, layout.NewSpacer(), layout.NewSpacer(), editDropdown)
 	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
@@ -47,9 +41,20 @@ func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 ReturnDateDropdown returns the configured dateDropdown passing the dates list
 */
 func ReturnDateDropdown(dates []string) *widget.SelectEntry {
+	re := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+
 	dateDropdown := widget.NewSelectEntry(dates)
-	dateDropdown.PlaceHolder = "Type or select date"
+	dateDropdown.PlaceHolder = "YYYY-MM-DD"
+	dateDropdown.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
+	dateDropdown.Scroll = container.ScrollNone
+	dateDropdown.Validator = func(s string) error {
+		if !re.MatchString(s) {
+			return errors.New("failure")
+		}
+		return nil
+	}
 	dateDropdown.Disable()
+
 	return dateDropdown
 }
 
@@ -90,6 +95,30 @@ func RefreshDateDropdown(dateDropdown *widget.SelectEntry, course string) {
 		dates = append(dates, element.ReceivedAt.Format("2006-01-02"))
 	}
 	dateDropdown.SetOptions(dates)
+}
+
+/*
+ConfigureDateDropdownVerification is responsible for configuring the verification process for text inputs passing the dateDropdown,
+course SelectionTracker, selection Label, courseTable Container as well as the editDropdown for further processing.
+*/
+func ConfigureDateDropdownVerification(dateDropdown *widget.SelectEntry, course *SelectionTracker, selection *widget.Label, courseTable *fyne.Container, editDropdown *widget.Select) {
+	dateDropdown.OnChanged = func(s string) {
+		if len(s) > 10 {
+			s = s[0:10]
+		}
+		re := regexp.MustCompile(`[^\d-]`)
+		s = re.ReplaceAllString(s, "")
+		dateDropdown.SetText(s)
+		if dateDropdown.Validate() != nil {
+			course.secondary.SetText("Falsches Datumsformat")
+		} else {
+			course.secondary.SetText(s)
+		}
+		selection.SetText(RefreshSelection(course))
+		courseTable.RemoveAll()
+		RefreshCourseAttendancy(courseTable, course.courseName.Text, s)
+		editDropdown.Enable()
+	}
 }
 
 /*

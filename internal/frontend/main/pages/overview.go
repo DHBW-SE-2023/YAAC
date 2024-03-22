@@ -1,7 +1,7 @@
 package yaac_frontend_pages
 
-//TODO: Verification needed when not all attendances = true
 import (
+	"image/color"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -16,12 +16,11 @@ var overviewGrid *fyne.Container
 
 func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Anwesenheitsliste der Kurse - Heute")
-
 	buttonImageContainer := ReturnVerifyImageContainer()
 	insertList := widget.NewButton("", func() {
 		OpenImageUpload(w)
-	})
-
+	},
+	)
 	overviewGrid = container.NewGridWrap(fyne.NewSize(250, 250))
 	LoadOverviewWidgets(w, overviewGrid)
 
@@ -45,15 +44,39 @@ LoadOverviewWidgets loads all OverviewWidgets for each course and adds them to t
 */
 func LoadOverviewWidgets(w fyne.Window, grid *fyne.Container) {
 	grid.RemoveAll()
+	var frameColor color.NRGBA
+	var hidden bool
 	courses, _ := myMVVM.Courses()
 	for _, element := range courses {
 		var students []string
+		var totalStudents int
 		lists, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: element.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
-		if len(lists[0].Attendancies) > 0 {
-			students = ReturnNonAttending(lists[0].Attendancies)
+		if len(lists) > 0 {
+			if len(lists[0].Attendancies) > 0 {
+				students = ReturnNonAttending(lists[0].Attendancies)
+				totalStudents = len(lists[0].Attendancies)
+				if len(students) > 0 {
+					frameColor = color.NRGBA{227, 0, 27, 255}
+					hidden = false
+				} else {
+					hidden = false
+					frameColor = color.NRGBA{R: 209, G: 209, B: 209, A: 255}
+				}
+			} else {
+				students = append(students, "Keine Anwesenheiten")
+				totalStudents = 0
+				frameColor = color.NRGBA{227, 0, 27, 255}
+				hidden = true
+			}
 		} else {
 			students = append(students, "Kein Listeingang")
+			totalStudents = 0
+			frameColor = color.NRGBA{227, 0, 27, 255}
+			hidden = true
 		}
-		grid.Add(NewOverviewWidget(w, element.Name, int(element.ID), students, len(lists[0].Attendancies)))
+		widget := NewOverviewWidget(w, element.Name, int(element.ID), students, totalStudents)
+		widget.frame.FillColor = frameColor
+		widget.button.Hidden = hidden
+		grid.Add(widget)
 	}
 }

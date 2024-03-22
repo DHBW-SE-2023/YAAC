@@ -18,3 +18,10 @@ func ReturnHeader(pageTitle string) *fyne.Container {
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	return container.NewCenter(container.NewGridWrap(fyne.NewSize(800, 200), title))
 }
+
+func MapMailBooleans(b bool) string {
+	if bool(b) {
+		return "Aktiv"
+	}
+	return "Nicht erreichbar"
+}

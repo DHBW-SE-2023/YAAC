@@ -13,7 +13,7 @@ import (
 )
 
 /*
-Delaration of custom Overwidget Struct
+Declaration of custom Overwidget Struct
 */
 type OverviewWidget struct {
 	widget.BaseWidget
@@ -65,7 +65,7 @@ func (item *OverviewWidget) CreateRenderer() fyne.WidgetRenderer {
 }
 
 /*
-Delaration of custom AttendanceRow Struct for course and student view
+Declaration of custom AttendanceRow Struct for course and student view
 */
 type AttendanceRow struct {
 	widget.BaseWidget

@@ -37,10 +37,8 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//start fetchings mails
 	go b.fetchMails(c, seqset, messages)
-
 	//process fetched mails
 	for msg := range messages {
-
 		//no new unread mail
 		if msg == nil {
 			log.Println("all mails fetched")
@@ -134,7 +132,6 @@ func (b *BackendMail) getBinaryImageFromMailString(mailString string) ([]byte, e
 		mr := multipart.NewReader(message.Body, boundary)
 
 		for {
-
 			// Read next part
 			part, err := mr.NextPart()
 
@@ -263,7 +260,7 @@ func (b *BackendMail) getDatetime(mailstring string) (time.Time, error) {
 
 	// Read datetime from Mail Header
 	datestring := message.Header.Get("Date")
-	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", datestring)
+	return time.Parse("Mon, 2 Jan 2006 15:04:05 -0700 (MST)", datestring)
 }
 
 // checkDatetime checks if the mail is from today. So it checks if the date from the mail is from today.

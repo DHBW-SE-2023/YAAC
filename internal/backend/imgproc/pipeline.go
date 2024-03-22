@@ -185,9 +185,10 @@ func StudentNames(img gocv.Mat, table Table, client *gosseract.Client) (Table, e
 			return Table{}, err
 		}
 
+		name = strings.TrimSpace(name)
 		table.Rows[i].FullName = name
 
-		nameParts := strings.Split(name, ",")
+		nameParts := strings.Split(name, ", ")
 		if len(nameParts) != 2 {
 			continue
 		}
@@ -284,6 +285,7 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 // The course always only consists of upper case letters and numbers
 // while the department name is written normaly.
 func extractCourseFromTitle(title string) (string, error) {
+	title = strings.TrimSpace(title)
 	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)$")
 	results := re.FindStringSubmatch(title)
 
@@ -293,5 +295,5 @@ func extractCourseFromTitle(title string) (string, error) {
 		return "", errors.New("could not identify course label")
 	}
 
-	return results[0], nil
+	return results[1], nil
 }
