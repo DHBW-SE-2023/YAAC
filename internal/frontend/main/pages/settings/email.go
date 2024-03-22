@@ -14,7 +14,7 @@ func emailScreen() fyne.CanvasObject {
 	title := ReturnHeader("Email")
 	form := ReturnForm()
 	content := container.NewCenter(container.NewVBox(container.NewGridWrap(fyne.NewSize(600, 40), form)))
-	return container.NewVBox(title, content)
+	return container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), content)
 }
 
 /*
@@ -22,12 +22,19 @@ ReturnForm returns the fully configured Email Form responsible for managing and 
 */
 func ReturnForm() *widget.Form {
 	mailConnection, mailUser, mailPassword := ReturnMailSettings()
-	var serverStatus *widget.Label
+	// var serverStatus *widget.Label
+	serverStatus := container.NewHBox()
 	if mailConnection != "" && mailUser != "" && mailPassword != "" {
 		alive := myMVVM.CheckMailConnection()
-		serverStatus = widget.NewLabel(MapMailBooleans(alive))
+		serverStatusText := widget.NewLabel(MapMailBooleans(alive))
+		serverStatusImage := loadImage("assets/alive.png")
+		serverStatus.Add(serverStatusImage)
+		serverStatus.Add(serverStatusText)
 	} else {
-		serverStatus = widget.NewLabel("Keine Daten hinterlegt")
+		serverStatusText := widget.NewLabel("Keine Daten hinterlegt")
+		serverStatusImage := loadImage("assets/down.png")
+		serverStatus.Add(serverStatusImage)
+		serverStatus.Add(serverStatusText)
 	}
 	form := ConfigureForm(mailConnection, mailUser, mailPassword, serverStatus)
 	return form
@@ -76,7 +83,7 @@ func ReturnMailSettings() (string, string, string) {
 ConfigureForm configures the mailForm regarding input as well as functionalities passing mailConnection, mailUser, mailPassword, serverStatus
 returning the fully configure form.
 */
-func ConfigureForm(mailConnection string, mailUser string, mailPassword string, serverStatus *widget.Label) *widget.Form {
+func ConfigureForm(mailConnection string, mailUser string, mailPassword string, serverStatus *fyne.Container) *widget.Form {
 	server := widget.NewEntry()
 	server.SetText(mailConnection)
 	username := widget.NewEntry()
@@ -131,7 +138,7 @@ ConfigureInputValidation takes every widget.Entry and assigns a specific Inputva
 as the input regarding syntax passing all entries
 */
 func ConfigureInputValidation(server *widget.Entry, username *widget.Entry, password *widget.Entry) {
-	InputValidater(server, `^[a-zA-Z0-9.-_]+:[0-9]+$`, 30, "Geben sie einen validen Servernamen ein.")
+	InputValidater(server, `^[a-zA-Z0-9-._]+:[0-9]+$`, 30, "Geben sie einen validen Servernamen ein.")
 	InputValidater(username, `\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b`, 30, "Geben sie einen validen Usernamen ein.")
 	InputValidater(password, `.*`, 30, "")
 }

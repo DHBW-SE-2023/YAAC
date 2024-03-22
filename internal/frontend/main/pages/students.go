@@ -26,10 +26,10 @@ func StudentScreen(_ fyne.Window) fyne.CanvasObject {
 	studentDropdown := ReturnStudentDropdown(studentNames, student, selection, attendanceTable)
 	courseDropdown := ReturnCourseDropdown(student, selection, studentDropdown, "student")
 
-	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
+	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))
 	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, studentDropdown)
-	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
-	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceTable))
+	selectionArea := container.NewVBox(selection, tableHeader)
+	studentView := container.NewBorder(container.NewVBox(header, widget.NewSeparator(), dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceTable))
 	return studentView
 }
 

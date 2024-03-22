@@ -176,7 +176,6 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 
 // Reset all settings. This clears the `Setting` table
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
-	// FIXME: Add default settings
 	settings := []Setting{
 		{Setting: "mailConnection", Value: "imap.mail.de:993"},
 		{Setting: "mailUser", Value: "anwesenheits_listen@mail.de"},

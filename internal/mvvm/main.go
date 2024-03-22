@@ -32,13 +32,13 @@ func (m *MVVM) StartApplication() {
 	}
 
 	ms := settingsToMap(settings)
-	_, _, _ = ReturnMailSettings(settings)
-	ms["MailServer"] = "secureimap.t-online.de:993"
-	ms["UserEmail"] = "dhbw.rust.sweng@t-online.de"
-	ms["UserEmailPassword"] = "Hallo123"
-	// ms["MailServer"] = mailConnection
-	// ms["UserEmail"] = mailUser
-	// ms["UserEmailPassword"] = mailPassword
+	mailConnection, mailUser, mailPassword := ReturnMailSettings(settings)
+	// ms["MailServer"] = "secureimap.t-online.de:993"
+	// ms["UserEmail"] = "dhbw.rust.sweng@t-online.de"
+	// ms["UserEmailPassword"] = "Hallo123"
+	ms["MailServer"] = mailConnection
+	ms["UserEmail"] = mailUser
+	ms["UserEmailPassword"] = mailPassword
 
 	err = m.NewMailBacked(yaac_shared.EmailData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
 	if err != nil {
@@ -46,7 +46,7 @@ func (m *MVVM) StartApplication() {
 		log.Default()
 	}
 
-	m.StartDemon(10) // Refresh every 5 seconds
+	// m.StartDemon(10) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()

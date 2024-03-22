@@ -11,8 +11,7 @@ sqlite3 data/data.db <<EOS
 .import courses.csv Course
 Update Course set DeletedAt=NULL where DeletedAt="NULL";
 
-.import students.csv Student
-Update Student set DeletedAt=NULL where DeletedAt="NULL";
+.import settings.csv Setting
 
 EOS
 

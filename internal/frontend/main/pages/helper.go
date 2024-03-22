@@ -32,7 +32,7 @@ ReturnHeader will return the canvas.Text objet of each page
 */
 func ReturnHeader(pageTitle string) *canvas.Text {
 	title := canvas.NewText(pageTitle, color.Black)
-	title.Alignment = fyne.TextAlignLeading
+	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	return title

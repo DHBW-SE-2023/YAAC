@@ -30,10 +30,10 @@ func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	courseDropdown := ReturnCourseDropdown(course, selection, dateDropdown, "course")
 	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown, courseTable)
 	ConfigureDateDropdownVerification(dateDropdown, course, selection, courseTable, editDropdown)
-	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
+	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(400, 200), title))
 	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, layout.NewSpacer(), layout.NewSpacer(), editDropdown)
-	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
-	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, container.NewVScroll(courseTable)))
+	selectionArea := container.NewVBox(selection, tableHeader)
+	studentView := container.NewBorder(container.NewVBox(header, widget.NewSeparator(), dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, container.NewVScroll(courseTable)))
 	return studentView
 }
 

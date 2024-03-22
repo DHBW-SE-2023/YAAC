@@ -16,26 +16,24 @@ var overviewGrid *fyne.Container
 
 func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Anwesenheitsliste der Kurse - Heute")
-	buttonImageContainer := ReturnVerifyImageContainer()
-	insertList := widget.NewButton("", func() {
-		OpenImageUpload(w)
-	},
-	)
+	buttonImageContainer := ReturnVerifyImageContainer(w)
 	overviewGrid = container.NewGridWrap(fyne.NewSize(250, 250))
 	LoadOverviewWidgets(w, overviewGrid)
 
-	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer, insertList)))), container.NewGridWrap(fyne.NewSize(400, 200), title)), widget.NewSeparator())
+	// header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewGridWrap(fyne.NewSize(400, 200), title)), widget.NewSeparator())
+	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))), widget.NewSeparator())
 	return container.NewBorder(header, nil, nil, nil, container.NewVScroll(overviewGrid))
 }
 
 /*
 ReturnVerifyImageContainer returns the buttonImageContaier containing the image for insertList Button.
 */
-func ReturnVerifyImageContainer() *fyne.Container {
-	insertListIcon, _ := fyne.LoadResourceFromPath("assets/imageUpload2.png")
+func ReturnVerifyImageContainer(w fyne.Window) *tappableImage {
+	insertListIcon, _ := fyne.LoadResourceFromPath("assets/imageUpload.png")
 	image := canvas.NewImageFromResource(insertListIcon)
-	image.FillMode = canvas.ImageFillOriginal
-	buttonImageContainer := container.NewCenter(image)
+	buttonImageContainer := newTappableImage(image, func() {
+		OpenImageUpload(w)
+	})
 	return buttonImageContainer
 }
 
@@ -66,12 +64,12 @@ func LoadOverviewWidgets(w fyne.Window, grid *fyne.Container) {
 				students = append(students, "Keine Anwesenheiten")
 				totalStudents = 0
 				frameColor = color.NRGBA{227, 0, 27, 255}
-				hidden = true
+				hidden = false
 			}
 		} else {
 			students = append(students, "Kein Listeingang")
 			totalStudents = 0
-			frameColor = color.NRGBA{227, 0, 27, 255}
+			frameColor = color.NRGBA{241, 230, 60, 200}
 			hidden = true
 		}
 		widget := NewOverviewWidget(w, element.Name, int(element.ID), students, totalStudents)

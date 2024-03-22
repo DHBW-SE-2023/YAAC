@@ -82,6 +82,7 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 			student, err = mvvm.InsertStudent(shared.Student{
 				FirstName: row.FirstName,
 				LastName:  row.LastName,
+				CourseID:  course.ID,
 			})
 
 			if err != nil {

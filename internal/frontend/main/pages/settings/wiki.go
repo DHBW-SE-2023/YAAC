@@ -25,7 +25,7 @@ func wikiScreen() fyne.CanvasObject {
 	backButton := ReturnBackButton(imageFrame, page, pages)
 
 	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
-	content := container.NewMax(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+	content := container.NewStack(container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), container.NewCenter(imageFrame), buttonArea))
 	return container.NewVScroll(content)
 }
 
