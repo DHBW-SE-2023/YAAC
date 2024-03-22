@@ -330,16 +330,16 @@ func ParseTable(img PreparedImage) *Table {
 	}
 }
 
-// imgShape: img.Cols(), img.Rows()
+// imgShape: img.Rows(), img.Cols()
 func gatherTableRows(boundingRects []image.Rectangle, meanHeight int, imgShape []int) []TableRow {
 	rows := []TableRow{}
 
 	newIdx := 0
-	minDx := int(float32(imgShape[0]) * 0.04)
-	minDy := int(float32(imgShape[1]) * 0.02)
+	minDx := int(float32(imgShape[1]) * 0.04)
+	minDy := int(float32(imgShape[0]) * 0.02)
 
-	sigDx := int(float32(imgShape[0]) * 0.30)
-	sigDy := int(float32(imgShape[1]) * 0.01)
+	sigDx := int(float32(imgShape[1]) * 0.30)
+	sigDy := int(float32(imgShape[0]) * 0.01)
 
 	for i, rect := range boundingRects {
 		if i < newIdx {
