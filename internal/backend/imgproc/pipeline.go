@@ -359,7 +359,6 @@ func ParseTable(img PreparedImage) *Table {
 			return row[i].Min.X < row[j].Min.X
 		})
 
-		// FIXME: Should we fail if we have a misformed row?
 		// We need the columns num, name, signature
 		// If not, we assume the column is malformed and skip it
 		if len(row) != 3 {
