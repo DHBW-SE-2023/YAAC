@@ -20,8 +20,8 @@ func LandingScreen(_ fyne.Window) fyne.CanvasObject {
 	description.TextStyle = fyne.TextStyle{Bold: true}
 	description.TextSize = 60
 
-	return container.NewCenter(container.NewVBox(container.NewCenter(container.NewHBox(
+	return container.NewPadded(container.NewPadded(container.NewCenter(container.NewVBox(container.NewCenter(container.NewHBox(
 		yaacLogo,
 		title,
-	)), description))
+	)), description))))
 }

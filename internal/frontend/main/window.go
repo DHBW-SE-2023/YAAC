@@ -102,7 +102,7 @@ func makeNavPage(setPage func(page yaac_frontend_pages.Page), loadPrevious bool,
 		tree.Select(currentPref)
 	}
 
-	logo := canvas.NewImageFromResource(yaac_shared.ResourceIconPng)
+	logo := canvas.NewImageFromResource(yaac_shared.ResourceDHBWPng)
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))

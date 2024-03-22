@@ -40,13 +40,13 @@ func (m *MVVM) StartApplication() {
 	ms["UserEmail"] = mailUser
 	ms["UserEmailPassword"] = mailPassword
 
-	err = m.NewMailBacked(yaac_shared.EmailData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
+	err = m.NewMailBacked(yaac_shared.MailLoginData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
 	if err != nil {
 		// log.Fatalf("Could not connect to email server")
 		log.Default()
 	}
 
-	// m.StartDemon(10) // Refresh every 5 seconds
+	m.StartDemon(10) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()

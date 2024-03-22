@@ -29,8 +29,7 @@ func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 ReturnVerifyImageContainer returns the buttonImageContaier containing the image for insertList Button.
 */
 func ReturnVerifyImageContainer(w fyne.Window) *tappableImage {
-	insertListIcon, _ := fyne.LoadResourceFromPath("assets/imageUpload.png")
-	image := canvas.NewImageFromResource(insertListIcon)
+	image := canvas.NewImageFromResource(yaac_shared.ResourceImageUpload2Png)
 	buttonImageContainer := newTappableImage(image, func() {
 		OpenImageUpload(w)
 	})

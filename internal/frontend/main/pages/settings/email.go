@@ -128,7 +128,7 @@ func ConfigureSubmitButton(server *widget.Entry, username *widget.Entry, passwor
 			UpdateSetting("mailConnection", serverConnection)
 			UpdateSetting("mailUser", serverUser)
 			UpdateSetting("mailPassword", password)
-			myMVVM.UpdateMailCredentials(yaac_shared.EmailData{MailServer: serverConnection, Email: serverUser, Password: password})
+			myMVVM.UpdateMailCredentials(yaac_shared.MailLoginData{MailServer: serverConnection, Email: serverUser, Password: password})
 		}
 	}
 }
