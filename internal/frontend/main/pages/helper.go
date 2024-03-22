@@ -156,7 +156,7 @@ func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 			log.Println("Cancelled")
 			return
 		}
-		img := LoadImage(reader)
+		img := LoadImage(w, reader)
 		if len(optional) != 0 {
 			InsertList(w, img, course, optional[0])
 		} else {
@@ -166,10 +166,10 @@ func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpg", ".jpeg"}))
 	fd.Show()
 }
-func LoadImage(f fyne.URIReadCloser) []byte {
+func LoadImage(w fyne.Window, f fyne.URIReadCloser) []byte {
 	data, err := io.ReadAll(f)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Failed to load image data", err.Error()))
+		dialog.ShowError(err, w)
 		return nil
 	}
 	return data
@@ -188,7 +188,7 @@ func InsertList(w fyne.Window, img []byte, course string, optional ...string) {
 
 	selectedCourse, err := myMVVM.CourseByName(course)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listen Uplaod", err.Error()))
+		dialog.ShowError(err, w)
 		return
 	}
 
@@ -199,9 +199,9 @@ func InsertList(w fyne.Window, img []byte, course string, optional ...string) {
 	}
 	_, err = myMVVM.InsertList(attendanceList)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listen Uplaod", err.Error()))
+		dialog.ShowError(err, w)
 	} else {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!")))
+		dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!"), w)
 		LoadOverviewWidgets(w, overviewGrid)
 	}
 }
@@ -217,3 +217,7 @@ func RotateImage(img []byte) *canvas.Image {
 	image := canvas.NewImageFromImage(imgNew)
 	return image
 }
+
+/*
+ShowSuccessDialog
+*/

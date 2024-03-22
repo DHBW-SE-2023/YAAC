@@ -78,8 +78,6 @@ func (item *YaacSidebarItem) Updateitem(title string) {
 
 func (item *YaacSidebarItem) CreateRenderer() fyne.WidgetRenderer {
 	bg := canvas.NewRectangle(item.SelectColor)
-	// FIXME - Design Item here ontop of bg
-	// item.SelectColor = ytheme.Color(theme.ColorRed, theme.VariantLight)
 	button := NewYaacSidebarButton(item.Title, item.SetPage, item.Page, bg)
 	c := container.NewStack(
 		bg,

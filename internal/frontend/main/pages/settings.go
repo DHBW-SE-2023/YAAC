@@ -10,7 +10,7 @@ import (
 	yaac_frontend_settings "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
 )
 
-func SettingsScreen(_ fyne.Window) fyne.CanvasObject {
+func SettingsScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Einstellungen")
 	settingNav := canvas.NewRectangle(color.NRGBA{R: 230, G: 233, B: 235, A: 255})
 	settingNav.Resize(fyne.NewSize(400, 400))
@@ -20,7 +20,7 @@ func SettingsScreen(_ fyne.Window) fyne.CanvasObject {
 		setContent is responsible for actually switching the displayed page content
 	*/
 	setContent := func(s yaac_frontend_settings.Setting) {
-		content.Objects = []fyne.CanvasObject{s.View()}
+		content.Objects = []fyne.CanvasObject{s.View(w)}
 		content.Refresh()
 	}
 	tree := ReturnNavBar(setContent)

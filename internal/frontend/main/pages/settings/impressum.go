@@ -8,7 +8,7 @@ import (
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
-func impressumScreen() fyne.CanvasObject {
+func impressumScreen(_ fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Impressum")
 	doku := canvas.NewImageFromResource(yaac_shared.ResourceYAACImpressumPng)
 	doku.FillMode = canvas.ImageFillContain

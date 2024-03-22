@@ -6,13 +6,14 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
-func emailScreen() fyne.CanvasObject {
+func emailScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Email")
-	form := ReturnForm()
+	form := ReturnForm(w)
 	content := container.NewCenter(container.NewVBox(container.NewGridWrap(fyne.NewSize(600, 40), form)))
 	return container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), content)
 }
@@ -20,7 +21,7 @@ func emailScreen() fyne.CanvasObject {
 /*
 ReturnForm returns the fully configured Email Form responsible for managing and updating mail settings
 */
-func ReturnForm() *widget.Form {
+func ReturnForm(w fyne.Window) *widget.Form {
 	mailConnection, mailUser, mailPassword := ReturnMailSettings()
 	// var serverStatus *widget.Label
 	serverStatus := container.NewHBox()
@@ -36,7 +37,7 @@ func ReturnForm() *widget.Form {
 		serverStatus.Add(serverStatusImage)
 		serverStatus.Add(serverStatusText)
 	}
-	form := ConfigureForm(mailConnection, mailUser, mailPassword, serverStatus)
+	form := ConfigureForm(w, mailConnection, mailUser, mailPassword, serverStatus)
 	return form
 }
 
@@ -44,7 +45,7 @@ func ReturnForm() *widget.Form {
 UpdateSetting collects the currently selected setting values, intialize a Setting Object
 for each and updates the changes on the database
 */
-func UpdateSetting(key string, value string) {
+func UpdateSetting(w fyne.Window, key string, value string) {
 	var settings []yaac_shared.Setting
 	setting := yaac_shared.Setting{
 		Setting: key,
@@ -53,9 +54,9 @@ func UpdateSetting(key string, value string) {
 	settings = append(settings, setting)
 	_, err := myMVVM.SettingsUpdate(settings)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler beim Aktualisieren", err.Error()))
+		dialog.ShowError(err, w)
 	} else {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Erfolgreiche Aktualisierung", "Ihre Mail Daten wurden erfolgreich aktualisiert"))
+		dialog.ShowInformation("Erfolgreiche Aktualisierung", "Ihre Mail Daten wurden erfolgreich aktualisiert", w)
 	}
 }
 
@@ -83,7 +84,7 @@ func ReturnMailSettings() (string, string, string) {
 ConfigureForm configures the mailForm regarding input as well as functionalities passing mailConnection, mailUser, mailPassword, serverStatus
 returning the fully configure form.
 */
-func ConfigureForm(mailConnection string, mailUser string, mailPassword string, serverStatus *fyne.Container) *widget.Form {
+func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPassword string, serverStatus *fyne.Container) *widget.Form {
 	server := widget.NewEntry()
 	server.SetText(mailConnection)
 	username := widget.NewEntry()
@@ -94,9 +95,9 @@ func ConfigureForm(mailConnection string, mailUser string, mailPassword string, 
 	restartButton := widget.NewButton("Zurücksetzen", func() {
 		_, err := myMVVM.SettingsReset()
 		if err != nil {
-			yaac_shared.App.SendNotification(fyne.NewNotification("Es gab einen Fehler beim Zurücksetzen", err.Error()))
+			dialog.ShowError(err, w)
 		} else {
-			yaac_shared.App.SendNotification(fyne.NewNotification("Email Einstellungen wurden erfolgreich zurückgesetzt", ""))
+			dialog.ShowInformation("Email Einstellungen wurden erfolgreich zurückgesetzt", "", w)
 		}
 	})
 	submitButton := widget.NewButton("Bestätigen", nil)
@@ -109,7 +110,7 @@ func ConfigureForm(mailConnection string, mailUser string, mailPassword string, 
 			{Text: "E-Mail Password", Widget: password},
 			{Widget: buttonArea}},
 	}
-	ConfigureSubmitButton(server, username, password, submitButton)
+	ConfigureSubmitButton(w, server, username, password, submitButton)
 	return form
 }
 
@@ -117,17 +118,17 @@ func ConfigureForm(mailConnection string, mailUser string, mailPassword string, 
 ConfigureSubmitButton configures the submitButton responsible for udpating the settings DB passing sever(Entry),username(Entry),password(Entry)as well as the sumbitButton itself.
 returning the fully configure form.
 */
-func ConfigureSubmitButton(server *widget.Entry, username *widget.Entry, password *widget.Entry, submitButton *widget.Button) {
+func ConfigureSubmitButton(w fyne.Window, server *widget.Entry, username *widget.Entry, password *widget.Entry, submitButton *widget.Button) {
 	submitButton.OnTapped = func() {
 		if CheckInputValidity([]*widget.Entry{server, username, password}) != nil {
-			yaac_shared.App.SendNotification(fyne.NewNotification("Überprüfen sie ihre Eingaben", "Fehler bei Udpate"))
+			dialog.ShowInformation("Überprüfen sie ihre Eingaben", "Fehler bei Udpate", w)
 		} else {
 			serverConnection := server.Text
 			serverUser := username.Text
 			password := password.Text
-			UpdateSetting("mailConnection", serverConnection)
-			UpdateSetting("mailUser", serverUser)
-			UpdateSetting("mailPassword", password)
+			UpdateSetting(w, "mailConnection", serverConnection)
+			UpdateSetting(w, "mailUser", serverUser)
+			UpdateSetting(w, "mailPassword", password)
 			myMVVM.UpdateMailCredentials(yaac_shared.MailLoginData{MailServer: serverConnection, Email: serverUser, Password: password})
 		}
 	}

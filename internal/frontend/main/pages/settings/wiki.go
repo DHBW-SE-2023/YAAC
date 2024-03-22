@@ -12,7 +12,7 @@ import (
 var page int = 1
 var pages int = 8
 
-func wikiScreen() fyne.CanvasObject {
+func wikiScreen(_ fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Nutzerdokumentation")
 
 	// This is neccecary because the frame wont accept an uninitialized image
