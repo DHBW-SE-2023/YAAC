@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 var gv GlobalVars
@@ -25,8 +24,7 @@ func (f *WindowMail) Open() {
 	gv.Window = gv.App.NewWindow("Mail Demo")
 
 	// set icon
-	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	gv.Window.SetIcon(r)
+	gv.Window.SetIcon(yaac_shared.ResourceIconPng)
 
 	gv.Window.SetContent(makeFormTab(gv.Window, f))
 	gv.Window.Show()
@@ -62,7 +60,7 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 		},
 		OnSubmit: func() {
 
-			formStruct := yaac_shared.EmailData{
+			formStruct := yaac_shared.MailLoginData{
 				MailServer: mailServer.Text,
 				Email:      email.Text,
 				Password:   password.Text,

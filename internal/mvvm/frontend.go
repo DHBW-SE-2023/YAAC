@@ -8,11 +8,7 @@ import (
 var frontendMain *yaac_frontend_main.FrontendMain = nil
 
 func (m *MVVM) NewFrontendMain() {
-	frontendMain = yaac_frontend_main.New(m)
-}
-
-func (m *MVVM) OpenMainWindow() {
-	frontendMain.OpenMainWindow()
+	m.FrontendMain = yaac_frontend_main.New(m)
 }
 
 func (m *MVVM) NotifyError(source string, err error) {

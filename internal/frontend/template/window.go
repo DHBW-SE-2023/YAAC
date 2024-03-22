@@ -5,7 +5,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 var gv GlobalVars
@@ -25,8 +24,7 @@ func (f *WindowTemplate) Open() {
 	gv.Window = gv.App.NewWindow("TEMPLATE")
 
 	// set icon
-	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	gv.Window.SetIcon(r)
+	gv.Window.SetIcon(yaac_shared.ResourceIconPng)
 
 	// handle main window
 	gv.Window.SetContent(makeWindow(f))
