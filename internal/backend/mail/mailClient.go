@@ -18,7 +18,9 @@ import (
 // GetMailsToday fetches all unread mails from today
 // and checks the mails with the subject containing "Anwesenheitsliste".
 // It extracts the attached image as binary data.
-// Returns an array with the maildata from the mails
+//
+// Returns an array with the maildata from the mails.
+// It marks the returned mails as read.
 func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 
 	//setup mail client
@@ -33,10 +35,14 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 		return nil, err
 	}
 
-	// logout before function returns
-	defer c.Logout()
+	mails := b.processMails(c, ids)
 
-	return b.processMails(c, ids), nil
+	c.Logout()
+
+	// Mark all mails that we process as read
+	b.MarkMailsAsRead(mails)
+
+	return mails, nil
 }
 
 // Processes all mails with the given ids and returns struct with mail data
@@ -287,24 +293,19 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 
 // Marks the mails with the given IDs as read
 // returns an error if there is an error with that
-func (b *BackendMail) MarkMailsAsRead(ids []uint32) error {
-	//connect to server
-	c, err := b.connectToServer(b.serverAddr)
+func (b *BackendMail) MarkMailsAsRead(mails []MailData) error {
+	c, err := b.setupMail(false)
 	if err != nil {
 		return err
 	}
 
-	//login with the user credentials
-	c, err = b.logInToInbox(c, b.username, b.password, false)
-	if err != nil {
-		return err
-	}
+	defer c.Logout()
 
 	//mark all mails with the given ids as read
-	for _, id := range ids {
+	for _, mail := range mails {
 
 		seqset := new(imap.SeqSet)
-		seqset.AddNum(id)
+		seqset.AddNum(mail.ID)
 
 		err = c.Store(seqset, "+FLAGS.SILENT", []interface{}{imap.SeenFlag}, nil)
 		if err != nil {
