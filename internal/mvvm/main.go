@@ -16,7 +16,6 @@ func settingsToMap(settings []yaac_shared.Setting) map[string]string {
 
 	return ms
 }
-
 func (m *MVVM) StartApplication() {
 	err := m.ConnectDatabase("data/data.db")
 	m.ImgprocBackendStart()

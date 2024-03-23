@@ -11,6 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
+const AACERROR = "AllAttendanceListInRangeByCourse: %v"
+const MPERROR = "Mismatched properties"
+
 var testTime = time.Date(2000, 01, 01, 1, 1, 1, 1, time.UTC)
 var testByteArray = []byte("This is a test string simulating the byte array from a file")
 
@@ -236,7 +239,7 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 
 	lists, err := conn.AllAttendanceListInRangeByCourse(tikC, testTime, testTime.Add(1000))
 	if err != nil {
-		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
+		t.Fatalf(AACERROR, err)
 	}
 
 	if len(correctLists) != len(lists) {
@@ -246,7 +249,7 @@ func TestAllAttendanceListInRangeByCourse(t *testing.T) {
 	for i, l := range lists {
 		c := correctLists[i]
 		if !listsEqual(l, c) {
-			t.Fatalf("Mismatched properties")
+			t.Fatalf(MPERROR)
 		}
 
 		for j, a := range l.Attendancies {
@@ -310,7 +313,7 @@ func TestAllAttendanceListInRange(t *testing.T) {
 	for i, l := range lists {
 		c := correctLists[i]
 		if !listsEqual(l, c) {
-			t.Fatalf("Mismatched properties")
+			t.Fatalf(MPERROR)
 		}
 
 		for j, a := range l.Attendancies {
@@ -346,7 +349,7 @@ func TestLatestList(t *testing.T) {
 
 	latestList, _ := conn.LatestList(c, time.Now())
 	if len(correctList.Attendancies) != len(latestList.Attendancies) || correctList.ReceivedAt != latestList.ReceivedAt || correctList.CourseID != latestList.CourseID {
-		t.Fatalf("Mismatched properties")
+		t.Fatalf(MPERROR)
 	}
 }
 
@@ -358,7 +361,7 @@ func TestUpdateList(t *testing.T) {
 	lists, err := conn.AllAttendanceListInRangeByCourse(c, testTime, testTime.Add(1000))
 
 	if err != nil {
-		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
+		t.Fatalf(AACERROR, err)
 	}
 
 	if len(lists) != 1 {
@@ -377,7 +380,7 @@ func TestUpdateList(t *testing.T) {
 	lists, err = conn.AllAttendanceListInRangeByCourse(c, testTime, testTime.Add(1000))
 
 	if err != nil {
-		t.Fatalf("AllAttendanceListInRangeByCourse: %v", err)
+		t.Fatalf(AACERROR, err)
 	}
 
 	if len(lists) != 1 {

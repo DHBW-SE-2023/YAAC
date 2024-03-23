@@ -324,16 +324,32 @@ func ParseTable(img PreparedImage) *Table {
 		return boundingRects[i].Max.Y < boundingRects[j].Max.Y
 	})
 
+	rows := gatherTableRows(boundingRects, meanHeight, shape)
+
+	return &Table{
+		Image: invImg,
+		Rows:  rows,
+	}
+}
+
+// imgShape: img.Rows(), img.Cols()
+func gatherTableRows(boundingRects []image.Rectangle, meanHeight int, imgShape []int) []TableRow {
 	rows := []TableRow{}
 
 	newIdx := 0
+	minDx := int(float32(imgShape[1]) * 0.04)
+	minDy := int(float32(imgShape[0]) * 0.02)
+
+	sigDx := int(float32(imgShape[1]) * 0.30)
+	sigDy := int(float32(imgShape[0]) * 0.01)
+
 	for i, rect := range boundingRects {
 		if i < newIdx {
 			continue
 		}
 
 		// Cell is to small, we skip it. Values were found empirically
-		if rect.Dx() < int(float32(img.Cols())*0.04) || rect.Dy() < int(float32(img.Rows())*0.02) {
+		if rect.Dx() < minDx || rect.Dy() < minDy {
 			continue
 		}
 
@@ -361,7 +377,6 @@ func ParseTable(img PreparedImage) *Table {
 			return row[i].Min.X < row[j].Min.X
 		})
 
-		// FIXME: Should we fail if we have a misformed row?
 		// We need the columns num, name, signature
 		// If not, we assume the column is malformed and skip it
 		if len(row) != 3 {
@@ -376,21 +391,18 @@ func ParseTable(img PreparedImage) *Table {
 		}
 
 		// The name and signature column have at least a width of 30%
-		if tableRow.NameROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.NameROI.Dy() <= int(0.01*float32(shape[1])) {
+		if tableRow.NameROI.Dx() <= sigDx || tableRow.NameROI.Dy() <= sigDy {
 			continue
 		}
 
-		if tableRow.SignatureROI.Dx() <= int(0.30*float32(shape[0])) || tableRow.SignatureROI.Dy() <= int(0.01*float32(shape[1])) {
+		if tableRow.SignatureROI.Dx() <= sigDx || tableRow.SignatureROI.Dy() <= sigDy {
 			continue
 		}
 
 		rows = append(rows, tableRow)
 	}
 
-	return &Table{
-		Image: invImg,
-		Rows:  rows,
-	}
+	return rows
 }
 
 func PrepareImage(img gocv.Mat) (PreparedImage, error) {

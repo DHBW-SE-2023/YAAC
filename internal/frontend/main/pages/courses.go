@@ -16,6 +16,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const DATE_FORMAT = "2006-01-02"
+
 func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	course := &SelectionTracker{
 		courseName: widget.NewLabel(""),
@@ -92,7 +94,7 @@ func RefreshDateDropdown(dateDropdown *widget.SelectEntry, course string) {
 	lists, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
 	var dates []string
 	for _, element := range lists {
-		dates = append(dates, element.ReceivedAt.Format("2006-01-02"))
+		dates = append(dates, element.ReceivedAt.Format(DATE_FORMAT))
 	}
 	dateDropdown.SetOptions(dates)
 }
@@ -128,7 +130,7 @@ func RefreshCourseAttendancy(table *fyne.Container, course string, date string) 
 	selectedCourse, _ := myMVVM.CourseByName(course)
 	lists, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -180), time.Now())
 	for _, list := range lists {
-		if list.ReceivedAt.Format(("2006-01-02")) == date {
+		if list.ReceivedAt.Format((DATE_FORMAT)) == date {
 			for _, attendancies := range list.Attendancies {
 				student, _ := myMVVM.Students(yaac_shared.Student{Model: gorm.Model{ID: attendancies.StudentID}})
 				table.Add(NewAttendanceRow(fmt.Sprintf("%s %s", student[0].FirstName, student[0].LastName), MapBooleans(attendancies.IsAttending)))
@@ -142,7 +144,7 @@ VerifyList will redirect the user to the Verification Page passing the currently
 */
 func VerifyList(w fyne.Window, course string, date string, courseTable *fyne.Container) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
-	parsedTime, _ := time.Parse("2006-01-02", date)
+	parsedTime, _ := time.Parse(DATE_FORMAT, date)
 	w.SetContent(VerificationScreen(w, GetImageByDate(course, parsedTime.Add(24*time.Hour)), int(selectedCourse.ID), courseTable, parsedTime))
 }
 
@@ -151,7 +153,7 @@ ShowImage will display the currently selected list in a seperate window passing 
 */
 func ShowImage(w fyne.Window, course string, date string) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
-	parsedTime, _ := time.Parse("2006-01-02", date)
+	parsedTime, _ := time.Parse(DATE_FORMAT, date)
 	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, parsedTime, parsedTime.Add(24*time.Hour))
 	img := RotateImage(list[0].Image)
 	img.FillMode = canvas.ImageFillOriginal

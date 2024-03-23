@@ -51,6 +51,8 @@ type Setting struct {
 	Value   string
 }
 
+const DEFAULT_ORDER = "ReceivedAt DESC"
+
 // Ensure that the database is present and all tables being there
 func (item *BackendDatabase) ConnectDatabase() error {
 	// We save private data, so noone but us may read it
@@ -106,7 +108,7 @@ func (item *BackendDatabase) UpdateList(list AttendanceList) (AttendanceList, er
 // [..., end)
 func (item *BackendDatabase) LatestList(course Course, end time.Time) (AttendanceList, error) {
 	list := AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("JOIN Course c ON c.ID = CourseID").Where("ReceivedAt < ?", end).Order("ReceivedAt DESC").Take(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Joins("JOIN Course c ON c.ID = CourseID").Where("ReceivedAt < ?", end).Order(DEFAULT_ORDER).Take(&list).Error
 	return list, err
 }
 
@@ -115,7 +117,7 @@ func (item *BackendDatabase) LatestList(course Course, end time.Time) (Attendanc
 // [start, end)
 func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("CourseID = ?", course.ID).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("CourseID = ?", course.ID).Where("ReceivedAt BETWEEN ? AND ?", start, end).Order(DEFAULT_ORDER).Find(&list).Error
 	return list, err
 }
 
@@ -124,7 +126,7 @@ func (item *BackendDatabase) AllAttendanceListInRangeByCourse(course Course, sta
 // [start, end)
 func (item *BackendDatabase) AllAttendanceListInRange(start time.Time, end time.Time) ([]AttendanceList, error) {
 	list := []AttendanceList{}
-	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("ReceivedAt BETWEEN ? AND ?", start, end).Order("ReceivedAt DESC").Find(&list).Error
+	err := item.DB.Model(&AttendanceList{}).Preload("Attendancies").Where("ReceivedAt BETWEEN ? AND ?", start, end).Order(DEFAULT_ORDER).Find(&list).Error
 	return list, err
 }
 
