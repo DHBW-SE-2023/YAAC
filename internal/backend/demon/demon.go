@@ -54,7 +54,6 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		Image:      mail.Image,
 	}
 
-	// TODO: Get the course from the table header
 	for _, row := range table.Rows {
 		if row.FullName == "" || row.FirstName == "" || row.LastName == "" {
 			continue
@@ -67,7 +66,6 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 
 		var student shared.Student
 
-		// TODO: Is this correct: No student with the name is present. Consider adding them
 		if len(students) == 0 {
 			student, err = mvvm.InsertStudent(shared.Student{
 				FirstName: row.FirstName,

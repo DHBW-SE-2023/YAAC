@@ -101,9 +101,9 @@ func makeWindow(f *WindowOpenCV) *fyne.Container {
 	)))
 }
 
-func (f *WindowOpenCV) ShowGeneratedImage(out_Path string) {
+func (f *WindowOpenCV) ShowGeneratedImage(outPath string) {
 	// Load the image resource directly from the file path
-	res, err := fyne.LoadResourceFromPath(out_Path)
+	res, err := fyne.LoadResourceFromPath(outPath)
 	if err != nil {
 		log.Println("Error loading generated image:", err)
 		return
