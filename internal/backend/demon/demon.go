@@ -13,20 +13,20 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	for {
 		newMails, err := mvvm.GetMailsToday()
 		if err != nil {
-			log.Fatalf("Could not get mails for today: %v", err)
+			log.Println("ERROR: Could not get mails for today: ", err)
 			continue
 		}
 
 		for _, mail := range newMails {
 			list, err := TableToAttendanceList(mvvm, mail)
 			if err != nil {
-				log.Fatalf("Could not process image from mail received at %v", mail.ReceivedAt)
+				log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
 				continue
 			}
 
 			_, err = mvvm.InsertList(list)
 			if err != nil {
-				log.Fatalf("Could not add list for mail received at %v: %v", mail.ReceivedAt, err)
+				log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
 				continue
 			}
 

@@ -69,7 +69,7 @@ func makeFormTab(_ fyne.Window, f *WindowMail) fyne.CanvasObject {
 			// FIXME: Error handling here
 			err := f.MVVM.UpdateMailCredentials(formStruct)
 			if err != nil {
-				log.Fatalf("Could not update E-Mail credentials")
+				log.Println("ERROR: Could not update E-Mail credentials")
 			}
 		},
 	}
