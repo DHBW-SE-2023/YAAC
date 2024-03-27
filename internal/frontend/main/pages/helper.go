@@ -1,10 +1,12 @@
 package yaac_frontend_pages
 
 import (
+	"errors"
 	"fmt"
 	"image/color"
 	"io"
 	"log"
+	"regexp"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -124,7 +126,7 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	if len(optional) != 0 {
 		courseEntry.Text = optional[0]
 	} else {
-		courseEntry.Text = "TIK22,TIT22...."
+		courseEntry.PlaceHolder = "TIK22,TIT22...."
 	}
 
 	fileUpload := widget.NewButton("Load Image", func() {
@@ -134,10 +136,9 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 			ShowFileDialog(w, courseEntry.Text)
 		}
 	})
+	ValidateCourseInput(courseEntry, fileUpload)
 	fileUpload.Disable()
-	courseEntry.OnSubmitted = func(text string) {
-		fileUpload.Enable()
-	}
+
 	content := container.NewVBox(
 		widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"),
 		courseEntry,
@@ -146,6 +147,28 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	customDialog := dialog.NewCustom("Listen Upload", "Beenden", content, w)
 	customDialog.Show()
 }
+
+/*
+ValidateCourseInput will validate the current input regarding the courseEntry on length and syn
+*/
+func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
+	courseEntry.Validator = func(s string) error {
+		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
+		if !re.MatchString(s) {
+			return errors.New("Die Eingabe entspricht keinem validen Kurs!")
+		}
+		fileUpload.Enable()
+		return nil
+	}
+	courseEntry.OnChanged = func(s string) {
+		if len(s) > 10 {
+			s = s[0:10]
+			courseEntry.SetText(s)
+		}
+
+	}
+}
+
 func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 	fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {

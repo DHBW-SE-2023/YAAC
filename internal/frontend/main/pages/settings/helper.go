@@ -26,9 +26,8 @@ func MapMailBooleans(b bool) string {
 	return "Nicht erreichbar"
 }
 
-func loadImage(filepath string) *canvas.Image {
-	insertListIcon, _ := fyne.LoadResourceFromPath(filepath)
-	image := canvas.NewImageFromResource(insertListIcon)
+func loadImage(resource *fyne.StaticResource) *canvas.Image {
+	image := canvas.NewImageFromResource(resource)
 	image.FillMode = canvas.ImageFillOriginal
 	return image
 }

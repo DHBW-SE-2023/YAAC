@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
 /*
@@ -23,8 +24,7 @@ type OverviewWidget struct {
 }
 
 func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending []string, totalStudents int) *OverviewWidget {
-	imageResource, _ := fyne.LoadResourceFromPath("assets/imageIcon.png")
-	image := canvas.NewImageFromResource(imageResource)
+	image := canvas.NewImageFromResource(yaac_shared.ResourceImageIconPng)
 	titleLabel := widget.NewLabel(title)
 	contentFrame := container.NewVBox()
 	if len(nonAttending) == 0 {

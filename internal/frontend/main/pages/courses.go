@@ -51,7 +51,7 @@ func ReturnDateDropdown(dates []string) *widget.SelectEntry {
 	dateDropdown.Scroll = container.ScrollNone
 	dateDropdown.Validator = func(s string) error {
 		if !re.MatchString(s) {
-			return errors.New("failure")
+			return errors.New("Geben sie ein valides Datum im Format YYYY-MM-DD ein!")
 		}
 		return nil
 	}
@@ -70,16 +70,20 @@ func ReturnEditDropdown(w fyne.Window, courseDropdown *widget.Select, dateDropdo
 		"Liste anzeigen",
 		"Liste hochladen",
 	}, func(s string) {
-		if s == "Liste bearbeiten" {
-			lastView = w.Content()
-			VerifyList(w, courseDropdown.Selected, dateDropdown.Text, courseTable)
-		} else if s == "Liste anzeigen" {
-			ShowImage(w, courseDropdown.Selected, dateDropdown.Text)
+		if dateDropdown.Text != "" {
+			if s == "Liste bearbeiten" {
+				lastView = w.Content()
+				VerifyList(w, courseDropdown.Selected, dateDropdown.Text, courseTable)
+			} else if s == "Liste anzeigen" {
+				ShowImage(w, courseDropdown.Selected, dateDropdown.Text)
+				courseTable.RemoveAll()
+			} else {
+				OpenImageUpload(w, courseDropdown.Selected, dateDropdown.Text)
+			}
 			courseTable.RemoveAll()
 		} else {
-			OpenImageUpload(w, courseDropdown.Selected, dateDropdown.Text)
+			dialog.ShowInformation("Es wurde noch kein Datum ausgewählt!", "", w)
 		}
-		courseTable.RemoveAll()
 	})
 	editDropdown.Selected = "Listenkonfiguration"
 	editDropdown.Disable()
@@ -104,6 +108,7 @@ ConfigureDateDropdownVerification is responsible for configuring the verificatio
 course SelectionTracker, selection Label, courseTable Container as well as the editDropdown for further processing.
 */
 func ConfigureDateDropdownVerification(dateDropdown *widget.SelectEntry, course *SelectionTracker, selection *widget.Label, courseTable *fyne.Container, editDropdown *widget.Select) {
+	editDropdown.Disable()
 	dateDropdown.OnChanged = func(s string) {
 		if len(s) > 10 {
 			s = s[0:10]
@@ -113,13 +118,14 @@ func ConfigureDateDropdownVerification(dateDropdown *widget.SelectEntry, course 
 		dateDropdown.SetText(s)
 		if dateDropdown.Validate() != nil {
 			course.secondary.SetText("Falsches Datumsformat")
+			editDropdown.Disable()
 		} else {
 			course.secondary.SetText(s)
+			editDropdown.Enable()
 		}
 		selection.SetText(RefreshSelection(course))
 		courseTable.RemoveAll()
 		RefreshCourseAttendancy(courseTable, course.courseName.Text, s)
-		editDropdown.Enable()
 	}
 }
 

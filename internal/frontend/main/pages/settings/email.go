@@ -28,12 +28,12 @@ func ReturnForm(w fyne.Window) *widget.Form {
 	if mailConnection != "" && mailUser != "" && mailPassword != "" {
 		alive := myMVVM.CheckMailConnection()
 		serverStatusText := widget.NewLabel(MapMailBooleans(alive))
-		serverStatusImage := loadImage("assets/alive.png")
+		serverStatusImage := loadImage(yaac_shared.ResourceAlivePng)
 		serverStatus.Add(serverStatusImage)
 		serverStatus.Add(serverStatusText)
 	} else {
 		serverStatusText := widget.NewLabel("Keine Daten hinterlegt")
-		serverStatusImage := loadImage("assets/down.png")
+		serverStatusImage := loadImage(yaac_shared.ResourceDownPng)
 		serverStatus.Add(serverStatusImage)
 		serverStatus.Add(serverStatusText)
 	}

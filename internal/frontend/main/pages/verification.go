@@ -155,7 +155,6 @@ func GetAttendancies(course int, date time.Time) ([]string, []bool) {
 	var students []string
 	var attendance []bool
 	for _, element := range attendancies[0].Attendancies {
-		fmt.Printf("%+v\n", element)
 		student, _ := myMVVM.Students(yaac_shared.Student{Model: gorm.Model{ID: element.StudentID}})
 		students = append(students, fmt.Sprintf("%s %s", student[0].FirstName, student[0].LastName))
 		attendance = append(attendance, element.IsAttending)
