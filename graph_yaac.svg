@@ -12,13 +12,13 @@
 <g id="node1" class="node">
 <title>N9</title>
 <polygon fill="none" stroke="black" points="1008,-108 638,-108 638,-72 1008,-72 1008,-108"/>
-<text text-anchor="middle" x="823" y="-85.33" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/shared</text>
+<text text-anchor="middle" x="823" y="-85.33" font-family="Times,serif" font-size="14.00">internal/shared</text>
 </g>
 <!-- N11 -->
 <g id="node2" class="node">
 <title>N11</title>
 <polygon fill="none" stroke="black" points="540.75,-36 97.25,-36 97.25,0 540.75,0 540.75,-36"/>
-<text text-anchor="middle" x="319" y="-13.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/backend/imgproc</text>
+<text text-anchor="middle" x="319" y="-13.32" font-family="Times,serif" font-size="14.00">internal/backend/imgproc</text>
 </g>
 <!-- N9&#45;&gt;N11 -->
 <g id="edge7" class="edge">
@@ -30,7 +30,7 @@
 <g id="node5" class="node">
 <title>N5</title>
 <polygon fill="none" stroke="black" points="1330.75,-36 881.25,-36 881.25,0 1330.75,0 1330.75,-36"/>
-<text text-anchor="middle" x="1106" y="-13.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/backend/database</text>
+<text text-anchor="middle" x="1106" y="-13.32" font-family="Times,serif" font-size="14.00">internal/backend/database</text>
 </g>
 <!-- N9&#45;&gt;N5 -->
 <g id="edge6" class="edge">
@@ -42,7 +42,7 @@
 <g id="node8" class="node">
 <title>N12</title>
 <polygon fill="none" stroke="black" points="1840.88,-36 1425.12,-36 1425.12,0 1840.88,0 1840.88,-36"/>
-<text text-anchor="middle" x="1633" y="-13.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/backend/mail</text>
+<text text-anchor="middle" x="1633" y="-13.32" font-family="Times,serif" font-size="14.00">internal/backend/mail</text>
 </g>
 <!-- N9&#45;&gt;N12 -->
 <g id="edge8" class="edge">
@@ -54,7 +54,7 @@
 <g id="node3" class="node">
 <title>N0</title>
 <polygon fill="none" stroke="black" points="644.25,-324 221.75,-324 221.75,-288 644.25,-288 644.25,-324"/>
-<text text-anchor="middle" x="433" y="-301.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/frontend/main</text>
+<text text-anchor="middle" x="433" y="-301.32" font-family="Times,serif" font-size="14.00">internal/frontend/main</text>
 </g>
 <!-- N0&#45;&gt;N9 -->
 <g id="edge3" class="edge">
@@ -66,7 +66,7 @@
 <g id="node9" class="node">
 <title>N1</title>
 <polygon fill="none" stroke="black" points="535.5,-252 66.5,-252 66.5,-216 535.5,-216 535.5,-252"/>
-<text text-anchor="middle" x="301" y="-229.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/frontend/main/pages</text>
+<text text-anchor="middle" x="301" y="-229.32" font-family="Times,serif" font-size="14.00">internal/frontend/main/pages</text>
 </g>
 <!-- N0&#45;&gt;N1 -->
 <g id="edge1" class="edge">
@@ -78,7 +78,7 @@
 <g id="node10" class="node">
 <title>N2</title>
 <polygon fill="none" stroke="black" points="794.62,-180 263.38,-180 263.38,-144 794.62,-144 794.62,-180"/>
-<text text-anchor="middle" x="529" y="-157.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/frontend/main/pages/settings</text>
+<text text-anchor="middle" x="529" y="-157.32" font-family="Times,serif" font-size="14.00">internal/frontend/main/pages/settings</text>
 </g>
 <!-- N0&#45;&gt;N2 -->
 <g id="edge2" class="edge">
@@ -90,13 +90,13 @@
 <g id="node4" class="node">
 <title>N4</title>
 <polygon fill="none" stroke="black" points="1254.62,-468 927.38,-468 927.38,-432 1254.62,-432 1254.62,-468"/>
-<text text-anchor="middle" x="1091" y="-445.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/cmd/yaac</text>
+<text text-anchor="middle" x="1091" y="-445.32" font-family="Times,serif" font-size="14.00">cmd/yaac (main)</text>
 </g>
 <!-- N10 -->
 <g id="node13" class="node">
 <title>N10</title>
 <polygon fill="none" stroke="black" points="1273.38,-396 908.62,-396 908.62,-360 1273.38,-360 1273.38,-396"/>
-<text text-anchor="middle" x="1091" y="-373.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/mvvm</text>
+<text text-anchor="middle" x="1091" y="-373.32" font-family="Times,serif" font-size="14.00">internal/mvvm</text>
 </g>
 <!-- N4&#45;&gt;N10 -->
 <g id="edge5" class="edge">
@@ -108,13 +108,13 @@
 <g id="node6" class="node">
 <title>N6</title>
 <polygon fill="none" stroke="black" points="1676.38,-324 1227.62,-324 1227.62,-288 1676.38,-288 1676.38,-324"/>
-<text text-anchor="middle" x="1452" y="-301.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/backend/template</text>
+<text text-anchor="middle" x="1452" y="-301.32" font-family="Times,serif" font-size="14.00">internal/backend/template</text>
 </g>
 <!-- N7 -->
 <g id="node7" class="node">
 <title>N7</title>
 <polygon fill="none" stroke="black" points="1219,-540 963,-540 963,-504 1219,-504 1219,-540"/>
-<text text-anchor="middle" x="1091" y="-517.33" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC</text>
+<text text-anchor="middle" x="1091" y="-517.33" font-family="Times,serif" font-size="14.00">YAAC</text>
 </g>
 <!-- N7&#45;&gt;N4 -->
 <g id="edge12" class="edge">
@@ -144,7 +144,7 @@
 <g id="node11" class="node">
 <title>N3</title>
 <polygon fill="none" stroke="black" points="1043.5,-252 592.5,-252 592.5,-216 1043.5,-216 1043.5,-252"/>
-<text text-anchor="middle" x="818" y="-229.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/frontend/template</text>
+<text text-anchor="middle" x="818" y="-229.32" font-family="Times,serif" font-size="14.00">internal/frontend/template</text>
 </g>
 <!-- N3&#45;&gt;N9 -->
 <g id="edge4" class="edge">
@@ -156,7 +156,7 @@
 <g id="node12" class="node">
 <title>N8</title>
 <polygon fill="none" stroke="black" points="1322.5,-180 889.5,-180 889.5,-144 1322.5,-144 1322.5,-180"/>
-<text text-anchor="middle" x="1106" y="-157.32" font-family="Times,serif" font-size="14.00">github.com/DHBW&#45;SE&#45;2023/YAAC/internal/backend/demon</text>
+<text text-anchor="middle" x="1106" y="-157.32" font-family="Times,serif" font-size="14.00">internal/backend/demon</text>
 </g>
 <!-- N8&#45;&gt;N9 -->
 <g id="edge22" class="edge">
