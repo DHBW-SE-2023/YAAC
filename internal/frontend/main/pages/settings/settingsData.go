@@ -9,7 +9,7 @@ Defines the Setting struct which will hold each settingPages properties
 */
 type Setting struct {
 	Title      string
-	View       func() fyne.CanvasObject
+	View       func(w fyne.Window) fyne.CanvasObject
 	SupportWeb bool
 }
 

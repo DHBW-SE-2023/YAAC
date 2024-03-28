@@ -1,7 +1,6 @@
 package yaac_frontend_main
 
 import (
-	"fmt"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -59,13 +58,11 @@ type YaacSidebarItem struct {
 	Title       string
 	SetPage     func(page pages.Page)
 	Page        pages.Page
-	BGColor     color.Color
 	SelectColor color.Color
 }
 
 func NewYaacSidebarItem(title string, setPage func(page pages.Page), page pages.Page, bgColor color.Color, selectColor color.Color) *YaacSidebarItem {
 	item := &YaacSidebarItem{
-		BGColor:     bgColor,
 		SelectColor: selectColor,
 		SetPage:     setPage,
 		Page:        page,
@@ -80,40 +77,32 @@ func (item *YaacSidebarItem) Updateitem(title string) {
 }
 
 func (item *YaacSidebarItem) CreateRenderer() fyne.WidgetRenderer {
-	bg := canvas.NewRectangle(item.BGColor)
-	txt := canvas.NewText(item.Title, color.Black)
-	// FIXME - Design Item here ontop of bg
-	// FIXME - Handle Hover event
+	bg := canvas.NewRectangle(item.SelectColor)
+	button := NewYaacSidebarButton(item.Title, item.SetPage, item.Page, bg)
 	c := container.NewStack(
-		NewYaacSidebarButton(item.Title, item.SetPage, item.Page),
-		container.NewStack(bg, txt),
+		bg,
+		button,
 	)
 	return widget.NewSimpleRenderer(c)
 }
 
-// Alt. Sidebar Button
 type YaacSidebarButton struct {
 	widget.Button
 	SetPage func(page pages.Page)
 	Page    pages.Page
+	bgColor color.Color
 }
 
-func NewYaacSidebarButton(title string, setPage func(page pages.Page), page pages.Page) *YaacSidebarButton {
+func NewYaacSidebarButton(title string, setPage func(page pages.Page), page pages.Page, bg *canvas.Rectangle) *fyne.Container {
 	item := &YaacSidebarButton{}
 	item.ExtendBaseWidget(item)
-
 	item.SetText(title)
 	item.SetPage = setPage
 	item.Page = page
-
-	return item
+	return container.NewStack(bg, item)
 }
 
 func (item *YaacSidebarButton) Tapped(_ *fyne.PointEvent) {
-	fmt.Println("Click!")
+	item.bgColor = color.Black
 	item.SetPage(item.Page)
-}
-
-func (item *YaacSidebarButton) TappedSecondary(_ *fyne.PointEvent) {
-	//fmt.Println("Click 2!")
 }

@@ -1,9 +1,7 @@
 package yaac_frontend_main
 
 import (
-	"fmt"
-
-	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	yaac_frontend_pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_frontend_settings "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages/settings"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
@@ -23,9 +21,9 @@ func New(mvvm yaac_shared.MVVM) *FrontendMain {
 
 func (*FrontendMain) ReceiveNewTable(table yaac_shared.AttendanceList) {
 	gv.Window.Show()
-	yaac_shared.App.SendNotification(fyne.NewNotification(fmt.Sprintf("%s %o %s", "Es ist ein neue Liste für den Kurs", table.CourseID, "eingetroffen!"), ""))
+	dialog.ShowInformation("Es ist ein neue Liste eingetroffen!", "Nun auf ihrer Übersichtsseite einzusehen!", gv.Window)
 }
 
 func (*FrontendMain) ReceiveError(source string, err error) {
-	yaac_shared.App.SendNotification(fyne.NewNotification(fmt.Sprintf("%s %s %s", "Es ist ein Fehler im", source, "aufgetreten!"), err.Error()))
+	dialog.ShowError(err, gv.Window)
 }

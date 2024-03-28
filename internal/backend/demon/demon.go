@@ -1,6 +1,7 @@
 package yaac_demon
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -12,6 +13,7 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
 		newMails, err := mvvm.GetMailsToday()
+		fmt.Println(len(newMails))
 		if err != nil {
 			log.Println("ERROR: Could not get mails for today: ", err)
 			continue
@@ -23,7 +25,6 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 				log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
 				continue
 			}
-
 			_, err = mvvm.InsertList(list)
 			if err != nil {
 				log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
@@ -59,7 +60,15 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 			continue
 		}
 
-		students, err := mvvm.Students(shared.Student{CourseID: list.CourseID, FirstName: row.FirstName, LastName: row.LastName})
+		// var student shared.Student
+		// students, _ := mvvm.CourseStudents(shared.Course{Model: gorm.Model{ID: list.ID}})
+		// for _, element := range students {
+		// 	if element.LastName == strings.TrimSpace(row.LastName) {
+		// 		student = element
+		// 	}
+		// }
+
+		students, err := mvvm.Students(shared.Student{LastName: row.LastName})
 		if err != nil {
 			return shared.AttendanceList{}, err
 		}
@@ -70,6 +79,7 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 			student, err = mvvm.InsertStudent(shared.Student{
 				FirstName: row.FirstName,
 				LastName:  row.LastName,
+				CourseID:  course.ID,
 			})
 
 			if err != nil {
@@ -77,12 +87,12 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 			}
 		} else if len(students) != 1 { // If there are more students with the same name, we don't know what to do
 			continue
+		} else {
+			student = students[0]
 		}
 
-		student = students[0]
-
 		attendance := shared.Attendance{
-			StudentID:    student.CourseID,
+			StudentID:    student.ID,
 			IsAttending:  row.Valid,
 			NameROI:      database.Rectangle(row.NameROI),
 			SignatureROI: database.Rectangle(row.SignatureROI),

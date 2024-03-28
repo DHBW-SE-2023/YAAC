@@ -1,6 +1,8 @@
 package yaac_frontend_settings
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -12,7 +14,7 @@ import (
 var page int = 1
 var pages int = 8
 
-func wikiScreen() fyne.CanvasObject {
+func wikiScreen(_ fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Nutzerdokumentation")
 
 	// This is neccecary because the frame wont accept an uninitialized image
@@ -20,25 +22,29 @@ func wikiScreen() fyne.CanvasObject {
 	image.FillMode = canvas.ImageFillContain
 	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), image)
 
-	nextButton := createReturnNextButton(imageFrame)
-	backButton := createReturnBackButton(imageFrame)
+	currentPage := widget.NewLabel(fmt.Sprintf("%s %d", "Seite", page))
+	nextButton := createReturnNextButton(imageFrame, currentPage)
+	backButton := createReturnBackButton(imageFrame, currentPage)
 
-	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
-	content := container.NewStack(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+	currentPage.Importance = widget.MediumImportance
+	currentPage.TextStyle = fyne.TextStyle{Bold: true}
 
+	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(5, backButton, layout.NewSpacer(), currentPage, layout.NewSpacer(), nextButton)))
+	content := container.NewStack(container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), container.NewCenter(imageFrame), buttonArea))
 	return container.NewVScroll(content)
 }
 
 /*
 ReturnNextButton returns the fully configured nextButton which is responsible for switch to the next page
 */
-func createReturnNextButton(imageFrame *fyne.Container) *widget.Button {
+func createReturnNextButton(imageFrame *fyne.Container, currentPage *widget.Label) *widget.Button {
 	nextButton := widget.NewButton("Weiter", func() {
 		imageFrame.RemoveAll()
 		page += 1
 		if page >= pages+1 {
 			page = 1
 		}
+		currentPage.SetText(fmt.Sprintf("%s %d", "Seite", page))
 		loadCurrentPageImage(imageFrame)
 	})
 	return nextButton
@@ -48,13 +54,14 @@ func createReturnNextButton(imageFrame *fyne.Container) *widget.Button {
 ReturnBackButton returns the fully configured backButton which is responsible for switch to the last page
 */
 
-func createReturnBackButton(imageFrame *fyne.Container) *widget.Button {
+func createReturnBackButton(imageFrame *fyne.Container, currentPage *widget.Label) *widget.Button {
 	backButton := widget.NewButton("Zurück", func() {
 		imageFrame.RemoveAll()
 		page -= 1
 		if page <= 0 {
 			page = pages
 		}
+		currentPage.SetText(fmt.Sprintf("%s %d", "Seite", page))
 		loadCurrentPageImage(imageFrame)
 	})
 	return backButton

@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"gorm.io/gorm"
@@ -61,9 +62,9 @@ func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []t
 			}
 		}
 		if len(optional) > 0 {
-			UpdateList(attendances, course, optional[0])
+			UpdateList(w, attendances, course, optional[0])
 		} else {
-			UpdateList(attendances, course, time.Now())
+			UpdateList(w, attendances, course, time.Now())
 		}
 		ReturnToPreviousPage(w, course, optional, courseTable)
 	})
@@ -73,7 +74,7 @@ func ReturnConfirmButton(w fyne.Window, widgetList *fyne.Container, optional []t
 /*
 UpdateList updates all new attendancies by initializing a AttedanceList Object as soon as the confirmButton gets clicked.
 */
-func UpdateList(attendances []bool, course int, date time.Time) {
+func UpdateList(w fyne.Window, attendances []bool, course int, date time.Time) {
 	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: uint(course)}}, date.AddDate(0, 0, -31), date.Add(24*time.Hour))
 	attendanceList := ReturnUpdatedAttendancies(attendances, list)
 	_, err := myMVVM.UpdateList(yaac_shared.AttendanceList{
@@ -86,10 +87,10 @@ func UpdateList(attendances []bool, course int, date time.Time) {
 	})
 
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listenaktualisierung", err.Error()))
+		dialog.ShowError(err, w)
 		return
 	} else {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Ihre Liste wurde erfolgreich aktualisiert", ""))
+		dialog.ShowInformation("Ihre Liste wurde erfolgreich aktualisiert!", "", w)
 	}
 }
 
