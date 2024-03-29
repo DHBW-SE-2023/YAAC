@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
@@ -28,7 +29,13 @@ func ReturnForm(w fyne.Window) *widget.Form {
 	if mailConnection != "" && mailUser != "" && mailPassword != "" {
 		alive := myMVVM.CheckMailConnection()
 		serverStatusText := widget.NewLabel(MapMailBooleans(alive))
-		serverStatusImage := loadImage(yaac_shared.ResourceAlivePng)
+		var serverStatusImage *canvas.Image
+		if alive {
+			serverStatusImage = loadImage(yaac_shared.ResourceAlivePng)
+		} else {
+			serverStatusImage = loadImage(yaac_shared.ResourceDownPng)
+		}
+
 		serverStatus.Add(serverStatusImage)
 		serverStatus.Add(serverStatusText)
 	} else {
