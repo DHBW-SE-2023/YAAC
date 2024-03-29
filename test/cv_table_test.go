@@ -89,10 +89,6 @@ func TestNewTable(t *testing.T) {
 	}
 
 	for attendanceListPath, validSignatures := range listSigs {
-		// if attendanceListPath == "testdata/list2.jpg" {
-		// 	continue
-		// }
-
 		t.Log("Processing ", attendanceListPath)
 
 		img := gocv.IMRead(attendanceListPath, gocv.IMReadAnyColor)
