@@ -12,29 +12,29 @@ import (
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
+		time.Sleep(duration * time.Second)
+
 		newMails, err := mvvm.GetMailsToday()
 		fmt.Println(len(newMails))
 		if err != nil {
-			log.Fatalf("Could not get mails for today: %v", err)
+			log.Println("ERROR: Could not get mails for today: ", err)
 			continue
 		}
 
 		for _, mail := range newMails {
 			list, err := TableToAttendanceList(mvvm, mail)
 			if err != nil {
-				log.Fatalf("Could not process image from mail received at %v", mail.ReceivedAt)
+				log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
 				continue
 			}
 			_, err = mvvm.InsertList(list)
 			if err != nil {
-				log.Fatalf("Could not add list for mail received at %v: %v", mail.ReceivedAt, err)
+				log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
 				continue
 			}
 
 			mvvm.NotifyNewList(list)
 		}
-
-		time.Sleep(duration * time.Second)
 	}
 }
 
@@ -103,4 +103,18 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 	}
 
 	return list, nil
+}
+
+func UploadImage(mvvm shared.MVVM, img []byte) (*shared.AttendanceList, error) {
+	list, err := TableToAttendanceList(mvvm, shared.MailData{Image: img, ReceivedAt: time.Now()})
+	if err != nil {
+		return nil, err
+	}
+
+	list, err = mvvm.InsertList(list)
+	if err != nil {
+		return nil, err
+	}
+
+	return &list, nil
 }

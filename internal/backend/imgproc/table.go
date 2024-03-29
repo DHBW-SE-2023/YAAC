@@ -8,14 +8,16 @@ import (
 )
 
 type Table struct {
-	Course string
-	Image  gocv.Mat
-	Rows   []TableRow
+	Course            string
+	Image             gocv.Mat
+	ImageWithoutTable gocv.Mat
+	Rows              []TableRow
 }
 
 type TableRow struct {
 	FirstName    string
 	LastName     string
+	RawName      string
 	FullName     string
 	Valid        bool
 	NameROI      image.Rectangle

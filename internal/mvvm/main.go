@@ -6,16 +6,14 @@ import (
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
-// FIXME: The existance of this function should not be necessary
 func settingsToMap(settings []yaac_shared.Setting) map[string]string {
 	ms := make(map[string]string)
-
 	for _, s := range settings {
 		ms[s.Setting] = s.Value
 	}
-
 	return ms
 }
+
 func (m *MVVM) StartApplication() {
 	err := m.ConnectDatabase("data/data.db")
 	m.ImgprocBackendStart()
@@ -31,21 +29,14 @@ func (m *MVVM) StartApplication() {
 	}
 
 	ms := settingsToMap(settings)
-	mailConnection, mailUser, mailPassword := ReturnMailSettings(settings)
-	// ms["MailServer"] = "secureimap.t-online.de:993"
-	// ms["UserEmail"] = "dhbw.rust.sweng@t-online.de"
-	// ms["UserEmailPassword"] = "Hallo123"
-	ms["MailServer"] = mailConnection
-	ms["UserEmail"] = mailUser
-	ms["UserEmailPassword"] = mailPassword
 
 	err = m.NewMailBacked(yaac_shared.MailLoginData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
 	if err != nil {
-		// log.Fatalf("Could not connect to email server")
-		log.Default()
+		log.Println("ERROR: Could not connect to email server")
+		log.Println("ERROR: Please set your email credentails in the settings")
 	}
 
-	m.StartDemon(10) // Refresh every 5 seconds
+	m.StartDemon(5 * 1000) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"image"
+	"image/color"
 	"math"
 	"regexp"
 	"sort"
@@ -93,7 +94,7 @@ func FindTable(img gocv.Mat) gocv.Mat {
 // If it fails, e.g. if some information is missing, it returns an error
 // It also takes in a Gosseract client to allow for reusing the Gosseract client.
 func (table *Table) Review(tesseractClient *gosseract.Client) error {
-	img := table.Image.Clone()
+	img := table.ImageWithoutTable.Clone()
 
 	kernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
 	gocv.MorphologyEx(img, &img, gocv.MorphClose, kernel)
@@ -103,10 +104,11 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 
 	gocv.CvtColor(img, &img, gocv.ColorGrayToBGRA)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
+	gocv.CvtColor(img, &img, gocv.ColorBGRAToGray)
 
 	tesseractClient.SetLanguage("deu")
 
-	err := table.studentNames(img, tesseractClient)
+	err := table.studentNames(&img, tesseractClient)
 	if err != nil {
 		return err
 	}
@@ -119,6 +121,17 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 
 		newRows = append(newRows, r)
 	}
+
+	// img = table.Image
+	// gocv.MorphologyEx(img, &img, gocv.MorphClose, kernel)
+	// gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdBinary)
+	// gocv.MedianBlur(img, &img, 3)
+	// gocv.BitwiseNot(img, &img)
+
+	// gocv.CvtColor(img, &img, gocv.ColorGrayToBGRA)
+	// gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 1.0, 0.0, gocv.BorderDefault)
+	// gocv.CvtColor(img, &img, gocv.ColorBGRAToGray)
+
 	table.Rows = newRows
 
 	dyBot := 2
@@ -128,7 +141,7 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 	for i, row := range table.Rows {
 		r := image.Rect(row.SignatureROI.Min.X+dxLeft, row.SignatureROI.Min.Y+dyTop, row.SignatureROI.Max.X-dxRight, row.SignatureROI.Max.Y-dyBot)
 		roi := img.Region(r)
-		valid := ValidSignature(roi.Clone())
+		valid := ValidSignature(roi)
 		table.Rows[i].Valid = valid
 	}
 
@@ -139,15 +152,18 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 // This function is called by `ReviewTable` and passes the Gosseract client
 // it receives into this function.
 // It returns a modified version of `table` with the names for the students filled in.
-func (table *Table) studentNames(img gocv.Mat, client *gosseract.Client) error {
-	dyBot := 2
-	dyTop := 4
-	dxLeft := 2
+func (table *Table) studentNames(img *gocv.Mat, client *gosseract.Client) error {
+	dyBot := -3
+	dyTop := 0
+	dxLeft := 0
 	dxRight := 30
 
 	for i, row := range table.Rows {
 		nameROI := image.Rect(row.NameROI.Min.X+dxLeft, row.NameROI.Min.Y+dyTop, row.NameROI.Max.X-dxRight, row.NameROI.Max.Y-dyBot)
 		nameROIImg := img.Region(nameROI)
+
+		gocv.Line(img, row.NameROI.Min, row.NameROI.Min.Add(image.Pt(row.NameROI.Dx(), 0)), color.RGBA{255, 0, 0, 255}, 5)
+		// gocv.Rectangle(img, nameROI, color.RGBA{255, 0, 0, 255}, 2)
 
 		// Tesseract accepts (among others) the following formats: PNG, JPEG, ...
 		// We choose PNG, because it is lossless and it doesn't have block artifacts
@@ -162,20 +178,21 @@ func (table *Table) studentNames(img gocv.Mat, client *gosseract.Client) error {
 			return err
 		}
 
-		name = strings.TrimSpace(name)
-		table.Rows[i].FullName = name
+		table.Rows[i].RawName = name
 
-		nameParts := strings.Split(name, ", ")
-		if len(nameParts) != 2 {
+		re := regexp.MustCompile(`([A-Z][a-z]+)[,.] (([A-Z][a-z\-]+ ?)+)`)
+		nameParts := re.FindStringSubmatch(name)
+		if nameParts == nil || len(nameParts) != 4 {
 			continue
 		}
 
-		table.Rows[i].LastName = nameParts[0]
-		table.Rows[i].FirstName = nameParts[1]
+		table.Rows[i].FullName = strings.TrimSpace(nameParts[0])
+		table.Rows[i].LastName = strings.TrimSpace(nameParts[1])
+		table.Rows[i].FirstName = strings.TrimSpace(nameParts[2])
 	}
 
 	if len(table.Rows) > 0 {
-		c, err := extractCourseFromTitle(table.Rows[0].FullName)
+		c, err := extractCourseFromTitle(table.Rows[0].RawName)
 		if err != nil {
 			return err
 		}
@@ -194,12 +211,13 @@ func (table *Table) studentNames(img gocv.Mat, client *gosseract.Client) error {
 //
 // It returns true if the signature is valid, false otherwise.
 func ValidSignature(img PreparedImage) bool {
-	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 5))
+	kernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(10, 3))
 
 	// Inplace mutation not allowed for gocv.Canny
 	canny := gocv.NewMat()
 	gocv.Canny(img, &canny, 128.0, 255.0)
 	gocv.MorphologyExWithParams(canny, &canny, gocv.MorphClose, kernel, 3, gocv.BorderDefault)
+	gocv.Dilate(canny, &canny, kernel)
 
 	cnts := gocv.FindContours(canny, gocv.RetrievalExternal, gocv.ChainApproxSimple).ToPoints()
 
@@ -209,7 +227,8 @@ func ValidSignature(img PreparedImage) bool {
 		merged = append(merged, r)
 	}
 
-	merged = merge(merged, 0.01*float64(img.Cols()), 0.01*float64(img.Rows()))
+	merged = merge(merged, 0.2*float64(img.Cols()), 0.2*float64(img.Rows()))
+	// merged = merge(merged, 0.05*float64(img.Cols()), 0.1*float64(img.Rows()))
 
 	filteredParts := make([]image.Rectangle, 0)
 	minWidth := img.Cols() / 10
@@ -223,6 +242,11 @@ func ValidSignature(img PreparedImage) bool {
 	}
 
 	valid := len(filteredParts) == 1
+
+	for _, r := range filteredParts {
+		gocv.Rectangle(&img, r, color.RGBA{255, 0, 0, 255}, 2)
+	}
+
 	return valid
 }
 
@@ -262,8 +286,7 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 // The course always only consists of upper case letters and numbers
 // while the department name is written normaly.
 func extractCourseFromTitle(title string) (string, error) {
-	title = strings.TrimSpace(title)
-	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)$")
+	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)")
 	results := re.FindStringSubmatch(title)
 
 	// First result should be the entire string,
@@ -286,16 +309,35 @@ func ParseTable(img PreparedImage) *Table {
 
 	shape := img.Size()
 
-	horizontalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[0]/50, 1))
-	verticalKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, shape[1]/35))
+	horizontalOpeningKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[1]/10, 1))
+	horizontalOpeningKernel2 := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[1]/5, 1))
+	horizontalClosingKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[1]/5, 5))
+
+	verticalOpeningKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, shape[0]/10))
+	verticalOpeningKernel2 := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(1, shape[0]/5))
+	verticalClosingKernel := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(5, shape[0]/5))
 	vhKernel := gocv.GetStructuringElement(gocv.MorphCross, image.Pt(3, 3))
 
-	iters := 8
 	binaryHorizontal := gocv.NewMat()
-	gocv.MorphologyExWithParams(img, &binaryHorizontal, gocv.MorphOpen, horizontalKernel, iters, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(img, &binaryHorizontal, gocv.MorphOpen, horizontalOpeningKernel, 1, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(binaryHorizontal, &binaryHorizontal, gocv.MorphClose, horizontalClosingKernel, 4, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(binaryHorizontal, &binaryHorizontal, gocv.MorphOpen, horizontalOpeningKernel2, 8, gocv.BorderConstant)
 
 	binaryVertical := gocv.NewMat()
-	gocv.MorphologyExWithParams(img, &binaryVertical, gocv.MorphOpen, verticalKernel, iters, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(img, &binaryVertical, gocv.MorphOpen, verticalOpeningKernel, 1, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(binaryVertical, &binaryVertical, gocv.MorphClose, verticalClosingKernel, 4, gocv.BorderConstant)
+	gocv.MorphologyExWithParams(binaryVertical, &binaryVertical, gocv.MorphOpen, verticalOpeningKernel2, 8, gocv.BorderConstant)
+
+	binaryVerticalWide := binaryVertical.Clone()
+	verticalClosingKernel2 := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(15, shape[0]/10))
+	gocv.Dilate(binaryVertical, &binaryVerticalWide, verticalClosingKernel2)
+
+	// Be conservative with the horizontal dilation
+	binaryHorizontalWide := binaryHorizontal.Clone()
+	horizontalClosingKernel2 := gocv.GetStructuringElement(gocv.MorphRect, image.Pt(shape[1]/10, 5))
+	gocv.Dilate(binaryHorizontal, &binaryHorizontalWide, horizontalClosingKernel2)
+	// gocv.Dilate(binaryHorizontalWide, &binaryHorizontalWide, horizontalClosingKernel2)
+	// gocv.Dilate(binaryHorizontalWide, &binaryHorizontalWide, horizontalClosingKernel2)
 
 	vhLines := gocv.NewMat()
 	gocv.AddWeighted(binaryVertical, 0.5, binaryHorizontal, 0.5, 0.0, &vhLines)
@@ -308,32 +350,38 @@ func ParseTable(img PreparedImage) *Table {
 	gocv.Threshold(vhLines, &vhLines, 128.0, 255.0, gocv.ThresholdOtsu)
 
 	contours := gocv.FindContours(vhLines, gocv.RetrievalTree, gocv.ChainApproxSimple).ToPoints()
-
 	boundingRects := make([]image.Rectangle, len(contours))
-	meanHeight := 0
 
 	for _, contour := range contours {
 		rect := gocv.BoundingRect(gocv.NewPointVectorFromPoints(contour))
 		boundingRects = append(boundingRects, rect)
-		meanHeight = meanHeight + rect.Dy()
 	}
 
-	meanHeight = meanHeight / len(contours)
+	rows := gatherTableRows(boundingRects, shape)
+
+	imageWithoutTable := invImg.Clone()
+	gocv.Subtract(imageWithoutTable, binaryVerticalWide, &imageWithoutTable)
+	gocv.Subtract(imageWithoutTable, binaryHorizontalWide, &imageWithoutTable)
+
+	return &Table{
+		Image:             invImg,
+		ImageWithoutTable: imageWithoutTable,
+		Rows:              rows,
+	}
+}
+
+// imgShape: img.Rows(), img.Cols()
+func gatherTableRows(boundingRects []image.Rectangle, imgShape []int) []TableRow {
+	meanHeight := 0
+	for _, rect := range boundingRects {
+		meanHeight = meanHeight + rect.Dy()
+	}
+	meanHeight = meanHeight / len(boundingRects)
 
 	sort.Slice(boundingRects, func(i, j int) bool {
 		return boundingRects[i].Max.Y < boundingRects[j].Max.Y
 	})
 
-	rows := gatherTableRows(boundingRects, meanHeight, shape)
-
-	return &Table{
-		Image: invImg,
-		Rows:  rows,
-	}
-}
-
-// imgShape: img.Rows(), img.Cols()
-func gatherTableRows(boundingRects []image.Rectangle, meanHeight int, imgShape []int) []TableRow {
 	rows := []TableRow{}
 
 	newIdx := 0
