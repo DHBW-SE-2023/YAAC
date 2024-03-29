@@ -17,6 +17,7 @@ type Table struct {
 type TableRow struct {
 	FirstName    string
 	LastName     string
+	RawName      string
 	FullName     string
 	Valid        bool
 	NameROI      image.Rectangle

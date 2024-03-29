@@ -115,7 +115,6 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 
 	newRows := make([]TableRow, 0, len(table.Rows))
 	for _, r := range table.Rows {
-		println(r.FullName)
 		if r.FullName == "" || r.FirstName == "" || r.LastName == "" {
 			continue
 		}
@@ -145,8 +144,6 @@ func (table *Table) Review(tesseractClient *gosseract.Client) error {
 		valid := ValidSignature(roi)
 		table.Rows[i].Valid = valid
 	}
-
-	gocv.IMWrite("output.png", img)
 
 	return nil
 }
@@ -181,24 +178,21 @@ func (table *Table) studentNames(img *gocv.Mat, client *gosseract.Client) error 
 			return err
 		}
 
-		table.Rows[i].FullName = name
+		table.Rows[i].RawName = name
 
-		re := regexp.MustCompile(`[,\.]`)
-		nameParts := re.Split(name, 2)
-		if len(nameParts) != 2 {
+		re := regexp.MustCompile(`([A-Z][a-z]+)[,.] (([A-Z][a-z\-]+ ?)+)`)
+		nameParts := re.FindStringSubmatch(name)
+		if nameParts == nil || len(nameParts) != 4 {
 			continue
 		}
 
-		table.Rows[i].LastName = strings.TrimSpace(nameParts[0])
-		table.Rows[i].FirstName = strings.TrimSpace(nameParts[1])
-
-		// ,.| are letters that are often misdetected
-		table.Rows[i].LastName = strings.ReplaceAll(table.Rows[i].LastName, ",.|", "")
-		table.Rows[i].FirstName = strings.ReplaceAll(table.Rows[i].FirstName, ",.|", "")
+		table.Rows[i].FullName = strings.TrimSpace(nameParts[0])
+		table.Rows[i].LastName = strings.TrimSpace(nameParts[1])
+		table.Rows[i].FirstName = strings.TrimSpace(nameParts[2])
 	}
 
 	if len(table.Rows) > 0 {
-		c, err := extractCourseFromTitle(table.Rows[0].FullName)
+		c, err := extractCourseFromTitle(table.Rows[0].RawName)
 		if err != nil {
 			return err
 		}
@@ -294,8 +288,6 @@ func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rect
 func extractCourseFromTitle(title string) (string, error) {
 	re := regexp.MustCompile("^[a-zA-Z ]* ([A-Z]+[0-9]+)")
 	results := re.FindStringSubmatch(title)
-
-	println(title)
 
 	// First result should be the entire string,
 	// second result is the capture gropu
