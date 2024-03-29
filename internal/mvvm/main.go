@@ -36,7 +36,7 @@ func (m *MVVM) StartApplication() {
 		log.Println("ERROR: Please set your email credentails in the settings")
 	}
 
-	m.StartDemon(5 * 1000) // Refresh every 5 seconds
+	m.StartDemon(5) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()

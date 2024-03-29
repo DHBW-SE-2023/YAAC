@@ -1,7 +1,6 @@
 package yaac_demon
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -15,7 +14,7 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 		time.Sleep(duration * time.Second)
 
 		newMails, err := mvvm.GetMailsToday()
-		fmt.Println(len(newMails))
+		log.Println("New mails: ", len(newMails))
 		if err != nil {
 			log.Println("ERROR: Could not get mails for today: ", err)
 			continue
