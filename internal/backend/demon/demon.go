@@ -105,10 +105,14 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 	return list, nil
 }
 
-func UploadImage(mvvm shared.MVVM, img []byte) (*shared.AttendanceList, error) {
+func UploadImage(mvvm shared.MVVM, img []byte, course *shared.Course) (*shared.AttendanceList, error) {
 	list, err := TableToAttendanceList(mvvm, shared.MailData{Image: img, ReceivedAt: time.Now()})
 	if err != nil {
 		return nil, err
+	}
+
+	if course != nil {
+		list.CourseID = course.ID
 	}
 
 	list, err = mvvm.InsertList(list)

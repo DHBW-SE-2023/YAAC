@@ -13,6 +13,6 @@ func (m *MVVM) StartDemon(duration time.Duration) {
 	go demon.StartDemon(m, duration)
 }
 
-func (m *MVVM) UploadImage(img []byte) (*yaac_shared.AttendanceList, error) {
-	return demon.UploadImage(m, img)
+func (m *MVVM) UploadImage(img []byte, course *yaac_shared.Course) (*yaac_shared.AttendanceList, error) {
+	return demon.UploadImage(m, img, course)
 }
