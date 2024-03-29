@@ -1,14 +1,6 @@
 
 BINARY_PATH=build/yaac
 SOURCE_PATH=cmd/yaac
-
-# The commented out line below should work on systems that use GNU sed
-# CGO_CPPFLAGS=$(foreach dir,$(shell pkg-config --cflags lept tesseract), $(shell echo "$(dir)" | sed -E 's|(([a-zA-Z]+)\/[0-9.]+\/include\/)\2\/*|\1|g'))
-CGO_LDFLAGS=$(shell pkg-config --libs lept tesseract)
-# The line below is a hacked solution, it works for now,
-# but should be removed in the future for a sed solution as above, that is portable
-CGO_CPPFLAGS=$(foreach dir,$(shell pkg-config --cflags lept tesseract), $(patsubst %include/leptonica, %include, $(dir)))
-
 .PHONY: all build test run clean
 
 yaac: $(SOURCE_PATH)/*.go
@@ -17,7 +9,7 @@ yaac: $(SOURCE_PATH)/*.go
 all: build test
 
 build:
-	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
+	go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
 
 test:
 	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go test -v ./test/
