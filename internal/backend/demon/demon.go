@@ -6,6 +6,7 @@ import (
 
 	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	"gocv.io/x/gocv"
 )
 
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
@@ -48,10 +49,15 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		return shared.AttendanceList{}, err
 	}
 
+	img, err := gocv.IMEncode(".png", table.Image)
+	if err != nil {
+		return shared.AttendanceList{}, err
+	}
+
 	list := shared.AttendanceList{
 		CourseID:   course.ID,
 		ReceivedAt: mail.ReceivedAt,
-		Image:      mail.Image,
+		Image:      img.GetBytes(),
 	}
 
 	for _, row := range table.Rows {
