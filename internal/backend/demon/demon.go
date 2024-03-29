@@ -11,7 +11,7 @@ import (
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
-		time.Sleep(duration * time.Second)
+		time.Sleep(duration)
 
 		newMails, err := mvvm.GetMailsToday()
 		log.Println("New mails: ", len(newMails))

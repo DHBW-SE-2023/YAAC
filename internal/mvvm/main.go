@@ -2,6 +2,7 @@ package yaac_mvvm
 
 import (
 	"log"
+	"time"
 
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
@@ -36,7 +37,7 @@ func (m *MVVM) StartApplication() {
 		log.Println("ERROR: Please set your email credentails in the settings")
 	}
 
-	m.StartDemon(5) // Refresh every 5 seconds
+	m.StartDemon(30 * time.Minute) // Refresh every 30 minutes
 
 	// Needs to be the last step
 	m.NewFrontendMain()
