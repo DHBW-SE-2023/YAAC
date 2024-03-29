@@ -1,6 +1,7 @@
 package yaac_frontend_opencv
 
 import (
+	"fmt"
 	"image/color"
 	"io"
 	"log"
@@ -58,7 +59,7 @@ func makeWindow(f *WindowOpenCV) *fyne.Container {
 	openFile := widget.NewButton("File Open With Filter (.jpg or .png)", func() {
 		fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil {
-				dialog.ShowError(err, gv.Window)
+				dialog.ShowError(fmt.Errorf("fehler bei der dateiauswahl\n%w", err), gv.Window)
 				return
 			}
 			if reader == nil {

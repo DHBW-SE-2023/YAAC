@@ -16,7 +16,7 @@ import (
 
 func VerificationScreen(w fyne.Window, img []byte, course int, courseTable *fyne.Container, optional ...time.Time) fyne.CanvasObject {
 	header := ReturnVerificationHeader()
-	description := canvas.NewText("Überprüfen sie die dargestellt Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
+	description := canvas.NewText("Überprüfen sie die dargestellte Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
 	description.TextSize = 16
 	description.TextStyle = fyne.TextStyle{Bold: true}
 	image := RotateImage(img)
@@ -87,7 +87,7 @@ func UpdateList(w fyne.Window, attendances []bool, course int, date time.Time) {
 	})
 
 	if err != nil {
-		dialog.ShowError(err, w)
+		dialog.ShowError(fmt.Errorf("fehler beim aktualisieren der informationen.\n%w", err), w)
 		return
 	} else {
 		dialog.ShowInformation("Ihre Liste wurde erfolgreich aktualisiert!", "", w)
