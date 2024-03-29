@@ -44,5 +44,6 @@ type MVVM interface {
 	Frontend
 
 	StartDemon(duration time.Duration)
+	SingleDemonRunthrough()
 	UploadImage(img []byte, course *Course) (*AttendanceList, error)
 }

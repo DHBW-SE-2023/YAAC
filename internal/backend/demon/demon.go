@@ -8,32 +8,34 @@ import (
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
+func SingleDemonRunthrough(mvvm shared.MVVM) {
+	newMails, err := mvvm.GetMailsToday()
+	log.Println("New mails: ", len(newMails))
+	if err != nil {
+		log.Println("ERROR: Could not get mails for today: ", err)
+		return
+	}
+	for _, mail := range newMails {
+		list, err := TableToAttendanceList(mvvm, mail)
+		if err != nil {
+			log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
+			continue
+		}
+		_, err = mvvm.InsertList(list)
+		if err != nil {
+			log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
+			continue
+		}
+
+		mvvm.NotifyNewList(list)
+	}
+}
+
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
 		time.Sleep(duration)
-
-		newMails, err := mvvm.GetMailsToday()
-		log.Println("New mails: ", len(newMails))
-		if err != nil {
-			log.Println("ERROR: Could not get mails for today: ", err)
-			continue
-		}
-
-		for _, mail := range newMails {
-			list, err := TableToAttendanceList(mvvm, mail)
-			if err != nil {
-				log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
-				continue
-			}
-			_, err = mvvm.InsertList(list)
-			if err != nil {
-				log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
-				continue
-			}
-
-			mvvm.NotifyNewList(list)
-		}
+		SingleDemonRunthrough(mvvm)
 	}
 }
 
