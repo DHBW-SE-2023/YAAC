@@ -4,7 +4,7 @@ SOURCE_PATH=cmd/yaac
 .PHONY: all build test run clean
 
 yaac: $(SOURCE_PATH)/*.go
-	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
+	go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
 
 all: build test
 
@@ -12,7 +12,7 @@ build:
 	go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
 
 test:
-	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go test -v ./test/
+	go test -v ./test/
 
 run: build
 	./$(BINARY_PATH)
