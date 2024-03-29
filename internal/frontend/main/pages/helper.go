@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+	yaac_backend_database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"gocv.io/x/gocv"
 	"gorm.io/gorm"
@@ -169,7 +170,10 @@ func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
 	}
 }
 
-func ShowFileDialog(w fyne.Window, course string, optional ...string) {
+/*
+Show file selection dialog
+*/
+func ShowFileDialog(w fyne.Window, courseName string, optional ...string) {
 	fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, w)
@@ -181,14 +185,18 @@ func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 		}
 		img := LoadImage(w, reader)
 		if len(optional) != 0 {
-			InsertList(w, img, course, optional[0])
+			InsertList(w, img, courseName, optional[0])
 		} else {
-			InsertList(w, img, course)
+			InsertList(w, img, courseName)
 		}
 	}, w)
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpg", ".jpeg"}))
 	fd.Show()
 }
+
+/*
+Read file from fs
+*/
 func LoadImage(w fyne.Window, f fyne.URIReadCloser) []byte {
 	data, err := io.ReadAll(f)
 	if err != nil {
@@ -201,32 +209,53 @@ func LoadImage(w fyne.Window, f fyne.URIReadCloser) []byte {
 /*
 InsertList will finally construct a yaac_shared.AttendanceList object from the previously gathered functions and push it on the database.
 */
-func InsertList(w fyne.Window, img []byte, course string, optional ...string) {
-	var testTime time.Time
-	if len(optional) != 0 {
-		testTime, _ = time.Parse("2006-01-02", optional[0])
-	} else {
-		testTime = time.Now()
-	}
-
-	selectedCourse, err := myMVVM.CourseByName(course)
+func InsertList(w fyne.Window, img []byte, courseName string, optional ...string) {
+	// Run improg on list
+	course, err := myMVVM.CourseByName(courseName)
 	if err != nil {
-		dialog.ShowError(err, w)
+		dlg := dialog.NewError(fmt.Errorf("error extracting course from database.\nCourse likely does not exist.\n%w", err), w)
+		dlg.SetOnClosed(func() {
+			AskCreateCourse(w, img, courseName, optional...)
+		})
+		dlg.Show()
+		return
+	}
+	loading := dialog.NewCustomWithoutButtons("In Bearbeitung...", widget.NewProgressBarInfinite(), w)
+	loading.Show()
+	attendanceList, err := myMVVM.UploadImage(img, &course)
+	if err != nil {
+		loading.Hide()
+		dialog.ShowError(fmt.Errorf("error runnig improg on image.\n%w", err), w)
 		return
 	}
 
-	attendanceList := yaac_shared.AttendanceList{
-		ReceivedAt: testTime,
-		CourseID:   selectedCourse.ID,
-		Image:      img,
-	}
-	_, err = myMVVM.InsertList(attendanceList)
+	// Insert data
+	_, err = myMVVM.InsertList(*attendanceList)
 	if err != nil {
-		dialog.ShowError(err, w)
-	} else {
-		dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!"), w)
-		LoadOverviewWidgets(w, overviewGrid)
+		loading.Hide()
+		dialog.ShowError(fmt.Errorf("error inserting list into database.\n%w", err), w)
+		return
 	}
+	loading.Hide()
+	dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", courseName, "wurde erfolgreich hochgeladen!"), w)
+	LoadOverviewWidgets(w, overviewGrid)
+}
+
+/*
+Ask if the user wants to create a new course with the given name an create it, if user agrees
+*/
+func AskCreateCourse(w fyne.Window, img []byte, courseName string, optional ...string) {
+	// Ask to create course
+	dialog.ShowConfirm(fmt.Sprintf("Create %s as new course?", courseName), fmt.Sprintf("Would you like to add a new course called  '%s'?", courseName), func(create bool) {
+		if create {
+			_, err := myMVVM.InsertCourse(yaac_backend_database.Course{Name: courseName})
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("error unable to create course.\n%w", err), w)
+			} else {
+				InsertList(w, img, courseName)
+			}
+		}
+	}, w)
 }
 
 /*
