@@ -42,7 +42,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	c.Logout()
 
 	// Mark all mails that we process as read
-	b.MarkMailsAsRead(mails)
+	b.markMailsAsRead(mails)
 
 	return mails, nil
 }
@@ -321,7 +321,7 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 
 // Marks the mails with the given IDs as read
 // returns an error if there is an error with that
-func (b *BackendMail) MarkMailsAsRead(mails []MailData) error {
+func (b *BackendMail) markMailsAsRead(mails []MailData) error {
 	c, err := b.setupMail(false)
 	if err != nil {
 		log.Printf(DEFAULT_ERR, err)
