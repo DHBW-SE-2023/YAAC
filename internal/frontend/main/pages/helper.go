@@ -1,10 +1,12 @@
 package yaac_frontend_pages
 
 import (
+	"errors"
 	"fmt"
 	"image/color"
 	"io"
 	"log"
+	"regexp"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -32,7 +34,7 @@ ReturnHeader will return the canvas.Text objet of each page
 */
 func ReturnHeader(pageTitle string) *canvas.Text {
 	title := canvas.NewText(pageTitle, color.Black)
-	title.Alignment = fyne.TextAlignLeading
+	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 28
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	return title
@@ -54,23 +56,23 @@ ReturnCourseDropdown returns the configured courseDropdown passing the Selection
 and source(course|student) since they will be necessary for change handling for use in course and student view.
 */
 func ReturnCourseDropdown(selectionTracker *SelectionTracker, selection *widget.Label, dependingDropdown *widget.SelectEntry, source string) *widget.Select {
-	courseDropdown := widget.NewSelect([]string{
-		"TIK22",
-		"TIT22",
-		"TIS22",
-		"TIM22",
-	}, func(s string) {
-		fmt.Println(s)
-		selectionTracker.courseName.SetText(s)
-		selection.SetText(RefreshSelection(selectionTracker))
-		if source == "course" {
-			RefreshDateDropdown(dependingDropdown, s)
-		} else {
-			RefreshStudentDropdown(dependingDropdown, s)
-		}
-		dependingDropdown.SetText("")
-		dependingDropdown.Enable()
-	})
+	courses, _ := myMVVM.Courses()
+	var courseNames []string
+	for _, element := range courses {
+		courseNames = append(courseNames, element.Name)
+	}
+	courseDropdown := widget.NewSelect(courseNames,
+		func(s string) {
+			selectionTracker.courseName.SetText(s)
+			selection.SetText(RefreshSelection(selectionTracker))
+			if source == "course" {
+				RefreshDateDropdown(dependingDropdown, s)
+			} else {
+				RefreshStudentDropdown(dependingDropdown, s)
+			}
+			dependingDropdown.SetText("")
+			dependingDropdown.Enable()
+		})
 	courseDropdown.Selected = "Kursauswahl"
 	return courseDropdown
 }
@@ -102,7 +104,12 @@ func ReturnNonAttending(attendance []yaac_shared.Attendance) []string {
 	for _, element := range attendance {
 		if !element.IsAttending {
 			students, _ := myMVVM.Students(yaac_shared.Student{Model: gorm.Model{ID: element.StudentID}})
-			returnNonAttending = append(returnNonAttending, fmt.Sprintf("%s %s", students[0].FirstName, students[0].LastName))
+			if len(students) > 0 {
+				returnNonAttending = append(returnNonAttending, fmt.Sprintf("%s %s", students[0].FirstName, students[0].LastName))
+			} else {
+				continue
+			}
+
 		}
 	}
 	return returnNonAttending
@@ -119,7 +126,7 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	if len(optional) != 0 {
 		courseEntry.Text = optional[0]
 	} else {
-		courseEntry.Text = "TIK22,TIT22...."
+		courseEntry.PlaceHolder = "TIK22,TIT22...."
 	}
 
 	fileUpload := widget.NewButton("Load Image", func() {
@@ -129,10 +136,9 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 			ShowFileDialog(w, courseEntry.Text)
 		}
 	})
+	ValidateCourseInput(courseEntry, fileUpload)
 	fileUpload.Disable()
-	courseEntry.OnSubmitted = func(text string) {
-		fileUpload.Enable()
-	}
+
 	content := container.NewVBox(
 		widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"),
 		courseEntry,
@@ -141,6 +147,28 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	customDialog := dialog.NewCustom("Listen Upload", "Beenden", content, w)
 	customDialog.Show()
 }
+
+/*
+ValidateCourseInput will validate the current input regarding the courseEntry on length and syn
+*/
+func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
+	courseEntry.Validator = func(s string) error {
+		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
+		if !re.MatchString(s) {
+			return errors.New("die Eingabe entspricht keinem validen Kurs")
+		}
+		fileUpload.Enable()
+		return nil
+	}
+	courseEntry.OnChanged = func(s string) {
+		if len(s) > 10 {
+			s = s[0:10]
+			courseEntry.SetText(s)
+		}
+
+	}
+}
+
 func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 	fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
@@ -151,20 +179,20 @@ func ShowFileDialog(w fyne.Window, course string, optional ...string) {
 			log.Println("Cancelled")
 			return
 		}
-		img := LoadImage(reader)
+		img := LoadImage(w, reader)
 		if len(optional) != 0 {
-			InsertList(img, course, optional[0])
+			InsertList(w, img, course, optional[0])
 		} else {
-			InsertList(img, course)
+			InsertList(w, img, course)
 		}
 	}, w)
 	fd.SetFilter(storage.NewExtensionFileFilter([]string{".png", ".jpg", ".jpeg"}))
 	fd.Show()
 }
-func LoadImage(f fyne.URIReadCloser) []byte {
+func LoadImage(w fyne.Window, f fyne.URIReadCloser) []byte {
 	data, err := io.ReadAll(f)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Failed to load image data", err.Error()))
+		dialog.ShowError(err, w)
 		return nil
 	}
 	return data
@@ -173,7 +201,7 @@ func LoadImage(f fyne.URIReadCloser) []byte {
 /*
 InsertList will finally construct a yaac_shared.AttendanceList object from the previously gathered functions and push it on the database.
 */
-func InsertList(img []byte, course string, optional ...string) {
+func InsertList(w fyne.Window, img []byte, course string, optional ...string) {
 	var testTime time.Time
 	if len(optional) != 0 {
 		testTime, _ = time.Parse("2006-01-02", optional[0])
@@ -183,7 +211,7 @@ func InsertList(img []byte, course string, optional ...string) {
 
 	selectedCourse, err := myMVVM.CourseByName(course)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listen Uplaod", err.Error()))
+		dialog.ShowError(err, w)
 		return
 	}
 
@@ -194,9 +222,10 @@ func InsertList(img []byte, course string, optional ...string) {
 	}
 	_, err = myMVVM.InsertList(attendanceList)
 	if err != nil {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Fehler bei Listen Uplaod", err.Error()))
+		dialog.ShowError(err, w)
 	} else {
-		yaac_shared.App.SendNotification(fyne.NewNotification("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!")))
+		dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", course, "wurde erfolgreich hochgeladen!"), w)
+		LoadOverviewWidgets(w, overviewGrid)
 	}
 }
 
@@ -211,3 +240,7 @@ func RotateImage(img []byte) *canvas.Image {
 	image := canvas.NewImageFromImage(imgNew)
 	return image
 }
+
+/*
+ShowSuccessDialog
+*/

@@ -163,7 +163,6 @@ func (b *BackendMail) parseMailContent(message *mail.Message, boundary string) (
 	mr := multipart.NewReader(message.Body, boundary)
 
 	for {
-
 		// Read next part
 		part, err := mr.NextPart()
 

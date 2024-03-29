@@ -27,7 +27,7 @@ var ytheme fyne.Theme = yaacTheme{
 	warn:    color.RGBA{227, 0, 27, 255},
 	page_bg: color.RGBA{230, 233, 235, 50},
 	elem:    color.RGBA{255, 255, 255, 0},
-	hover:   color.RGBA{209, 209, 209, 125},
+	hover:   color.RGBA{209, 209, 209, 255},
 	green:   color.RGBA{51, 255, 0, 255},
 	yellow:  color.RGBA{255, 229, 0, 255},
 	text:    color.RGBA{0, 0, 0, 255},
@@ -91,7 +91,7 @@ func (m yaacTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) co
 		return theme.DefaultTheme().Color(name, theme.VariantLight)
 	case theme.ColorNameSelection:
 		// Handle selection color
-		return m.accent
+		return m.warn
 	case theme.ColorNameSeparator:
 		// Handle separator bar color
 		return theme.DefaultTheme().Color(name, theme.VariantLight)

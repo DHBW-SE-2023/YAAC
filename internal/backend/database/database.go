@@ -71,6 +71,8 @@ func (item *BackendDatabase) ConnectDatabase() error {
 	}
 
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		FullSaveAssociations: true,
+		AllowGlobalUpdate:    true,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 			NoLowerCase:   true,
@@ -176,13 +178,17 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 
 // Reset all settings. This clears the `Setting` table
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
-	// FIXME: Add default settings
-	settings := []Setting{}
+	settings := []Setting{
+		{Setting: "mailConnection", Value: "imap.mail.de:993"},
+		{Setting: "mailUser", Value: "anwesenheits_listen@mail.de"},
+		{Setting: "mailPassword", Value: "DHBW-YAAC-2024!"},
+	}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err
 }
 
 // Query all students based on `student`.
+
 func (item *BackendDatabase) Students(student Student) ([]Student, error) {
 	students := []Student{}
 	err := item.DB.Model(&Student{}).Where(student).Find(&students).Error

@@ -295,7 +295,7 @@ func extractCourseFromTitle(title string) (string, error) {
 		return "", errors.New("could not identify course label")
 	}
 
-	return results[0], nil
+	return results[1], nil
 }
 
 func ParseTable(img PreparedImage) *Table {

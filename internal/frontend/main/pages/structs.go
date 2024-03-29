@@ -13,17 +13,18 @@ import (
 )
 
 /*
-Delaration of custom Overwidget Struct
+Declaration of custom Overwidget Struct
 */
 type OverviewWidget struct {
 	widget.BaseWidget
 	frame   *canvas.Rectangle
 	title   *fyne.Container
 	content *fyne.Container
-	button  *widget.Button
+	button  *tappableImage
 }
 
 func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending []string, totalStudents int) *OverviewWidget {
+	image := canvas.NewImageFromResource(yaac_shared.ResourceImageIconPng)
 	titleLabel := widget.NewLabel(title)
 	contentFrame := container.NewVBox()
 	if len(nonAttending) == 0 {
@@ -44,11 +45,16 @@ func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending [
 		},
 		title:   container.NewVBox(titleLabel),
 		content: contentFrame,
-		button: widget.NewButtonWithIcon("", yaac_shared.ResourceImageIconPng, func() {
+		button: newTappableImage(image, func() {
 			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, container.NewWithoutLayout())
 			lastView = w.Content()
 			w.SetContent(v)
 		}),
+		// button: widget.NewButtonWithIcon("", imageResource, func() {
+		// 	v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, fyne.NewContainer())
+		// 	lastView = w.Content()
+		// 	w.SetContent(v)
+		// }),
 	}
 	item.ExtendBaseWidget(item)
 	return item
@@ -64,37 +70,32 @@ func (item *OverviewWidget) CreateRenderer() fyne.WidgetRenderer {
 }
 
 /*
-Delaration of custom AttendanceRow Struct for course and student view
+Declaration of custom AttendanceRow Struct for course and student view
 */
 type AttendanceRow struct {
 	widget.BaseWidget
-	frame    *canvas.Rectangle
-	date     *widget.Label
-	state    *widget.Label
-	content  *fyne.Container
-	OnTapped func()
+	frame   *canvas.Rectangle
+	date    *widget.Label
+	state   *widget.Label
+	content *fyne.Container
 }
 
 func NewAttendanceRow(dateText string, stateText string) *AttendanceRow {
 	item := &AttendanceRow{
 		frame: &canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 209, G: 209, B: 209, A: 255},
-			StrokeColor:  color.NRGBA{R: 209, G: 209, B: 209, A: 255},
+			FillColor:    color.RGBA{209, 209, 209, 255},
+			StrokeColor:  color.RGBA{209, 209, 209, 255},
 			StrokeWidth:  4.0,
 			CornerRadius: 10,
 		},
 		date:    widget.NewLabel(dateText),
 		state:   widget.NewLabel(stateText),
 		content: container.NewGridWithColumns(2),
-		OnTapped: func() {
-			yaac_shared.App.SendNotification(fyne.NewNotification("Weiterleitung", fmt.Sprintf("%s %s", dateText, stateText)))
-		},
 	}
 	item.ExtendBaseWidget(item)
 	DetectAttendancyState(item)
 	return item
 }
-func (item *AttendanceRow) Tapped(ev *fyne.PointEvent) { item.OnTapped() }
 
 func (item *AttendanceRow) CreateRenderer() fyne.WidgetRenderer {
 	item.frame.Resize(fyne.NewSize(250, 250))
@@ -120,8 +121,8 @@ type VerificationWidget struct {
 func NewVerificationWidget(student string, attendance bool, students []string, attendances []bool) *VerificationWidget {
 	item := &VerificationWidget{
 		frame: &canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 209, G: 209, B: 209, A: 255},
-			StrokeColor:  color.NRGBA{R: 209, G: 209, B: 209, A: 255},
+			FillColor:    color.RGBA{209, 209, 209, 255},
+			StrokeColor:  color.RGBA{209, 209, 209, 255},
 			StrokeWidth:  4.0,
 			CornerRadius: 10,
 		},
@@ -168,4 +169,33 @@ Declaration of SelectionTracker struct this will track the current selections fo
 type SelectionTracker struct {
 	courseName *widget.Label
 	secondary  *widget.Label
+}
+
+/*
+Declaration of tappableImage struct this is a custom Widget, which will replace simualte the behaviour of a button. The user can pass the image
+to display as well and the logic to execte on Click
+*/
+type tappableImage struct {
+	widget.BaseWidget
+	image    *canvas.Image
+	OnTapped func()
+}
+
+func newTappableImage(imageButton *canvas.Image, onTapped func()) *tappableImage {
+	icon := &tappableImage{
+		image:    imageButton,
+		OnTapped: onTapped,
+	}
+	icon.ExtendBaseWidget(icon)
+	return icon
+}
+
+func (icon *tappableImage) Tapped(_ *fyne.PointEvent) {
+	icon.OnTapped()
+}
+
+func (icon *tappableImage) CreateRenderer() fyne.WidgetRenderer {
+	icon.image.FillMode = canvas.ImageFillOriginal
+	buttonImageContainer := container.NewCenter(icon.image)
+	return widget.NewSimpleRenderer(buttonImageContainer)
 }
