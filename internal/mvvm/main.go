@@ -29,22 +29,13 @@ func (m *MVVM) StartApplication() {
 
 	ms := settingsToMap(settings)
 
-	// if ms["MailServer"] == nil {
-	// 	ms["MailServer"] = ""
-	// }
-	// if ms["UserEmail"] == nil {
-	// 	ms["UserEmail"] = ""
-	// }
-	// if ms["UserEmailPassword"] == nil {
-	// 	ms["UserEmailPassword"] = ""
-	// }
-
 	err = m.NewMailBacked(yaac_shared.MailLoginData{MailServer: ms["MailServer"], Email: ms["UserEmail"], Password: ms["UserEmailPassword"]})
 	if err != nil {
-		log.Fatalf("Could not connect to email server")
+		log.Println("ERROR: Could not connect to email server")
+		log.Println("ERROR: Please set your email credentails in the settings")
 	}
 
-	m.StartDemon(5) // Refresh every 5 seconds
+	m.StartDemon(5 * 1000) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()

@@ -11,6 +11,8 @@ import (
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
+		time.Sleep(duration * time.Second)
+
 		newMails, err := mvvm.GetMailsToday()
 		if err != nil {
 			log.Println("ERROR: Could not get mails for today: ", err)
@@ -32,8 +34,6 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 
 			mvvm.NotifyNewList(list)
 		}
-
-		time.Sleep(duration * time.Second)
 	}
 }
 

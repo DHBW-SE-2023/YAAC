@@ -3,6 +3,7 @@ package yaac_backend_mail
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"mime"
@@ -241,6 +242,7 @@ func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) 
 // returns an error if something went wrong
 func (b *BackendMail) setupMail(onlyReadable bool) (*client.Client, error) {
 	//connect to the mail server
+	fmt.Println(b)
 	c, err := b.connectToServer(b.serverAddr)
 	if err != nil {
 		return nil, err
