@@ -176,7 +176,7 @@ Show file selection dialog
 func ShowFileDialog(w fyne.Window, courseName string, optional ...string) {
 	fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
-			dialog.ShowError(err, w)
+			dialog.ShowError(fmt.Errorf("fehler während der dateiauswhl.\n%w", err), w)
 			return
 		}
 		if reader == nil {
@@ -200,7 +200,7 @@ Read file from fs
 func LoadImage(w fyne.Window, f fyne.URIReadCloser) []byte {
 	data, err := io.ReadAll(f)
 	if err != nil {
-		dialog.ShowError(err, w)
+		dialog.ShowError(fmt.Errorf("fehler beim öffnen der datei.\nIst die datei in einem anderen programm offen?%w", err), w)
 		return nil
 	}
 	return data
@@ -225,7 +225,7 @@ func InsertList(w fyne.Window, img []byte, courseName string, optional ...string
 	attendanceList, err := myMVVM.UploadImage(img, &course)
 	if err != nil {
 		loading.Hide()
-		dialog.ShowError(fmt.Errorf("error runnig improg on image.\n%w", err), w)
+		dialog.ShowError(fmt.Errorf("fehler bei der automatischen Anwesenheitserkennung.\n%w", err), w)
 		return
 	}
 
@@ -233,7 +233,7 @@ func InsertList(w fyne.Window, img []byte, courseName string, optional ...string
 	_, err = myMVVM.InsertList(*attendanceList)
 	if err != nil {
 		loading.Hide()
-		dialog.ShowError(fmt.Errorf("error inserting list into database.\n%w", err), w)
+		dialog.ShowError(fmt.Errorf("fehler beim einfügen der daten in die datenbank.\n%w", err), w)
 		return
 	}
 	loading.Hide()
@@ -250,7 +250,7 @@ func AskCreateCourse(w fyne.Window, img []byte, courseName string, optional ...s
 		if create {
 			_, err := myMVVM.InsertCourse(yaac_backend_database.Course{Name: courseName})
 			if err != nil {
-				dialog.ShowError(fmt.Errorf("error unable to create course.\n%w", err), w)
+				dialog.ShowError(fmt.Errorf("fehler beim erstellen des kurses.\n%w", err), w)
 			} else {
 				InsertList(w, img, courseName)
 			}

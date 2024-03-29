@@ -87,7 +87,7 @@ func UpdateList(w fyne.Window, attendances []bool, course int, date time.Time) {
 	})
 
 	if err != nil {
-		dialog.ShowError(err, w)
+		dialog.ShowError(fmt.Errorf("fehler beim aktualisieren der informationen.\n%w", err), w)
 		return
 	} else {
 		dialog.ShowInformation("Ihre Liste wurde erfolgreich aktualisiert!", "", w)
