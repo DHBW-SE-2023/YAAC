@@ -13,14 +13,14 @@ type BackendMail struct {
 }
 
 type MailData struct {
-	image_data []byte
-	course     string
-	datetime   time.Time
+	Image      []byte
+	ReceivedAt time.Time
+	ID         uint32
 }
 
 // Create a new backend_mail struct
 // Paramter: mvvm, serverAddress, username, password
-// returns an error if it is not possible to connect and login to the server and NO Mailservice
+// returns an error if it is not possible to connect and login to the server
 func New(mvvm mvvm, serverAddr string, username string, password string) (*BackendMail, error) {
 	mailservice := BackendMail{
 		MVVM:       mvvm,
@@ -28,9 +28,12 @@ func New(mvvm mvvm, serverAddr string, username string, password string) (*Backe
 		username:   username,
 		password:   password,
 	}
-	_, _, err := mailservice.setupMail()
+
+	c, err := mailservice.setupMail(true)
 	if err != nil {
 		return nil, err
 	}
+
+	c.Logout()
 	return &mailservice, nil
 }

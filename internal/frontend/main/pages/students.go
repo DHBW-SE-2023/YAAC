@@ -1,72 +1,84 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fmt"
-	"image/color"
+	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	"gorm.io/gorm"
 )
 
-type students struct {
-	name   *widget.Label
-	course *widget.Label
-	year   *widget.Label
-}
-
-func studentScreen(_ fyne.Window) fyne.CanvasObject {
-	title := canvas.NewText(" Studenten", color.Black)
-	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = 28
-	title.TextStyle = fyne.TextStyle{Bold: true}
-	student := &students{
-		name:   widget.NewLabel("Max, Alberti"),
-		course: widget.NewLabel(""),
-		year:   widget.NewLabel(""),
+func StudentScreen(_ fyne.Window) fyne.CanvasObject {
+	student := &SelectionTracker{
+		courseName: widget.NewLabel(""),
+		secondary:  widget.NewLabel(""),
 	}
+	var studentNames []string
 	selection := widget.NewLabel("")
-	courseDropdown := widget.NewSelect([]string{
-		"TIK",
-		"TIT",
-	}, func(s string) {
-		student.course.SetText(s)
-		selection.SetText(updateSelection(student))
-	})
-	yearDropdown := widget.NewSelect([]string{
-		"2021",
-		"2022",
-		"2023",
-	}, func(s string) {
-		student.year.SetText(s)
-		selection.SetText(updateSelection(student))
-	})
 
-	dropdownArea := container.NewHBox(courseDropdown, yearDropdown)
-	selectionArea := container.NewVBox(selection, widget.NewSeparator())
+	title := ReturnHeader("Studenten")
+	tableHeader, attendanceTable := ReturnAttendanceTable("Datum", "Anwesenheit")
+	studentDropdown := ReturnStudentDropdown(studentNames, student, selection, attendanceTable)
+	courseDropdown := ReturnCourseDropdown(student, selection, studentDropdown, "student")
 
-	var attendanceData = [][]string{
-		[]string{"Datum", "Anwesenheit"},
-		[]string{"10.10.2023", "Anwesend"},
-		[]string{"11.10.2023", "Anwesend"}}
-	attendanceList := widget.NewTable(
-		func() (int, int) {
-			return len(attendanceData), len(attendanceData[0])
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("Template")
-		},
-		func(i widget.TableCellID, cell fyne.CanvasObject) {
-			cell.(*widget.Label).SetText(attendanceData[i.Row][i.Col])
-		})
-	attendanceList.SetColumnWidth(0, 140)
-	attendanceList.SetRowHeight(2, 50)
 	header := container.NewGridWrap(fyne.NewSize(400, 200), title)
-	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceList))
+	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, studentDropdown)
+	selectionArea := container.NewVBox(selection, widget.NewSeparator(), tableHeader)
+	studentView := container.NewBorder(container.NewVBox(header, dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceTable))
 	return studentView
 }
 
-func updateSelection(student *students) string {
-	return fmt.Sprintf("%s - %s %s", student.name.Text, student.course.Text, student.year.Text)
+/*
+ReturnStudentDropdown returns the configured studentDropdown passing the studentNames list,selectionTracker,selection label and the attendance Table
+*/
+func ReturnStudentDropdown(studentNames []string, student *SelectionTracker, selection *widget.Label, attendanceTable *fyne.Container) *widget.SelectEntry {
+	studentDropdown := widget.NewSelectEntry(studentNames)
+	studentDropdown.OnChanged = func(s string) {
+		student.secondary.SetText(s)
+		selection.SetText(RefreshSelection(student))
+		attendanceTable.RemoveAll()
+		RefreshStudentAttendancyList(attendanceTable, student.courseName.Text, s)
+	}
+	studentDropdown.PlaceHolder = "Type or select student"
+	studentDropdown.Disable()
+	return studentDropdown
+}
+
+/*
+RefreshStudentDropdown is responsible for refreshing the studentDropdown list as soon as a course has been selected
+*/
+func RefreshStudentDropdown(studentDropdown *widget.SelectEntry, course string) {
+	selectedCourse, _ := myMVVM.CourseByName(course)
+	students, _ := myMVVM.CourseStudents(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}})
+	if len(students) != 0 {
+		var studentNames []string
+		for _, studElement := range students {
+			studentNames = append(studentNames, fmt.Sprintf("%s %s", studElement.FirstName, studElement.LastName))
+		}
+		studentDropdown.SetOptions(studentNames)
+	}
+}
+
+/*
+RefreshStudentAttendancyList is responsible for refreshing the attedanceTable list as soon as a course and a student has been selected
+*/
+func RefreshStudentAttendancyList(table *fyne.Container, course string, student string) {
+	selectedCourse, _ := myMVVM.CourseByName(course)
+	if strings.Contains(student, " ") {
+		selectedStudent, _ := myMVVM.Students(yaac_shared.Student{LastName: strings.Split(student, " ")[1]})
+		if len(selectedStudent) != 0 {
+			attendances, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
+			for _, attendance := range attendances {
+				for _, attendancy := range attendance.Attendancies {
+					if attendancy.StudentID == selectedStudent[0].ID {
+						table.Add(NewAttendanceRow(attendance.ReceivedAt.Format("2006-01-02"), MapBooleans(attendancy.IsAttending)))
+					}
+				}
+			}
+		}
+	}
 }

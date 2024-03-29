@@ -8,9 +8,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
-	"github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
+	yaac_frontend_pages "github.com/DHBW-SE-2023/YAAC/internal/frontend/main/pages"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 const preferedStartPage = "home"
@@ -31,8 +30,7 @@ func (f *FrontendMain) OpenMainWindow() {
 	gv.Window = gv.App.NewWindow(yaac_shared.APP_NAME)
 
 	// set icon
-	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	gv.Window.SetIcon(r)
+	gv.Window.SetIcon(yaac_shared.ResourceIconPng)
 
 	// setup systray
 	if desk, ok := gv.App.(desktop.App); ok {
@@ -41,26 +39,25 @@ func (f *FrontendMain) OpenMainWindow() {
 				gv.Window.Show()
 			}))
 		desk.SetSystemTrayMenu(m)
-		desk.SetSystemTrayIcon(r)
+		desk.SetSystemTrayIcon(yaac_shared.ResourceIconPng)
 	}
 	gv.Window.SetCloseIntercept(func() {
 		gv.Window.Hide()
 	})
 	// Important setting to enable custom backgrounds without borders
 	gv.Window.SetPadded(false)
-
-	// handle main window
-	gv.Window.SetContent(makeWindow(f))
+	gv.Window.Show()
+	gv.Window.SetContent(makeWindow())
 	gv.Window.Resize(fyne.NewSize(1280, 720))
 	gv.Window.Show()
 
 	gv.App.Run()
 }
 
-func makeWindow(f *FrontendMain) fyne.CanvasObject {
+func makeWindow() fyne.CanvasObject {
 	content := container.NewStack()
 	title := widget.NewLabel("Component name")
-	setPage := func(p pages.Page) {
+	setPage := func(p yaac_frontend_pages.Page) {
 		title.SetText(p.Title)
 
 		content.Objects = []fyne.CanvasObject{p.View(gv.Window)}
@@ -69,17 +66,17 @@ func makeWindow(f *FrontendMain) fyne.CanvasObject {
 
 	page := container.NewBorder(
 		nil, nil, nil, nil, content)
-
-	return container.NewBorder(nil, nil, makeNav(setPage, true), nil, page)
+	nav := makeNav(setPage, true)
+	return container.NewBorder(nil, nil, nav, nil, page)
 }
 
-func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject {
+func makeNav(setPage func(page yaac_frontend_pages.Page), loadPrevious bool) fyne.CanvasObject {
 	tree := &widget.Tree{
 		ChildUIDs: func(uid string) []string {
-			return pages.PagesIndex[uid]
+			return yaac_frontend_pages.PagesIndex[uid]
 		},
 		IsBranch: func(uid string) bool {
-			children, ok := pages.PagesIndex[uid]
+			children, ok := yaac_frontend_pages.PagesIndex[uid]
 
 			return ok && len(children) > 0
 		},
@@ -87,7 +84,7 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 			return widget.NewLabel("Collection Widgets")
 		},
 		UpdateNode: func(uid string, branch bool, obj fyne.CanvasObject) {
-			p, ok := pages.Pages[uid]
+			p, ok := yaac_frontend_pages.Pages[uid]
 			if !ok {
 				fyne.LogError("Missing Pages panel: "+uid, nil)
 				return
@@ -95,22 +92,20 @@ func makeNav(setPage func(page pages.Page), loadPrevious bool) fyne.CanvasObject
 			obj.(*widget.Label).SetText(p.Title)
 		},
 		OnSelected: func(uid string) {
-			if p, ok := pages.Pages[uid]; ok {
+			if p, ok := yaac_frontend_pages.Pages[uid]; ok {
 				gv.App.Preferences().SetString(preferedStartPage, uid)
 				setPage(p)
 			}
 		},
 	}
-
 	if loadPrevious {
 		currentPref := gv.App.Preferences().StringWithFallback(preferedStartPage, "home")
 		tree.Select(currentPref)
 	}
 
-	logo := canvas.NewImageFromFile("assets/DHBW.png")
+	logo := canvas.NewImageFromResource(yaac_shared.ResourceIconPng)
 	navFrame := canvas.NewRectangle(color.White)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
-
-	return container.NewMax(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
+	return container.NewStack(navFrame, container.NewBorder(logo, nil, nil, nil, tree))
 }

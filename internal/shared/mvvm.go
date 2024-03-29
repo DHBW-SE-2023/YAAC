@@ -4,17 +4,18 @@ import (
 	"time"
 )
 
-type MVVM interface {
-	// Mail
-	MailFormUpdated(data EmailData)
-	MailUpdateData()
-	MailRestartServer()
-	MailsRefresh()
+type ImgProc interface {
+	NewTable(img []byte) (*Table, error)
+}
 
-	// Imgproc
-	ValidateTable(img []byte)
+type MailClient interface {
+	UpdateMailCredentials(credentials MailLoginData) error
+	GetMailsToday() ([]MailData, error)
+	CheckMailConnection() bool
+	MarkMailsAsRead(mails []MailData) error
+}
 
-	// Database
+type DatabaseClient interface {
 	InsertList(list AttendanceList) (AttendanceList, error)
 	UpdateList(list AttendanceList) (AttendanceList, error)
 	LatestList(course Course, date time.Time) (AttendanceList, error)
@@ -28,4 +29,20 @@ type MVVM interface {
 	SettingsReset() ([]Setting, error)
 	CourseByName(name string) (Course, error)
 	Students(student Student) ([]Student, error)
+	InsertStudent(student Student) (Student, error)
+}
+
+type Frontend interface {
+	NotifyError(source string, err error)
+	NotifyNewList(list AttendanceList)
+}
+
+type MVVM interface {
+	ImgProc
+	MailClient
+	DatabaseClient
+	Frontend
+
+	StartDemon(duration time.Duration)
+	UploadImage(img []byte) (*AttendanceList, error)
 }

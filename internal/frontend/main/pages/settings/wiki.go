@@ -1,45 +1,91 @@
-package settings
+package yaac_frontend_settings
 
 import (
-	"image/color"
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/cmd/fyne_demo/data"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
+	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
+var page int = 1
+var pages int = 8
+
 func wikiScreen() fyne.CanvasObject {
-	gradient := canvas.NewHorizontalGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0, 0xff})
-	go func() {
-		for {
-			time.Sleep(time.Second)
+	title := ReturnHeader("Nutzerdokumentation")
 
-			gradient.Angle += 45
-			if gradient.Angle >= 360 {
-				gradient.Angle -= 360
-			}
-			canvas.Refresh(gradient)
+	// This is neccecary because the frame wont accept an uninitialized image
+	image := canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+	image.FillMode = canvas.ImageFillContain
+	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), image)
+
+	nextButton := createReturnNextButton(imageFrame)
+	backButton := createReturnBackButton(imageFrame)
+
+	buttonArea := container.NewCenter(container.NewHBox(container.NewAdaptiveGrid(3, backButton, layout.NewSpacer(), nextButton)))
+	content := container.NewStack(container.NewVBox(title, container.NewCenter(imageFrame), buttonArea))
+
+	return container.NewVScroll(content)
+}
+
+/*
+ReturnNextButton returns the fully configured nextButton which is responsible for switch to the next page
+*/
+func createReturnNextButton(imageFrame *fyne.Container) *widget.Button {
+	nextButton := widget.NewButton("Weiter", func() {
+		imageFrame.RemoveAll()
+		page += 1
+		if page >= pages+1 {
+			page = 1
 		}
-	}()
+		loadCurrentPageImage(imageFrame)
+	})
+	return nextButton
+}
 
-	return container.NewGridWrap(fyne.NewSize(90, 90),
-		canvas.NewImageFromResource(data.FyneLogo),
-		&canvas.Rectangle{FillColor: color.NRGBA{0x80, 0, 0, 0xff},
-			StrokeColor: color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth: 1},
-		&canvas.Rectangle{
-			FillColor:    color.NRGBA{R: 255, G: 200, B: 0, A: 180},
-			StrokeColor:  color.NRGBA{R: 255, G: 120, B: 0, A: 255},
-			StrokeWidth:  4.0,
-			CornerRadius: 20},
-		&canvas.Line{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff}, StrokeWidth: 5},
-		&canvas.Circle{StrokeColor: color.NRGBA{0, 0, 0x80, 0xff},
-			FillColor:   color.NRGBA{0x30, 0x30, 0x30, 0x60},
-			StrokeWidth: 2},
-		canvas.NewText("Text", color.NRGBA{0, 0x80, 0, 0xff}),
-		gradient,
-		canvas.NewRadialGradient(color.NRGBA{0x80, 0, 0, 0xff}, color.NRGBA{0, 0x80, 0x80, 0xff}),
-	)
+/*
+ReturnBackButton returns the fully configured backButton which is responsible for switch to the last page
+*/
+
+func createReturnBackButton(imageFrame *fyne.Container) *widget.Button {
+	backButton := widget.NewButton("Zurück", func() {
+		imageFrame.RemoveAll()
+		page -= 1
+		if page <= 0 {
+			page = pages
+		}
+		loadCurrentPageImage(imageFrame)
+	})
+	return backButton
+}
+
+/*
+Load the image matching the current page into the frame
+*/
+func loadCurrentPageImage(imageFrame *fyne.Container) {
+	var image *canvas.Image
+
+	// Ingenious solution
+	switch page {
+	case 1:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+	case 2:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku2Png)
+	case 3:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku3Png)
+	case 4:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku4Png)
+	case 5:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku5Png)
+	case 6:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku6Png)
+	case 7:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku7Png)
+	case 8:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku8Png)
+	}
+
+	image.FillMode = canvas.ImageFillContain
+	imageFrame.Add(image)
 }
