@@ -51,7 +51,7 @@ func ReturnDateDropdown(dates []string) *widget.SelectEntry {
 	dateDropdown.Scroll = container.ScrollNone
 	dateDropdown.Validator = func(s string) error {
 		if !re.MatchString(s) {
-			return errors.New("Geben sie ein valides Datum im Format YYYY-MM-DD ein!")
+			return errors.New("geben sie ein valides Datum im Format YYYY-MM-DD ein")
 		}
 		return nil
 	}

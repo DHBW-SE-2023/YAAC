@@ -155,7 +155,7 @@ func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
 	courseEntry.Validator = func(s string) error {
 		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
 		if !re.MatchString(s) {
-			return errors.New("Die Eingabe entspricht keinem validen Kurs!")
+			return errors.New("die Eingabe entspricht keinem validen Kurs")
 		}
 		fileUpload.Enable()
 		return nil

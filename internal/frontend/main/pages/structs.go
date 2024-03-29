@@ -46,7 +46,7 @@ func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending [
 		title:   container.NewVBox(titleLabel),
 		content: contentFrame,
 		button: newTappableImage(image, func() {
-			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, fyne.NewContainer())
+			v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, container.NewWithoutLayout())
 			lastView = w.Content()
 			w.SetContent(v)
 		}),

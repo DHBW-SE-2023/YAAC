@@ -13,6 +13,6 @@ func impressumScreen(_ fyne.Window) fyne.CanvasObject {
 	doku := canvas.NewImageFromResource(yaac_shared.ResourceYAACImpressumPng)
 	doku.FillMode = canvas.ImageFillContain
 	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), doku)
-	content := container.NewMax(container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), container.NewCenter(imageFrame)))
+	content := container.NewStack(container.NewVBox(container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title)), widget.NewSeparator(), container.NewCenter(imageFrame)))
 	return container.NewVScroll(content)
 }
