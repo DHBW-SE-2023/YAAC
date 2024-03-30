@@ -4,6 +4,7 @@ func (b *BackendTemplate) Foo() {
 	Bar()
 }
 
+// "public" function
 func Bar() {
 	bar()
 }

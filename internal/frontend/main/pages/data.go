@@ -1,44 +1,31 @@
-package pages
+package yaac_frontend_pages
 
 import (
 	"fyne.io/fyne/v2"
 )
 
-// Tutorial defines the data structure for a tutorial
+/*
+Defines the Page struct which will hold each Pages properties
+*/
 type Page struct {
 	Title      string
 	View       func(w fyne.Window) fyne.CanvasObject
 	SupportWeb bool
 }
 
+/*
+Defines the actual Mapping from each Page struct to it's respective index
+*/
 var (
-	// Tutorials defines the metadata for each tutorial
 	Pages = map[string]Page{
-		"home":     {"Home", landingScreen, true},
-		"overview": {"Übersicht", overviewScreen, true},
-		"courses":  {"Kurse", coursesScreen, true},
-		"students": {"Studenten", studentScreen, true},
-		"settings": {"Einstellungen", settingsScreen, true},
+		"home":     {"Home", LandingScreen, true},
+		"overview": {"Übersicht", OverviewScreen, true},
+		"courses":  {"Kurse", CoursesScreen, true},
+		"students": {"Studenten", StudentScreen, true},
+		"settings": {"Einstellungen", SettingsScreen, true},
 	}
 
-	// TutorialIndex  defines how our tutorials should be laid out in the index tree
 	PagesIndex = map[string][]string{
 		"": {"home", "overview", "courses", "students", "settings"},
-	}
-)
-
-var (
-	// Tutorials defines the metadata for each tutorial
-	SettingPages = map[string]Page{
-		"general":   {"Allgemein", landingScreen, true},
-		"database":  {"Datenbank", overviewScreen, true},
-		"email":     {"Email", coursesScreen, true},
-		"wiki":      {"WIKI", studentScreen, true},
-		"impressum": {"Impressum", settingsScreen, true},
-	}
-
-	// TutorialIndex  defines how our tutorials should be laid out in the index tree
-	SettingPagesIndex = map[string][]string{
-		"": {"general", "database", "email", "wiki", "impressum"},
 	}
 )

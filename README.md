@@ -9,15 +9,7 @@ Full-Stack YAAC Prototype writen in Go.
 - WSL2
 
 ## Install the latest image
-Pull the docker image:
-```
-docker pull ghcr.io/dhbw-se-2023/yaac:nightly
-```
-
-Run the docker image (this command must be executed in WSL2)
-```
-docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ghcr.io/dhbw-se-2023/yaac:nightly
-```
+Download the repository. Then execute `Install.bat` to install the application. Run `YAAC.bat` to run the application.
 
 # Development Setup
 ## Prerequisites

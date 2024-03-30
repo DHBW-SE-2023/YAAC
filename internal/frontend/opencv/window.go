@@ -1,6 +1,7 @@
 package yaac_frontend_opencv
 
 import (
+	"fmt"
 	"image/color"
 	"io"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
-	resource "github.com/DHBW-SE-2023/YAAC/pkg/resource_manager"
 )
 
 var gv GlobalVars
@@ -34,8 +34,7 @@ func (f *WindowOpenCV) Open() {
 	gv.Window = gv.App.NewWindow("OpenCV Demo")
 
 	// set icon
-	r, _ := resource.LoadResourceFromPath("./Icon.png")
-	gv.Window.SetIcon(r)
+	gv.Window.SetIcon(yaac_shared.ResourceIconPng)
 
 	// handle main window
 	gv.Window.SetContent(makeWindow(f))
@@ -60,7 +59,7 @@ func makeWindow(f *WindowOpenCV) *fyne.Container {
 	openFile := widget.NewButton("File Open With Filter (.jpg or .png)", func() {
 		fd := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
 			if err != nil {
-				dialog.ShowError(err, gv.Window)
+				dialog.ShowError(fmt.Errorf("fehler bei der dateiauswahl\n%w", err), gv.Window)
 				return
 			}
 			if reader == nil {
@@ -103,9 +102,9 @@ func makeWindow(f *WindowOpenCV) *fyne.Container {
 	)))
 }
 
-func (f *WindowOpenCV) ShowGeneratedImage(out_Path string) {
+func (f *WindowOpenCV) ShowGeneratedImage(outPath string) {
 	// Load the image resource directly from the file path
-	res, err := fyne.LoadResourceFromPath(out_Path)
+	res, err := fyne.LoadResourceFromPath(outPath)
 	if err != nil {
 		log.Println("Error loading generated image:", err)
 		return
