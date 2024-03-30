@@ -1,6 +1,7 @@
 package yaac_demon
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -12,20 +13,24 @@ import (
 // Trigger a single runthrough of the demon. This runs independet from StartDemon
 func SingleDemonRunthrough(mvvm shared.MVVM) {
 	newMails, err := mvvm.GetMailsToday()
-	log.Println("New mails: ", len(newMails))
 	if err != nil {
 		log.Println("ERROR: Could not get mails for today: ", err)
+		mvvm.NotifyError("demon", fmt.Errorf("e-mails konnten nicht abgerufen werden"))
 		return
 	}
+	log.Println("New mails: ", len(newMails))
+
 	for _, mail := range newMails {
 		list, err := TableToAttendanceList(mvvm, mail)
 		if err != nil {
-			log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
+			log.Printf("ERROR: Could not process image for mail received at %v: %v\n", mail.ReceivedAt, err)
+			mvvm.NotifyError("demon", fmt.Errorf("bild konnte nicht verarbeitet werden"))
 			continue
 		}
 		_, err = mvvm.InsertList(list)
 		if err != nil {
 			log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
+			mvvm.NotifyError("demon", fmt.Errorf("neue anwesenheitsliste für e-mail vom %v konnte nicht hinzugefügt werden", mail.ReceivedAt))
 			continue
 		}
 
