@@ -250,6 +250,7 @@ func ValidSignature(img PreparedImage) bool {
 	return valid
 }
 
+// Merge rectangles if they are overlapping or close enough
 func merge(rects []image.Rectangle, deltaX float64, deltaY float64) []image.Rectangle {
 	merged := make([]image.Rectangle, 0, len(rects))
 
@@ -298,6 +299,7 @@ func extractCourseFromTitle(title string) (string, error) {
 	return results[1], nil
 }
 
+// Extract the table structure from an image of the attendance list table
 func ParseTable(img PreparedImage) *Table {
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)
 	gocv.Threshold(img, &img, 128.0, 255.0, gocv.ThresholdOtsu)
@@ -453,6 +455,7 @@ func gatherTableRows(boundingRects []image.Rectangle, imgShape []int) []TableRow
 	return rows
 }
 
+// Prepare the image in a way that it can be used for further processing
 func PrepareImage(img gocv.Mat) (PreparedImage, error) {
 	gocv.CvtColor(img, &img, gocv.ColorBGRToGray)
 	gocv.GaussianBlur(img, &img, image.Point{X: 3, Y: 3}, 2.0, 0.0, gocv.BorderDefault)

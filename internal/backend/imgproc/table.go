@@ -29,6 +29,8 @@ type TableRow struct {
 type PreparedImage = gocv.Mat
 
 // Parses `img` to return a new table
+//
+// This extracts the students names from the image and validates the signatures.
 func NewTable(img gocv.Mat, client *gosseract.Client) (*Table, error) {
 	img = FindTable(img)
 	warpedImg := img.Clone()
