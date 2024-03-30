@@ -159,9 +159,10 @@ func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 }
 
 // Add a new student to the database.
+// student.FullName will be set automatically.
 func (item *BackendDatabase) InsertStudent(student Student) (Student, error) {
 	if student.FullName == "" {
-		student.FullName = student.FirstName + " " + student.LastName
+		student.FullName = student.LastName + ", " + student.FirstName
 	}
 
 	err := item.DB.Model(&Student{}).Save(&student).Error
