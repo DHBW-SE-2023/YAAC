@@ -9,6 +9,7 @@ import (
 	"gocv.io/x/gocv"
 )
 
+// Trigger a single runthrough of the demon. This runs independet from StartDemon
 func SingleDemonRunthrough(mvvm shared.MVVM) {
 	newMails, err := mvvm.GetMailsToday()
 	log.Println("New mails: ", len(newMails))
@@ -32,6 +33,7 @@ func SingleDemonRunthrough(mvvm shared.MVVM) {
 	}
 }
 
+// Start the demon. This runs forever and calls a SingleDemonRunthrough every duration
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
@@ -40,6 +42,8 @@ func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	}
 }
 
+// Convert MailData to an AttendanceList.
+// If the students extracted from the list do not exist, they are created.
 func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.AttendanceList, error) {
 	table, err := mvvm.NewTable(mail.Image)
 	if err != nil {
@@ -66,14 +70,6 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		if row.FullName == "" || row.FirstName == "" || row.LastName == "" {
 			continue
 		}
-
-		// var student shared.Student
-		// students, _ := mvvm.CourseStudents(shared.Course{Model: gorm.Model{ID: list.ID}})
-		// for _, element := range students {
-		// 	if element.LastName == strings.TrimSpace(row.LastName) {
-		// 		student = element
-		// 	}
-		// }
 
 		students, err := mvvm.Students(shared.Student{LastName: row.LastName})
 		if err != nil {
@@ -112,6 +108,8 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 	return list, nil
 }
 
+// Upload an image. This is basically SingleDemonRunthrough but it takes in an image and a course instead of implicitly reading the mails.
+// course may be nil.
 func UploadImage(mvvm shared.MVVM, img []byte, course *shared.Course) (*shared.AttendanceList, error) {
 	list, err := TableToAttendanceList(mvvm, shared.MailData{Image: img, ReceivedAt: time.Now()})
 	if err != nil {
