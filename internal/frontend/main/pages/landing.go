@@ -17,7 +17,7 @@ func LandingScreen(_ fyne.Window) fyne.CanvasObject {
 	title := canvas.NewText("YAAC", color.Black)
 	title.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
 	title.TextSize = 150
-	description := canvas.NewText("Ihre Plattform zur Studenten Verwaltung", color.Black)
+	description := canvas.NewText("Ihre Plattform zur Studentenverwaltung", color.Black)
 	description.TextStyle = fyne.TextStyle{Bold: true}
 	description.TextSize = 60
 	spacer := container.NewGridWrap(fyne.NewSize(50, 50), layout.NewSpacer())
