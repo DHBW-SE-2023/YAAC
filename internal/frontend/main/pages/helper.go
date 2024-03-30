@@ -67,8 +67,10 @@ func ReturnCourseDropdown(selectionTracker *SelectionTracker, selection *widget.
 			selectionTracker.courseName.SetText(s)
 			selection.SetText(RefreshSelection(selectionTracker))
 			if source == "course" {
+				dependingDropdown.SetOptions([]string{})
 				RefreshDateDropdown(dependingDropdown, s)
 			} else {
+				dependingDropdown.SetOptions([]string{})
 				RefreshStudentDropdown(dependingDropdown, s)
 			}
 			dependingDropdown.SetText("")
@@ -124,13 +126,15 @@ These values will be passed to the function ShowFileDialog to handle the actual 
 */
 func OpenImageUpload(w fyne.Window, optional ...string) {
 	courseEntry := widget.NewEntry()
+	content := container.NewVBox()
+	customDialog := dialog.NewCustomWithoutButtons("Listen Upload", content, w)
 	if len(optional) != 0 {
 		courseEntry.Text = optional[0]
 	} else {
 		courseEntry.PlaceHolder = "TIK22,TIT22...."
 	}
 
-	fileUpload := widget.NewButton("Load Image", func() {
+	fileUpload := widget.NewButton("Bild suchen..", func() {
 		if len(optional) > 1 {
 			ShowFileDialog(w, courseEntry.Text, optional[1])
 		} else {
@@ -140,12 +144,12 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	ValidateCourseInput(courseEntry, fileUpload)
 	fileUpload.Disable()
 
-	content := container.NewVBox(
-		widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"),
-		courseEntry,
-		fileUpload,
-	)
-	customDialog := dialog.NewCustom("Listen Upload", "Beenden", content, w)
+	exitButton := widget.NewButton("Zurück", func() {
+		customDialog.Hide()
+	})
+	content.Add(widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"))
+	content.Add(courseEntry)
+	content.Add(container.NewGridWithColumns(2, exitButton, fileUpload))
 	customDialog.Show()
 }
 
@@ -156,9 +160,11 @@ func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
 	courseEntry.Validator = func(s string) error {
 		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
 		if !re.MatchString(s) {
+			fileUpload.Disable()
 			return errors.New("die Eingabe entspricht keinem validen Kurs")
+		} else {
+			fileUpload.Enable()
 		}
-		fileUpload.Enable()
 		return nil
 	}
 	courseEntry.OnChanged = func(s string) {
@@ -222,20 +228,13 @@ func InsertList(w fyne.Window, img []byte, courseName string, optional ...string
 	}
 	loading := dialog.NewCustomWithoutButtons("In Bearbeitung...", widget.NewProgressBarInfinite(), w)
 	loading.Show()
-	attendanceList, err := myMVVM.UploadImage(img, &course)
+	_, err = myMVVM.UploadImage(img, &course)
 	if err != nil {
 		loading.Hide()
 		dialog.ShowError(fmt.Errorf("fehler bei der automatischen Anwesenheitserkennung.\n%w", err), w)
 		return
 	}
 
-	// Insert data
-	_, err = myMVVM.InsertList(*attendanceList)
-	if err != nil {
-		loading.Hide()
-		dialog.ShowError(fmt.Errorf("fehler beim einfügen der daten in die datenbank.\n%w", err), w)
-		return
-	}
 	loading.Hide()
 	dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", courseName, "wurde erfolgreich hochgeladen!"), w)
 	LoadOverviewWidgets(w, overviewGrid)
@@ -246,7 +245,7 @@ Ask if the user wants to create a new course with the given name an create it, i
 */
 func AskCreateCourse(w fyne.Window, img []byte, courseName string, optional ...string) {
 	// Ask to create course
-	dialog.ShowConfirm(fmt.Sprintf("Create %s as new course?", courseName), fmt.Sprintf("Would you like to add a new course called  '%s'?", courseName), func(create bool) {
+	dialog.ShowConfirm(fmt.Sprintf("Wollen sie %s als neuen Kurs anlegen?", courseName), "", func(create bool) {
 		if create {
 			_, err := myMVVM.InsertCourse(yaac_backend_database.Course{Name: courseName})
 			if err != nil {

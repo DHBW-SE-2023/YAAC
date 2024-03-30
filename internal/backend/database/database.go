@@ -20,8 +20,9 @@ type Course struct {
 
 type Student struct {
 	gorm.Model
-	FirstName        string `gorm:"check:FirstName!=''"`
-	LastName         string `gorm:"check:LastName!=''"`
+	FirstName        string `gorm:"check:FirstName!='';type:varchar(64)"`
+	LastName         string `gorm:"check:LastName!='';type:varchar(64)"`
+	FullName         string `gorm:"check:FullName!='';type:varchar(128)"`
 	CourseID         uint
 	IsImmatriculated bool
 }
@@ -158,7 +159,12 @@ func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 }
 
 // Add a new student to the database.
+// student.FullName will be set automatically.
 func (item *BackendDatabase) InsertStudent(student Student) (Student, error) {
+	if student.FullName == "" {
+		student.FullName = student.LastName + ", " + student.FirstName
+	}
+
 	err := item.DB.Model(&Student{}).Save(&student).Error
 	return student, err
 }
@@ -179,9 +185,9 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 // Reset all settings. This clears the `Setting` table
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
 	settings := []Setting{
-		{Setting: "mailConnection", Value: "imap.mail.de:993"},
-		{Setting: "mailUser", Value: "anwesenheits_listen@mail.de"},
-		{Setting: "mailPassword", Value: "DHBW-YAAC-2024!"},
+		{Setting: "MailServer", Value: "imap.mail.de:993"},
+		{Setting: "UserEmail", Value: "anwesenheits_listen@mail.de"},
+		{Setting: "UserEmailPassword", Value: "DHBW-YAAC-2024!"},
 	}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err

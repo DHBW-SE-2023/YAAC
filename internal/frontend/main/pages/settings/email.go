@@ -13,6 +13,8 @@ import (
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 )
 
+var errCon = true
+
 func emailScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Email")
 	form := ReturnForm(w)
@@ -25,10 +27,10 @@ ReturnForm returns the fully configured Email Form responsible for managing and 
 */
 func ReturnForm(w fyne.Window) *widget.Form {
 	mailConnection, mailUser, mailPassword := ReturnMailSettings()
-	// var serverStatus *widget.Label
+	var alive bool
 	serverStatus := container.NewHBox()
-	if mailConnection != "" && mailUser != "" && mailPassword != "" {
-		alive := myMVVM.CheckMailConnection()
+	if mailConnection != "" && mailUser != "" && mailPassword != "" && errCon {
+		alive = myMVVM.CheckMailConnection()
 		serverStatusText := widget.NewLabel(MapMailBooleans(alive))
 		var serverStatusImage *canvas.Image
 		if alive {
@@ -45,7 +47,7 @@ func ReturnForm(w fyne.Window) *widget.Form {
 		serverStatus.Add(serverStatusImage)
 		serverStatus.Add(serverStatusText)
 	}
-	form := ConfigureForm(w, mailConnection, mailUser, mailPassword, serverStatus)
+	form := ConfigureForm(w, alive, mailConnection, mailUser, mailPassword, serverStatus)
 	return form
 }
 
@@ -77,9 +79,9 @@ func ReturnMailSettings() (string, string, string) {
 	var mailUser string
 	var mailPassword string
 	for _, element := range setting {
-		if element.Setting == "mailConnection" {
+		if element.Setting == "MailServer" {
 			mailConnection = element.Value
-		} else if element.Setting == "mailUser" {
+		} else if element.Setting == "UserEmail" {
 			mailUser = element.Value
 		} else {
 			mailPassword = element.Value
@@ -92,7 +94,7 @@ func ReturnMailSettings() (string, string, string) {
 ConfigureForm configures the mailForm regarding input as well as functionalities passing mailConnection, mailUser, mailPassword, serverStatus
 returning the fully configure form.
 */
-func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPassword string, serverStatus *fyne.Container) *widget.Form {
+func ConfigureForm(w fyne.Window, alive bool, mailConnection string, mailUser string, mailPassword string, serverStatus *fyne.Container) *widget.Form {
 	server := widget.NewEntry()
 	server.SetText(mailConnection)
 	username := widget.NewEntry()
@@ -109,6 +111,14 @@ func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPa
 		}
 	})
 	submitButton := widget.NewButton("Bestätigen", nil)
+	submitButton.Disable()
+	password.OnChanged = func(s string) {
+		if server.Validate() != nil || username.Validate() != nil {
+			submitButton.Disable()
+		} else {
+			submitButton.Enable()
+		}
+	}
 	buttonArea := container.NewAdaptiveGrid(2, submitButton, restartButton)
 	form := &widget.Form{
 		Items: []*widget.FormItem{ // we can specify items in the constructor
@@ -118,7 +128,7 @@ func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPa
 			{Text: "E-Mail Password", Widget: password},
 			{Widget: buttonArea}},
 	}
-	ConfigureSubmitButton(w, server, username, password, submitButton)
+	ConfigureSubmitButton(w, alive, server, username, password, submitButton)
 	return form
 }
 
@@ -126,7 +136,7 @@ func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPa
 ConfigureSubmitButton configures the submitButton responsible for udpating the settings DB passing sever(Entry),username(Entry),password(Entry)as well as the sumbitButton itself.
 returning the fully configure form.
 */
-func ConfigureSubmitButton(w fyne.Window, server *widget.Entry, username *widget.Entry, password *widget.Entry, submitButton *widget.Button) {
+func ConfigureSubmitButton(w fyne.Window, alive bool, server *widget.Entry, username *widget.Entry, password *widget.Entry, submitButton *widget.Button) {
 	submitButton.OnTapped = func() {
 		if CheckInputValidity([]*widget.Entry{server, username, password}) != nil {
 			dialog.ShowInformation("Überprüfen sie ihre Eingaben", "Fehler bei Udpate", w)
@@ -134,10 +144,15 @@ func ConfigureSubmitButton(w fyne.Window, server *widget.Entry, username *widget
 			serverConnection := server.Text
 			serverUser := username.Text
 			password := password.Text
-			UpdateSetting(w, "mailConnection", serverConnection)
-			UpdateSetting(w, "mailUser", serverUser)
-			UpdateSetting(w, "mailPassword", password)
-			myMVVM.UpdateMailCredentials(yaac_shared.MailLoginData{MailServer: serverConnection, Email: serverUser, Password: password})
+			UpdateSetting(w, "MailServer", serverConnection)
+			UpdateSetting(w, "UserEmail", serverUser)
+			UpdateSetting(w, "UserEmailPassword", password)
+			err := myMVVM.UpdateMailCredentials(yaac_shared.MailLoginData{MailServer: serverConnection, Email: serverUser, Password: password})
+			if err != nil {
+				errCon = false
+			} else {
+				errCon = true
+			}
 		}
 	}
 }

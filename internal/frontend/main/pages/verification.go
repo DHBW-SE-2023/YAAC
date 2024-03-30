@@ -45,7 +45,8 @@ func ReturnVerificationHeader() *fyne.Container {
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(200, 200))
 	title := ReturnHeader("Anwesenheitsprüfung")
-	header := container.NewGridWrap(fyne.NewSize(200, 200), logo, title)
+	// header := container.NewGridWrap(fyne.NewSize(200, 200), logo, title)
+	header := container.NewBorder(nil, nil, logo, nil, title)
 	return container.NewStack(headerFrame, header)
 }
 
@@ -138,7 +139,7 @@ func ReturnToPreviousPage(w fyne.Window, course int, optional []time.Time, cours
 ReturnExit returns the configured exitButton to exit the current Page and return to lastView.
 */
 func ReturnExitButton(w fyne.Window) *widget.Button {
-	exitButton := widget.NewButton("Zurück zur Startseite", func() {
+	exitButton := widget.NewButton("Abbrechen", func() {
 		if lastView != nil {
 			w.SetContent(lastView)
 		}

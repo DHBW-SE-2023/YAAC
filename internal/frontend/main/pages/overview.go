@@ -7,6 +7,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"gorm.io/gorm"
@@ -17,11 +19,11 @@ var overviewGrid *fyne.Container
 func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Anwesenheitsliste der Kurse - Heute")
 	buttonImageContainer := ReturnVerifyImageContainer(w)
+	buttonRefreshContainer := ReturnMailRefreshContainer(w)
 	overviewGrid = container.NewGridWrap(fyne.NewSize(250, 250))
 	LoadOverviewWidgets(w, overviewGrid)
 
-	// header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewGridWrap(fyne.NewSize(400, 200), title)), widget.NewSeparator())
-	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))), widget.NewSeparator())
+	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewGridWithRows(1, container.NewPadded(buttonImageContainer), buttonRefreshContainer)))), container.NewCenter(container.NewGridWithRows(1, layout.NewSpacer(), container.NewGridWrap(fyne.NewSize(200, 200), title), layout.NewSpacer()))), widget.NewSeparator())
 	return container.NewBorder(header, nil, nil, nil, container.NewVScroll(overviewGrid))
 }
 
@@ -34,6 +36,18 @@ func ReturnVerifyImageContainer(w fyne.Window) *tappableImage {
 		OpenImageUpload(w)
 	})
 	return buttonImageContainer
+}
+
+/*
+ReturnVerifyImageContainer returns the buttonImageContaier containing the image for insertList Button.
+*/
+func ReturnMailRefreshContainer(w fyne.Window) *tappableImage {
+	image := canvas.NewImageFromResource(yaac_shared.ResourceRefreshPng)
+	buttonRefreshContainer := newTappableImage(image, func() {
+		myMVVM.SingleDemonRunthrough()
+		dialog.ShowInformation("Der Prozess wurde gestartet", "Sobald neue Listen gefunden wurden erhalten sie eine Benachrichtigung!", w)
+	})
+	return buttonRefreshContainer
 }
 
 /*

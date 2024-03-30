@@ -43,19 +43,3 @@ func (m *MVVM) StartApplication() {
 	m.NewFrontendMain()
 	m.OpenMainWindow()
 }
-
-func ReturnMailSettings(setting []yaac_shared.Setting) (string, string, string) {
-	var mailConnection string
-	var mailUser string
-	var mailPassword string
-	for _, element := range setting {
-		if element.Setting == "mailConnection" {
-			mailConnection = element.Value
-		} else if element.Setting == "mailUser" {
-			mailUser = element.Value
-		} else {
-			mailPassword = element.Value
-		}
-	}
-	return mailConnection, mailUser, mailPassword
-}
