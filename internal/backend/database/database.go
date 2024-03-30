@@ -22,6 +22,7 @@ type Student struct {
 	gorm.Model
 	FirstName        string `gorm:"check:FirstName!=''"`
 	LastName         string `gorm:"check:LastName!=''"`
+	FullName         string `gorm:"check:FullName!=''"`
 	CourseID         uint
 	IsImmatriculated bool
 }
@@ -159,6 +160,10 @@ func (item *BackendDatabase) CourseStudents(course Course) ([]Student, error) {
 
 // Add a new student to the database.
 func (item *BackendDatabase) InsertStudent(student Student) (Student, error) {
+	if student.FullName == "" {
+		student.FullName = student.FirstName + " " + student.LastName
+	}
+
 	err := item.DB.Model(&Student{}).Save(&student).Error
 	return student, err
 }
