@@ -12,7 +12,6 @@ type MailClient interface {
 	UpdateMailCredentials(credentials MailLoginData) error
 	GetMailsToday() ([]MailData, error)
 	CheckMailConnection() bool
-	MarkMailsAsRead(mails []MailData) error
 }
 
 type DatabaseClient interface {
@@ -44,5 +43,6 @@ type MVVM interface {
 	Frontend
 
 	StartDemon(duration time.Duration)
+	SingleDemonRunthrough()
 	UploadImage(img []byte, course *Course) (*AttendanceList, error)
 }

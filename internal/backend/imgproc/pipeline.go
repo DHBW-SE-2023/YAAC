@@ -292,7 +292,7 @@ func extractCourseFromTitle(title string) (string, error) {
 	// First result should be the entire string,
 	// second result is the capture gropu
 	if len(results) != 2 {
-		return "", errors.New("could not identify course label")
+		return "", errors.New("kurs konnte nicht erkannt werden")
 	}
 
 	return results[1], nil

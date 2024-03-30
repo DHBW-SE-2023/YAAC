@@ -13,7 +13,7 @@ type Rectangle image.Rectangle
 func (rect *Rectangle) Scan(value any) error {
 	bytes, ok := value.([]byte)
 	if !ok {
-		return errors.New(fmt.Sprint("Could not unmarshal rectangle: ", value))
+		return errors.New(fmt.Sprint("Das Rechteck konnte nicht aufgelöst werden: ", value))
 	}
 
 	result := image.Rectangle{}

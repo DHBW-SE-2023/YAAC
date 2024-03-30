@@ -1,40 +1,42 @@
 package yaac_demon
 
 import (
-	"fmt"
 	"log"
 	"time"
 
 	database "github.com/DHBW-SE-2023/YAAC/internal/backend/database"
 	shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
+	"gocv.io/x/gocv"
 )
+
+func SingleDemonRunthrough(mvvm shared.MVVM) {
+	newMails, err := mvvm.GetMailsToday()
+	log.Println("New mails: ", len(newMails))
+	if err != nil {
+		log.Println("ERROR: Could not get mails for today: ", err)
+		return
+	}
+	for _, mail := range newMails {
+		list, err := TableToAttendanceList(mvvm, mail)
+		if err != nil {
+			log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
+			continue
+		}
+		_, err = mvvm.InsertList(list)
+		if err != nil {
+			log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
+			continue
+		}
+
+		mvvm.NotifyNewList(list)
+	}
+}
 
 func StartDemon(mvvm shared.MVVM, duration time.Duration) {
 	// Run forever
 	for {
-		time.Sleep(duration * time.Second)
-
-		newMails, err := mvvm.GetMailsToday()
-		fmt.Println(len(newMails))
-		if err != nil {
-			log.Println("ERROR: Could not get mails for today: ", err)
-			continue
-		}
-
-		for _, mail := range newMails {
-			list, err := TableToAttendanceList(mvvm, mail)
-			if err != nil {
-				log.Println("ERROR: Could not process image from mail received at ", mail.ReceivedAt)
-				continue
-			}
-			_, err = mvvm.InsertList(list)
-			if err != nil {
-				log.Printf("ERROR: Could not add list for mail received at %v: %v\n", mail.ReceivedAt, err)
-				continue
-			}
-
-			mvvm.NotifyNewList(list)
-		}
+		time.Sleep(duration)
+		SingleDemonRunthrough(mvvm)
 	}
 }
 
@@ -49,10 +51,15 @@ func TableToAttendanceList(mvvm shared.MVVM, mail shared.MailData) (shared.Atten
 		return shared.AttendanceList{}, err
 	}
 
+	img, err := gocv.IMEncode(".png", table.Image)
+	if err != nil {
+		return shared.AttendanceList{}, err
+	}
+
 	list := shared.AttendanceList{
 		CourseID:   course.ID,
 		ReceivedAt: mail.ReceivedAt,
-		Image:      mail.Image,
+		Image:      img.GetBytes(),
 	}
 
 	for _, row := range table.Rows {

@@ -42,7 +42,7 @@ func (b *BackendMail) GetMailsToday() ([]MailData, error) {
 	c.Logout()
 
 	// Mark all mails that we process as read
-	b.MarkMailsAsRead(mails)
+	b.markMailsAsRead(mails)
 
 	return mails, nil
 }
@@ -112,7 +112,7 @@ func (b *BackendMail) getBoundary(contentType string) (string, error) {
 		return "", err
 	}
 	if params["boundary"] == "" {
-		err := errors.New("no boundary found")
+		err := errors.New("keine umrandung gefunden")
 		return "", err
 	}
 	return params["boundary"], nil
@@ -125,7 +125,7 @@ func (b *BackendMail) getMailAsString(msg *imap.Message) (string, error) {
 	var section imap.BodySectionName
 	mailLiteral := msg.GetBody(&section)
 	if mailLiteral == nil {
-		err := errors.New("no litteral in mail body found")
+		err := errors.New("kein text in mail")
 		log.Printf(DEFAULT_ERR, err)
 		return "", err
 	}
@@ -195,7 +195,7 @@ func (b *BackendMail) parseMailContent(message *mail.Message, boundary string) (
 		}
 	}
 	// Return Error if no image found
-	err := errors.New("found no attached image in mail")
+	err := errors.New("kein anhang in mail")
 	log.Printf(DEFAULT_ERR, err)
 	return nil, err
 }
@@ -215,7 +215,7 @@ func (b *BackendMail) getBinaryImageFromMail(msg *imap.Message) ([]byte, error) 
 	contentType := message.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "multipart/") {
 		// Return Error if invalid contet type
-		err = errors.New("found no attached image in mail")
+		err = errors.New("kein bild im mail anhang")
 		log.Printf(DEFAULT_ERR, err)
 		return nil, err
 	}
@@ -321,7 +321,7 @@ func (b *BackendMail) logInToInbox(c *client.Client, username string, password s
 
 // Marks the mails with the given IDs as read
 // returns an error if there is an error with that
-func (b *BackendMail) MarkMailsAsRead(mails []MailData) error {
+func (b *BackendMail) markMailsAsRead(mails []MailData) error {
 	c, err := b.setupMail(false)
 	if err != nil {
 		log.Printf(DEFAULT_ERR, err)

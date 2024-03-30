@@ -2,6 +2,7 @@ package yaac_frontend_settings
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"fyne.io/fyne/v2"
@@ -61,7 +62,7 @@ func UpdateSetting(w fyne.Window, key string, value string) {
 	settings = append(settings, setting)
 	_, err := myMVVM.SettingsUpdate(settings)
 	if err != nil {
-		dialog.ShowError(err, w)
+		dialog.ShowError(fmt.Errorf("fehler beim aktualisieren der einstellungen\n%w", err), w)
 	} else {
 		dialog.ShowInformation("Erfolgreiche Aktualisierung", "Ihre Mail Daten wurden erfolgreich aktualisiert", w)
 	}
@@ -102,7 +103,7 @@ func ConfigureForm(w fyne.Window, mailConnection string, mailUser string, mailPa
 	restartButton := widget.NewButton("Zurücksetzen", func() {
 		_, err := myMVVM.SettingsReset()
 		if err != nil {
-			dialog.ShowError(err, w)
+			dialog.ShowError(fmt.Errorf("fehler beim zurücksetzen\n%w", err), w)
 		} else {
 			dialog.ShowInformation("Email Einstellungen wurden erfolgreich zurückgesetzt", "", w)
 		}
