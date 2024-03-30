@@ -179,9 +179,9 @@ func (item *BackendDatabase) SettingsUpdate(settings []Setting) ([]Setting, erro
 // Reset all settings. This clears the `Setting` table
 func (item *BackendDatabase) SettingsReset() ([]Setting, error) {
 	settings := []Setting{
-		{Setting: "mailConnection", Value: "imap.mail.de:993"},
-		{Setting: "mailUser", Value: "anwesenheits_listen@mail.de"},
-		{Setting: "mailPassword", Value: "DHBW-YAAC-2024!"},
+		{Setting: "MailServer", Value: "imap.mail.de:993"},
+		{Setting: "UserEmail", Value: "anwesenheits_listen@mail.de"},
+		{Setting: "UserEmailPassword", Value: "DHBW-YAAC-2024!"},
 	}
 	err := item.DB.Model(&Setting{}).Delete(&Setting{}).Create(&settings).Error
 	return settings, err

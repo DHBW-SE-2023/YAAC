@@ -67,8 +67,10 @@ func ReturnCourseDropdown(selectionTracker *SelectionTracker, selection *widget.
 			selectionTracker.courseName.SetText(s)
 			selection.SetText(RefreshSelection(selectionTracker))
 			if source == "course" {
+				dependingDropdown.SetOptions([]string{})
 				RefreshDateDropdown(dependingDropdown, s)
 			} else {
+				dependingDropdown.SetOptions([]string{})
 				RefreshStudentDropdown(dependingDropdown, s)
 			}
 			dependingDropdown.SetText("")

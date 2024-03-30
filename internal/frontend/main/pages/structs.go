@@ -50,11 +50,6 @@ func NewOverviewWidget(w fyne.Window, title string, courseId int, nonAttending [
 			lastView = w.Content()
 			w.SetContent(v)
 		}),
-		// button: widget.NewButtonWithIcon("", imageResource, func() {
-		// 	v := VerificationScreen(w, GetImageByDate(title, time.Now()), courseId, fyne.NewContainer())
-		// 	lastView = w.Content()
-		// 	w.SetContent(v)
-		// }),
 	}
 	item.ExtendBaseWidget(item)
 	return item

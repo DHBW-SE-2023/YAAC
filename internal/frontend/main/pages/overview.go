@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"gorm.io/gorm"
@@ -44,6 +45,7 @@ func ReturnMailRefreshContainer(w fyne.Window) *tappableImage {
 	image := canvas.NewImageFromResource(yaac_shared.ResourceRefreshPng)
 	buttonRefreshContainer := newTappableImage(image, func() {
 		myMVVM.SingleDemonRunthrough()
+		dialog.ShowInformation("Der Prozess wurde gestartet", "Sobald neue Listen gefunden wurden erhalten sie eine Benachrichtigung!", w)
 	})
 	return buttonRefreshContainer
 }

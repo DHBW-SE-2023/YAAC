@@ -205,7 +205,7 @@ func ShowImage(w fyne.Window, course string, date string) {
 	list, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, parsedTime, parsedTime.Add(24*time.Hour))
 	img := RotateImage(list[0].Image)
 	img.FillMode = canvas.ImageFillOriginal
-	customDialog := dialog.NewCustom(fmt.Sprintf("%s %s", "Listen vom", date), "Beenden", container.NewVScroll(container.NewGridWrap(fyne.NewSize(800, 1000), img)), w)
+	customDialog := dialog.NewCustom(fmt.Sprintf("%s %s", "Liste vom", date), "Beenden", container.NewVScroll(container.NewGridWrap(fyne.NewSize(800, 1000), img)), w)
 	customDialog.Resize(fyne.NewSize(800, 800))
 	customDialog.Show()
 }
