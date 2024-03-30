@@ -76,9 +76,9 @@ func ReturnMailSettings() (string, string, string) {
 	var mailUser string
 	var mailPassword string
 	for _, element := range setting {
-		if element.Setting == "mailConnection" {
+		if element.Setting == "MailServer" {
 			mailConnection = element.Value
-		} else if element.Setting == "mailUser" {
+		} else if element.Setting == "UserEmail" {
 			mailUser = element.Value
 		} else {
 			mailPassword = element.Value
@@ -133,9 +133,9 @@ func ConfigureSubmitButton(w fyne.Window, server *widget.Entry, username *widget
 			serverConnection := server.Text
 			serverUser := username.Text
 			password := password.Text
-			UpdateSetting(w, "mailConnection", serverConnection)
-			UpdateSetting(w, "mailUser", serverUser)
-			UpdateSetting(w, "mailPassword", password)
+			UpdateSetting(w, "MailServer", serverConnection)
+			UpdateSetting(w, "UserEmail", serverUser)
+			UpdateSetting(w, "UserEmailPassword", password)
 			myMVVM.UpdateMailCredentials(yaac_shared.MailLoginData{MailServer: serverConnection, Email: serverUser, Password: password})
 		}
 	}

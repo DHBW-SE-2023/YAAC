@@ -17,6 +17,7 @@ type yaacTheme struct {
 	green   color.RGBA
 	yellow  color.RGBA
 	text    color.RGBA
+	white   color.RGBA
 }
 
 // Assert that the Theme implements the theme interface
@@ -31,6 +32,7 @@ var ytheme fyne.Theme = yaacTheme{
 	green:   color.RGBA{51, 255, 0, 255},
 	yellow:  color.RGBA{255, 229, 0, 255},
 	text:    color.RGBA{0, 0, 0, 255},
+	white:   color.RGBA{243, 243, 243, 255},
 }
 
 func (m yaacTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
@@ -40,7 +42,7 @@ func (m yaacTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) co
 		return m.bg
 	case theme.ColorNameButton:
 		// Handle button color
-		return m.elem
+		return m.white
 	case theme.ColorNameDisabledButton:
 		// Handle disabled button color
 		return theme.DefaultTheme().Color(name, theme.VariantLight)

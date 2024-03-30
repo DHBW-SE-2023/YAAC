@@ -36,25 +36,10 @@ func (m *MVVM) StartApplication() {
 		log.Println("ERROR: Please set your email credentails in the settings")
 	}
 
-	m.StartDemon(5 * 1000) // Refresh every 5 seconds
+	// m.StartDemon(5 * 1000) // Refresh every 5 seconds
+	m.StartDemon(5) // Refresh every 5 seconds
 
 	// Needs to be the last step
 	m.NewFrontendMain()
 	m.OpenMainWindow()
-}
-
-func ReturnMailSettings(setting []yaac_shared.Setting) (string, string, string) {
-	var mailConnection string
-	var mailUser string
-	var mailPassword string
-	for _, element := range setting {
-		if element.Setting == "mailConnection" {
-			mailConnection = element.Value
-		} else if element.Setting == "mailUser" {
-			mailUser = element.Value
-		} else {
-			mailPassword = element.Value
-		}
-	}
-	return mailConnection, mailUser, mailPassword
 }

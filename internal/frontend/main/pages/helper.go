@@ -123,6 +123,8 @@ These values will be passed to the function ShowFileDialog to handle the actual 
 */
 func OpenImageUpload(w fyne.Window, optional ...string) {
 	courseEntry := widget.NewEntry()
+	content := container.NewVBox()
+	customDialog := dialog.NewCustomWithoutButtons("Listen Upload", content, w)
 	if len(optional) != 0 {
 		courseEntry.Text = optional[0]
 	} else {
@@ -139,12 +141,12 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 	ValidateCourseInput(courseEntry, fileUpload)
 	fileUpload.Disable()
 
-	content := container.NewVBox(
-		widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"),
-		courseEntry,
-		fileUpload,
-	)
-	customDialog := dialog.NewCustom("Listen Upload", "Beenden", content, w)
+	exitButton := widget.NewButton("Zurück", func() {
+		customDialog.Hide()
+	})
+	content.Add(widget.NewLabel("Geben sie das Kürzel des betroffenen Kurses ein:"))
+	content.Add(courseEntry)
+	content.Add(container.NewGridWithColumns(2, exitButton, fileUpload))
 	customDialog.Show()
 }
 
@@ -155,9 +157,11 @@ func ValidateCourseInput(courseEntry *widget.Entry, fileUpload *widget.Button) {
 	courseEntry.Validator = func(s string) error {
 		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
 		if !re.MatchString(s) {
+			fileUpload.Disable()
 			return errors.New("die Eingabe entspricht keinem validen Kurs")
+		} else {
+			fileUpload.Enable()
 		}
-		fileUpload.Enable()
 		return nil
 	}
 	courseEntry.OnChanged = func(s string) {

@@ -30,10 +30,11 @@ func CoursesScreen(w fyne.Window) fyne.CanvasObject {
 	tableHeader, courseTable := ReturnAttendanceTable("Name", "Status")
 	dateDropdown := ReturnDateDropdown(dates)
 	courseDropdown := ReturnCourseDropdown(course, selection, dateDropdown, "course")
+	courseInsertButton := ReturnCourseInsertButton(w)
 	editDropdown := ReturnEditDropdown(w, courseDropdown, dateDropdown, courseTable)
 	ConfigureDateDropdownVerification(dateDropdown, course, selection, courseTable, editDropdown)
 	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(400, 200), title))
-	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, layout.NewSpacer(), layout.NewSpacer(), editDropdown)
+	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, dateDropdown, courseInsertButton, layout.NewSpacer(), editDropdown)
 	selectionArea := container.NewVBox(selection, tableHeader)
 	studentView := container.NewBorder(container.NewVBox(header, widget.NewSeparator(), dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, container.NewVScroll(courseTable)))
 	return studentView
@@ -58,6 +59,47 @@ func ReturnDateDropdown(dates []string) *widget.SelectEntry {
 	dateDropdown.Disable()
 
 	return dateDropdown
+}
+
+/*
+ReturnCourseInsertButton returns the configured courseInsertButton
+*/
+func ReturnCourseInsertButton(w fyne.Window) *widget.Button {
+	insertButton := widget.NewButton("Kurs hinzufügen", func() {
+		DisplayInserCourseDialog(w)
+	})
+	return insertButton
+}
+
+/*
+ReturnCourseInsertButton returns the configured courseInsertButton
+*/
+func DisplayInserCourseDialog(w fyne.Window) {
+	content := container.NewVBox()
+	form := dialog.NewCustomWithoutButtons("Kurs hinzufügen", content, w)
+	courseEntry := widget.NewEntry()
+	courseEntry.PlaceHolder = "Kursname"
+	exitButton := widget.NewButton("Zurück", func() {
+		form.Hide()
+	})
+	confirmButton := widget.NewButton("Bestätigen", func() {
+		fmt.Println(courseEntry.Text)
+		course := yaac_shared.Course{
+			Name: courseEntry.Text,
+		}
+		_, err := myMVVM.InsertCourse(course)
+		if err != nil {
+			dialog.ShowError(err, w)
+		} else {
+			form.Hide()
+			dialog.ShowInformation("Kurs hinzufügen", fmt.Sprintf("%s %s %s", "Es wurde erfolgreich der Kurs", courseEntry.Text, "angelegt!"), w)
+		}
+	})
+	confirmButton.Disable()
+	ValidateCourseInput(courseEntry, confirmButton)
+	content.Add(courseEntry)
+	content.Add(container.NewGridWithColumns(2, exitButton, confirmButton))
+	form.Show()
 }
 
 /*

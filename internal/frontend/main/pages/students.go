@@ -1,6 +1,7 @@
 package yaac_frontend_pages
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -8,12 +9,13 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	yaac_shared "github.com/DHBW-SE-2023/YAAC/internal/shared"
 	"gorm.io/gorm"
 )
 
-func StudentScreen(_ fyne.Window) fyne.CanvasObject {
+func StudentScreen(w fyne.Window) fyne.CanvasObject {
 	student := &SelectionTracker{
 		courseName: widget.NewLabel(""),
 		secondary:  widget.NewLabel(""),
@@ -25,9 +27,9 @@ func StudentScreen(_ fyne.Window) fyne.CanvasObject {
 	tableHeader, attendanceTable := ReturnAttendanceTable("Datum", "Anwesenheit")
 	studentDropdown := ReturnStudentDropdown(studentNames, student, selection, attendanceTable)
 	courseDropdown := ReturnCourseDropdown(student, selection, studentDropdown, "student")
-
+	studentInsertButton := ReturnStudentInsertButton(w)
 	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))
-	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, studentDropdown)
+	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, studentDropdown, studentInsertButton)
 	selectionArea := container.NewVBox(selection, tableHeader)
 	studentView := container.NewBorder(container.NewVBox(header, widget.NewSeparator(), dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceTable))
 	return studentView
@@ -52,6 +54,119 @@ func ReturnStudentDropdown(studentNames []string, student *SelectionTracker, sel
 	studentDropdown.PlaceHolder = "Type or select student"
 	studentDropdown.Disable()
 	return studentDropdown
+}
+
+/*
+ReturnStudentInsertButton returns the configured studentInsertButton
+*/
+func ReturnStudentInsertButton(w fyne.Window) *widget.Button {
+	insertButton := widget.NewButton("Student hinzufügen", func() {
+		DisplayInsertStudentDialog(w)
+	})
+	return insertButton
+}
+
+/*
+ReturnStudentInsertButton returns the configured courseInsertButton
+*/
+func DisplayInsertStudentDialog(w fyne.Window) {
+	content := container.NewVBox()
+	form := dialog.NewCustomWithoutButtons("Student hinzufügen", content, w)
+	studentEntry := widget.NewEntry()
+	studentEntry.PlaceHolder = "Studentenname"
+	courseEntry := widget.NewEntry()
+	courseEntry.PlaceHolder = "Kursname"
+	isImmatriculated := widget.NewCheck("Ist der Student immatrikuliert?", nil)
+	exitButton := widget.NewButton("Zurück", func() {
+		form.Hide()
+	})
+	confirmButton := widget.NewButton("Bestätigen", InsertStudent(w, form, studentEntry, courseEntry, isImmatriculated))
+	confirmButton.Disable()
+	ValidateInput(studentEntry, courseEntry, confirmButton)
+	content.Add(studentEntry)
+	content.Add(courseEntry)
+	content.Add(isImmatriculated)
+	content.Add(container.NewGridWithColumns(2, exitButton, confirmButton))
+	form.Show()
+}
+
+/*
+ValidateInput takes the two entries studentEntry, courseEntry as input and decides regarding their validity to enable the ConfirmButton
+*/
+func ValidateInput(studentEntry *widget.Entry, courseEntry *widget.Entry, confirmButton *widget.Button) {
+	var validStudent bool
+	var validCourse bool
+	studentEntry.Validator = func(s string) error {
+		re, _ := regexp.Compile(`^[a-zA-Z]+(\s[a-zA-Z]+)+$`)
+		if !re.MatchString(s) {
+			validStudent = false
+			return errors.New("Die Eingabe entspricht nicht den Bedingungen(min. 1x Leerzeichen, nur Buchstaben!")
+		} else {
+			validStudent = true
+		}
+		return nil
+	}
+	studentEntry.OnChanged = func(s string) {
+		if len(s) > 30 {
+			s = s[0:10]
+			studentEntry.SetText(s)
+		}
+
+		if validCourse && validStudent {
+			confirmButton.Enable()
+		} else {
+			confirmButton.Disable()
+		}
+	}
+
+	courseEntry.Validator = func(s string) error {
+		re, _ := regexp.Compile(`\bT[A-Z]{2}\d{2}\b`)
+		if !re.MatchString(s) {
+			validCourse = false
+			return errors.New("die Eingabe entspricht keinem validen Kurs")
+		} else {
+			validCourse = true
+		}
+		return nil
+	}
+	courseEntry.OnChanged = func(s string) {
+		if len(s) > 10 {
+			s = s[0:10]
+			courseEntry.SetText(s)
+		}
+		if validCourse && validStudent {
+			confirmButton.Enable()
+		} else {
+			confirmButton.Disable()
+		}
+
+	}
+}
+
+/*
+InsertStudent collects all of the forms entries as input and builds student struct out of them to push on the db.
+*/
+func InsertStudent(w fyne.Window, form *dialog.CustomDialog, studentEntry *widget.Entry, courseEntry *widget.Entry, isImmatriculated *widget.Check) func() {
+	insertStudent := func() {
+		words := strings.Fields(studentEntry.Text)
+		lastName := words[len(words)-1]
+		firstName := strings.Join(words[:len(words)-1], " ")
+		course, _ := myMVVM.CourseByName(courseEntry.Text)
+		student := yaac_shared.Student{
+			FirstName:        firstName,
+			LastName:         lastName,
+			CourseID:         course.ID,
+			IsImmatriculated: isImmatriculated.Checked,
+		}
+		_, err := myMVVM.InsertStudent(student)
+		if err != nil {
+			dialog.ShowError(err, w)
+		} else {
+			form.Hide()
+			dialog.ShowInformation("Student hinzufügen", fmt.Sprintf("%s %s %s", "Es wurde erfolgreich der Student", studentEntry.Text, "angelegt!"), w)
+		}
+	}
+	return insertStudent
 }
 
 /*
