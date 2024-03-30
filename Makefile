@@ -31,6 +31,9 @@ test-macos:
 run: build
 	./$(BINARY_PATH)
 
+run-macos: build-macos
+	./$(BINARY_PATH)
+
 package:
 	fyne package --src ./$(SOURCE_PATH)/ --icon ./../../Icon.png
 
