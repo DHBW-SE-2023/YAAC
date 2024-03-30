@@ -29,7 +29,7 @@ func StudentScreen(w fyne.Window) fyne.CanvasObject {
 	courseDropdown := ReturnCourseDropdown(student, selection, studentDropdown, "student")
 	studentInsertButton := ReturnStudentInsertButton(w)
 	header := container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))
-	dropdownArea := container.NewGridWrap(fyne.NewSize(200, 40), courseDropdown, studentDropdown, studentInsertButton)
+	dropdownArea := container.NewGridWithRows(1, courseDropdown, studentDropdown, studentInsertButton)
 	selectionArea := container.NewVBox(selection, tableHeader)
 	studentView := container.NewBorder(container.NewVBox(header, widget.NewSeparator(), dropdownArea), nil, nil, nil, container.NewBorder(selectionArea, nil, nil, nil, attendanceTable))
 	return studentView
@@ -44,14 +44,14 @@ func ReturnStudentDropdown(studentNames []string, student *SelectionTracker, sel
 		if len(s) > 30 {
 			s = s[0:30]
 		}
-		re := regexp.MustCompile(`[^a-zA-Z-ä-ö-ü\s]`)
+		re := regexp.MustCompile(`[^a-zA-Z-ä-ö-ü\s,]`)
 		s = re.ReplaceAllString(s, "")
 		studentDropdown.SetText(s)
 		attendanceTable.RemoveAll()
 		RefreshStudentAttendancyList(attendanceTable, student.courseName.Text, s, student)
 		selection.SetText(RefreshSelection(student))
 	}
-	studentDropdown.PlaceHolder = "Type or select student"
+	studentDropdown.PlaceHolder = "Mustermann, Max"
 	studentDropdown.Disable()
 	return studentDropdown
 }
@@ -178,7 +178,7 @@ func RefreshStudentDropdown(studentDropdown *widget.SelectEntry, course string) 
 	if len(students) != 0 {
 		var studentNames []string
 		for _, studElement := range students {
-			studentNames = append(studentNames, fmt.Sprintf("%s %s", studElement.FirstName, studElement.LastName))
+			studentNames = append(studentNames, studElement.FullName)
 		}
 		studentDropdown.SetOptions(studentNames)
 	}
@@ -189,16 +189,14 @@ RefreshStudentAttendancyList is responsible for refreshing the attedanceTable li
 */
 func RefreshStudentAttendancyList(table *fyne.Container, course string, student string, selection *SelectionTracker) {
 	selectedCourse, _ := myMVVM.CourseByName(course)
-	if strings.Contains(student, " ") {
-		selectedStudent, _ := myMVVM.Students(yaac_shared.Student{LastName: strings.Split(student, " ")[1]})
-		if len(selectedStudent) != 0 {
-			selection.secondary.SetText(student)
-			attendances, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
-			for _, attendance := range attendances {
-				for _, attendancy := range attendance.Attendancies {
-					if attendancy.StudentID == selectedStudent[0].ID {
-						table.Add(NewAttendanceRow(attendance.ReceivedAt.Format("2006-01-02"), MapBooleans(attendancy.IsAttending)))
-					}
+	selectedStudent, _ := myMVVM.Students(yaac_shared.Student{FullName: student})
+	if len(selectedStudent) != 0 {
+		selection.secondary.SetText(student)
+		attendances, _ := myMVVM.AllAttendanceListInRangeByCourse(yaac_shared.Course{Model: gorm.Model{ID: selectedCourse.ID}}, time.Now().AddDate(0, 0, -30), time.Now())
+		for _, attendance := range attendances {
+			for _, attendancy := range attendance.Attendancies {
+				if attendancy.StudentID == selectedStudent[0].ID {
+					table.Add(NewAttendanceRow(attendance.ReceivedAt.Format("2006-01-02"), MapBooleans(attendancy.IsAttending)))
 				}
 			}
 		}

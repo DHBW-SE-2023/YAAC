@@ -12,13 +12,13 @@ import (
 )
 
 var page int = 1
-var pages int = 8
+var pages int = 24
 
 func wikiScreen(_ fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Nutzerdokumentation")
 
 	// This is neccecary because the frame wont accept an uninitialized image
-	image := canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+	image := canvas.NewImageFromResource(yaac_shared.ResourceYaacManual01Png)
 	image.FillMode = canvas.ImageFillContain
 	imageFrame := container.NewGridWrap(fyne.NewSize(1200, 1000), image)
 
@@ -76,21 +76,53 @@ func loadCurrentPageImage(imageFrame *fyne.Container) {
 	// Ingenious solution
 	switch page {
 	case 1:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku1Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual01Png)
 	case 2:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku2Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual02Png)
 	case 3:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku3Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual03Png)
 	case 4:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku4Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual04Png)
 	case 5:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku5Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual05Png)
 	case 6:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku6Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual06Png)
 	case 7:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku7Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual07Png)
 	case 8:
-		image = canvas.NewImageFromResource(yaac_shared.ResourceDoku8Png)
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual08Png)
+	case 9:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual09Png)
+	case 10:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual10Png)
+	case 11:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual11Png)
+	case 12:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual12Png)
+	case 13:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual13Png)
+	case 14:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual14Png)
+	case 15:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual15Png)
+	case 16:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual16Png)
+	case 17:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual17Png)
+	case 18:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual18Png)
+	case 19:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual19Png)
+	case 20:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual20Png)
+	case 21:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual21Png)
+	case 22:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual22Png)
+	case 23:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual23Png)
+	case 24:
+		image = canvas.NewImageFromResource(yaac_shared.ResourceYaacManual24Png)
 	}
 
 	image.FillMode = canvas.ImageFillContain

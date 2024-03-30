@@ -134,7 +134,7 @@ func OpenImageUpload(w fyne.Window, optional ...string) {
 		courseEntry.PlaceHolder = "TIK22,TIT22...."
 	}
 
-	fileUpload := widget.NewButton("Load Image", func() {
+	fileUpload := widget.NewButton("Bild suchen..", func() {
 		if len(optional) > 1 {
 			ShowFileDialog(w, courseEntry.Text, optional[1])
 		} else {

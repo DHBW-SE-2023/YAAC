@@ -31,7 +31,6 @@ func ReturnForm(w fyne.Window) *widget.Form {
 	serverStatus := container.NewHBox()
 	if mailConnection != "" && mailUser != "" && mailPassword != "" && errCon {
 		alive = myMVVM.CheckMailConnection()
-		fmt.Println(alive)
 		serverStatusText := widget.NewLabel(MapMailBooleans(alive))
 		var serverStatusImage *canvas.Image
 		if alive {

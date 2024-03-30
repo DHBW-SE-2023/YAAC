@@ -23,12 +23,15 @@ test:
 	go test -v ./test/
 	
 build-macos:
-	CGO_CPPFLAGS=$(CGO_CPPFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
+	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go build -o ./$(BINARY_PATH) ./$(SOURCE_PATH)
 	
 test-macos:
-	CGO_CPPFLAGS=$(CGO_CPPFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go test -v ./test/
+	CGO_CPPFLAGS="$(CGO_CPPFLAGS)" CGO_LDFLAGS="$(CGO_LDFLAGS)" go test -v ./test/
 
 run: build
+	./$(BINARY_PATH)
+
+run-macos: build-macos
 	./$(BINARY_PATH)
 
 package:

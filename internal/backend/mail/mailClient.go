@@ -3,7 +3,6 @@ package yaac_backend_mail
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"mime"
@@ -99,8 +98,6 @@ func (b *BackendMail) processMails(c *client.Client, ids []uint32) []MailData {
 // Checks the mail connection to the server and the login credentials. Returns true if the connection and authentication is fine otherwise false
 func (b *BackendMail) CheckMailConnection() bool {
 	c, err := b.setupMail(true)
-	fmt.Println(b.username)
-	fmt.Println(b.serverAddr)
 	if err != nil {
 		return false
 	}
