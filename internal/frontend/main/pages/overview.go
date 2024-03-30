@@ -17,11 +17,12 @@ var overviewGrid *fyne.Container
 func OverviewScreen(w fyne.Window) fyne.CanvasObject {
 	title := ReturnHeader("Anwesenheitsliste der Kurse - Heute")
 	buttonImageContainer := ReturnVerifyImageContainer(w)
+	buttonRefreshContainer := ReturnMailRefreshContainer(w)
 	overviewGrid = container.NewGridWrap(fyne.NewSize(250, 250))
 	LoadOverviewWidgets(w, overviewGrid)
 
 	// header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewGridWrap(fyne.NewSize(400, 200), title)), widget.NewSeparator())
-	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewPadded(buttonImageContainer)))), container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))), widget.NewSeparator())
+	header := container.NewVBox(container.NewBorder(nil, nil, nil, container.NewPadded(container.NewPadded(container.NewPadded(container.NewGridWithColumns(2, container.NewPadded(buttonImageContainer), buttonRefreshContainer)))), container.NewCenter(container.NewGridWrap(fyne.NewSize(200, 200), title))), widget.NewSeparator())
 	return container.NewBorder(header, nil, nil, nil, container.NewVScroll(overviewGrid))
 }
 
@@ -34,6 +35,17 @@ func ReturnVerifyImageContainer(w fyne.Window) *tappableImage {
 		OpenImageUpload(w)
 	})
 	return buttonImageContainer
+}
+
+/*
+ReturnVerifyImageContainer returns the buttonImageContaier containing the image for insertList Button.
+*/
+func ReturnMailRefreshContainer(w fyne.Window) *tappableImage {
+	image := canvas.NewImageFromResource(yaac_shared.ResourceRefreshPng)
+	buttonRefreshContainer := newTappableImage(image, func() {
+		myMVVM.SingleDemonRunthrough()
+	})
+	return buttonRefreshContainer
 }
 
 /*
