@@ -226,20 +226,13 @@ func InsertList(w fyne.Window, img []byte, courseName string, optional ...string
 	}
 	loading := dialog.NewCustomWithoutButtons("In Bearbeitung...", widget.NewProgressBarInfinite(), w)
 	loading.Show()
-	attendanceList, err := myMVVM.UploadImage(img, &course)
+	_, err = myMVVM.UploadImage(img, &course)
 	if err != nil {
 		loading.Hide()
 		dialog.ShowError(fmt.Errorf("fehler bei der automatischen Anwesenheitserkennung.\n%w", err), w)
 		return
 	}
 
-	// Insert data
-	_, err = myMVVM.InsertList(*attendanceList)
-	if err != nil {
-		loading.Hide()
-		dialog.ShowError(fmt.Errorf("fehler beim einfügen der daten in die datenbank.\n%w", err), w)
-		return
-	}
 	loading.Hide()
 	dialog.ShowInformation("Liste erfolgreich hochgeladen", fmt.Sprintf("%s %s %s", "Ihre Liste für den Kurs", courseName, "wurde erfolgreich hochgeladen!"), w)
 	LoadOverviewWidgets(w, overviewGrid)
@@ -250,7 +243,7 @@ Ask if the user wants to create a new course with the given name an create it, i
 */
 func AskCreateCourse(w fyne.Window, img []byte, courseName string, optional ...string) {
 	// Ask to create course
-	dialog.ShowConfirm(fmt.Sprintf("Create %s as new course?", courseName), fmt.Sprintf("Would you like to add a new course called  '%s'?", courseName), func(create bool) {
+	dialog.ShowConfirm(fmt.Sprintf("Wollen sie %s als neuen Kurs anlegen?", courseName), "", func(create bool) {
 		if create {
 			_, err := myMVVM.InsertCourse(yaac_backend_database.Course{Name: courseName})
 			if err != nil {
