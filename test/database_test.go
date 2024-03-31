@@ -151,6 +151,27 @@ func TestConnectDatabase(t *testing.T) {
 	}
 }
 
+func TestInsertTwoStudentsWithSameName(t *testing.T) {
+	conn, _ := setupDatabase()
+	defer clearDatabase(t, conn)
+
+	c, _ := conn.CourseByName("TIK22")
+
+	// This student already exists in the database
+	s := backend.Student{
+		FirstName:        "Max",
+		LastName:         "Mustermann",
+		IsImmatriculated: true,
+		CourseID:         c.ID,
+	}
+
+	_, err := conn.InsertStudent(s)
+	if err == nil {
+		t.Fatalf("Expected to fail. Two students in the same course may not have the same name")
+	}
+
+}
+
 func TestInsertAttendanceList(t *testing.T) {
 	conn, _ := setupDatabase()
 	defer clearDatabase(t, conn)

@@ -16,7 +16,7 @@ import (
 
 func VerificationScreen(w fyne.Window, img []byte, course int, courseTable *fyne.Container, optional ...time.Time) fyne.CanvasObject {
 	header := ReturnVerificationHeader()
-	description := canvas.NewText("Überprüfen sie die dargestellte Liste und wählen gegebenfalls Anwesende Studenten aus:", color.Black)
+	description := canvas.NewText("Vergleichen sie die links dargestellte Unterschriftenliste mit den erfassten heutigen Anwesenheiten:", color.Black)
 	description.TextSize = 16
 	description.TextStyle = fyne.TextStyle{Bold: true}
 	image := RotateImage(img)
