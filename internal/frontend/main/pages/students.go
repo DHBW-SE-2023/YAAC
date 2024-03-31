@@ -100,14 +100,15 @@ func ValidateInput(studentEntry *widget.Entry, courseEntry *widget.Entry, confir
 		re, _ := regexp.Compile(`^[a-zA-Z]+(\s[a-zA-Z]+)+$`)
 		if !re.MatchString(s) {
 			validStudent = false
-			return errors.New("Die Eingabe entspricht nicht den Bedingungen(min. 1x Leerzeichen, nur Buchstaben!")
+			return errors.New("die eingabe entspricht nicht den bedingungen(min. 1x leerzeichen, nur buchstaben)")
 		} else {
 			validStudent = true
 		}
 		return nil
 	}
 	studentEntry.OnChanged = func(s string) {
-		if len(s) > 30 {
+		// Max student name length is 128
+		if len(s) > 128 {
 			s = s[0:10]
 			studentEntry.SetText(s)
 		}

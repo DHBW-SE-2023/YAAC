@@ -22,9 +22,9 @@ type Student struct {
 	gorm.Model
 	FirstName        string `gorm:"check:FirstName!='';type:varchar(64)"`
 	LastName         string `gorm:"check:LastName!='';type:varchar(64)"`
-	FullName         string `gorm:"check:FullName!='';type:varchar(128)"`
-	CourseID         uint
-	IsImmatriculated bool
+	FullName         string `gorm:"check:FullName!='';type:varchar(128);uniqueIndex:namecourseunique;index;not null"`
+	CourseID         uint   `gorm:"uniqueIndex:namecourseunique;not null"`
+	IsImmatriculated bool   `gorm:"default:true"`
 }
 
 type Attendance struct {
