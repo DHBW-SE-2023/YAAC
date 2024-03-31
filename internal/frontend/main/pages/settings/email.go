@@ -122,6 +122,8 @@ func ConfigureForm(w fyne.Window, alive bool, mailConnection string, mailUser st
 	buttonArea := container.NewAdaptiveGrid(2, submitButton, restartButton)
 	form := &widget.Form{
 		Items: []*widget.FormItem{ // we can specify items in the constructor
+			{Text: "Beschreibung", Widget: widget.NewLabel("Hier können sie das EMail Postfach hinterlegen, an welches")},
+			{Text: "", Widget: widget.NewLabel("die Kurssprecher Anwesenheitslisten schicken werden.")},
 			{Text: "Status", Widget: serverStatus},
 			{Text: "E-Mail Server", Widget: server},
 			{Text: "E-Mail User", Widget: username},
