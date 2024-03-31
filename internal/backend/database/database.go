@@ -66,7 +66,7 @@ func (item *BackendDatabase) ConnectDatabase() error {
 	}
 
 	// Ensure that the file exists
-	fd, err := os.OpenFile(dbPath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
+	fd, err := os.OpenFile(dbPath, os.O_APPEND|os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
 	if err == nil {
 		fd.Close()
 	}
