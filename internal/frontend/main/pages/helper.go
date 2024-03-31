@@ -231,8 +231,13 @@ func InsertList(w fyne.Window, img []byte, courseName string, optional ...string
 	_, err = myMVVM.UploadImage(img, &course)
 	if err != nil {
 		loading.Hide()
-		dialog.ShowError(fmt.Errorf("fehler bei der automatischen Anwesenheitserkennung.\n%w", err), w)
-		return
+		if err.Error() == "record not found" {
+			dialog.ShowError(errors.New("fehler angegebener kurs entspriht nicht kursname der liste"), w)
+			return
+		} else {
+			dialog.ShowError(fmt.Errorf("fehler bei der automatischen Anwesenheitserkennung.\n%w", err), w)
+			return
+		}
 	}
 
 	loading.Hide()
