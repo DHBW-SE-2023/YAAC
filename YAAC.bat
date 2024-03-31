@@ -1,1 +1,1 @@
-start /Min cmd /C wsl -- docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME:/host -v /mnt/c:/winc ghcr.io/dhbw-se-2023/yaac:master
+start /Min cmd /C wsl -- docker run -it --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME:/root/host -v /mnt/c:/root/winc -v yaacv1.0.0:/go/YAAC/data ghcr.io/dhbw-se-2023/yaac:master
